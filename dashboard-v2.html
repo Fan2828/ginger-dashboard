@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>希望瓶装热饮出现的场景</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa;
+    color: #222;
+    padding: 20px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .hint { color: #888; font-size: 13px; margin-bottom: 16px; }
+
+  .nav-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    border: 1px solid #ddd; background: #fff; color: #444;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f5f5f5; }
+  .nav-link.active { background: #222; color: #fff; border-color: #222; }
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .clear-btn {
+    background: #fff; border: 1px solid #ccc; padding: 4px 12px;
+    border-radius: 6px; cursor: pointer; font-size: 12px;
+  }
+  .clear-btn:hover { background: #f5f5f5; }
+  .clear-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── 图例 ── */
+  .legend-bar {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+    font-size: 12px;
+  }
+  .legend-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .legend-group-title {
+    font-weight: 700;
+    color: #fff;
+    padding: 1px 8px;
+    border-radius: 4px;
+    align-self: flex-start;
+    font-size: 11px;
+  }
+  .legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #444;
+    white-space: nowrap;
+  }
+  .legend-letter {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    color: #fff;
+    text-align: center;
+    line-height: 16px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  /* ── 矩阵 ── */
+  .matrix {
+    display: grid;
+    background: #eee;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    gap: 1px;
+  }
+  .mx-head, .mx-row-label, .mx-cell {
+    background: #fff;
+    padding: 12px;
+  }
+  .mx-head {
+    background: #f3f4f6;
+    font-weight: 600;
+    text-align: center;
+    font-size: 14px;
+  }
+  .mx-row-label {
+    background: #f3f4f6;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .mx-cell {
+    cursor: pointer;
+    transition: background 0.15s;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .mx-cell:hover { background: #f9fafb; }
+  .mx-cell.selected {
+    background: #fff8e1;
+    outline: 2px solid #f5a623;
+    outline-offset: -2px;
+  }
+  .mx-cell.empty { color: #bbb; }
+
+  .cell-count {
+    font-size: 22px;
+    font-weight: 700;
+    color: #222;
+    line-height: 1;
+  }
+  .cell-count .total-label { font-size: 11px; color: #888; font-weight: normal; margin-left: 4px; }
+
+  .stack-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f0f0f0;
+  }
+  .stack-bar > div { transition: opacity 0.15s; }
+  .stack-bar > div:hover { opacity: 0.75; }
+
+  /* 迷你柱状图 */
+  .mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 70px;
+    padding-top: 4px;
+    border-bottom: 1px solid #eee;
+    margin-top: auto;
+  }
+  .mini-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 12px;
+    height: 100%;
+    justify-content: flex-end;
+    position: relative;
+  }
+  .mini-bar-count {
+    font-size: 9px;
+    color: #666;
+    font-weight: 600;
+    margin-bottom: 1px;
+  }
+  .mini-bar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    transition: opacity 0.15s;
+  }
+  .mini-bar:hover { opacity: 0.7; }
+  .mini-label {
+    font-size: 10px;
+    color: #555;
+    margin-top: 2px;
+    font-weight: 600;
+  }
+
+  .empty-text {
+    color: #bbb;
+    font-size: 12px;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  /* ── 详情面板 ── */
+  .detail {
+    margin-top: 20px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .detail.empty { color: #aaa; text-align: center; padding: 40px; font-size: 14px; }
+  .detail-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .detail-title { font-size: 18px; font-weight: 700; }
+  .detail-sub { color: #666; font-size: 13px; margin-top: 4px; }
+  .source-tags {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;
+  }
+  .src-tag {
+    background: #fff8e1; border: 1px solid #f5a623;
+    color: #b87900; font-size: 11px; padding: 2px 8px;
+    border-radius: 10px; font-weight: 600;
+  }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+  .chart-block h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .bar-label { width: 110px; color: #444; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 18px; background: #f3f4f6; border-radius: 4px; position: relative; }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 22px;
+  }
+
+  .cards-area h3 { font-size: 13px; font-weight: 600; color: #555; margin: 16px 0 10px; }
+  .cards-by-sub {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+  .sub-block {
+    background: #fafafa;
+    border-left: 4px solid;
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .sub-block-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+  }
+  .sub-block-title .letter {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-right: 4px;
+    font-size: 11px;
+  }
+  .sub-card {
+    background: #fff;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    border: 1px solid #eee;
+    position: relative;
+  }
+  .sub-card-source {
+    display: inline-block;
+    background: #f0f4ff;
+    color: #4a5fb8;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-bottom: 3px;
+    border: 1px solid #d8e0f5;
+  }
+
+  /* 颜色变量 */
+  .c-pink   { background: #E91E63; }
+  .c-blue   { background: #2196F3; }
+  .c-yellow { background: #F5A623; }
+  .c-red    { background: #F44336; }
+  .c-teal   { background: #26A69A; }
+  .c-gray   { background: #9E9E9E; }
+
+  .b-pink   { border-color: #E91E63; }
+  .b-blue   { border-color: #2196F3; }
+  .b-yellow { border-color: #F5A623; }
+  .b-red    { border-color: #F44336; }
+  .b-teal   { border-color: #26A69A; }
+  .b-gray   { border-color: #9E9E9E; }
+</style>
+</head>
+<body>
+
+<h1>希望瓶装热饮出现的场景</h1>
+<div class="hint">点击格子 = 选中（可多选）；下方查看汇总数据，每条卡片带「城市·人群」来源标签。</div>
+
+<div class="nav-bar">
+  <a class="nav-link active" href="dashboard-v2.html">📍 希望瓶装热饮出现的场景</a>
+  <a class="nav-link" href="dashboard-heating.html">🔥 加热设备选型</a>
+  <a class="nav-link" href="dashboard-devices.html">📷 用户实拍设备</a>
+  <a class="nav-link" href="dashboard-scenes.html">🌆 用户场景卡</a>
+  <a class="nav-link" href="dashboard-complaints.html">💢 不好的体验</a>
+</div>
+
+<div id="legend" class="legend-bar"></div>
+
+<div class="toolbar">
+  <div id="selection-info" style="font-size:13px;color:#666"></div>
+  <button class="clear-btn" id="clear-btn" onclick="clearSelection()" disabled>清空选择</button>
+</div>
+
+<!-- 矩阵 -->
+<div class="matrix" id="matrix"></div>
+
+<!-- 详情 -->
+<div class="detail empty" id="detail">点击上方矩阵中的任意一个或多个格子，查看汇总分布与原文卡片</div>
+
+<script>
+/* ───────── 配置 ───────── */
+const CITIES = ['上海', '成都', '广州', '哈尔滨'];
+const PERSONAS = ['学生', '年轻白领', '中产', '中产·有娃'];
+
+const CATEGORIES = [
+  { id: 'home',    name: '居住室内',    color: 'pink',   letters: ['A'] },
+  { id: 'work',    name: '工作/学习',   color: 'blue',   letters: ['B','C'] },
+  { id: 'public',  name: '公共室内',    color: 'yellow', letters: ['I','J','K','L','M','N','O','P'] },
+  { id: 'outdoor', name: '户外活动',    color: 'red',    letters: ['Q','R','S','T'] },
+  { id: 'transit', name: '乘坐交通中',  color: 'teal',   letters: ['D','E','F','G','H'] },
+  { id: 'other',   name: '其他',        color: 'gray',   letters: ['U'] }
+];
+
+const LOCATIONS = {
+  A: '学校宿舍',  B: '办公室',     C: '图书馆',     D: '加油站',
+  E: '高速休息站', F: '高铁/高铁站上', G: '机场/飞机上', H: '地铁站',
+  I: '食堂',     J: '网红街小店', K: '演唱会',     L: '电影院',
+  M: '差旅酒店',  N: '商场',       O: '医院',       P: '健身房',
+  Q: 'CityWalk路上', R: '景区',    S: '公园',       T: '滑雪场/冰雪乐园',
+  U: '其他'
+};
+const LETTER_ORDER = Object.keys(LOCATIONS);
+const LETTER_TO_CAT = {};
+CATEGORIES.forEach(c => c.letters.forEach(l => LETTER_TO_CAT[l] = c));
+
+/* ───────── 数据 ───────── */
+let DATA = [
+  /* ===== 中产 · 上海（10 条）===== */
+  { city:"上海", persona:"中产", loc:"U", reason:"打工人最累的一种缓解精神的饮品，尤其是热的" },
+  { city:"上海", persona:"中产", loc:"L", reason:"需要看电影时配备热饮更好的享受" },
+  { city:"上海", persona:"中产", loc:"Q", reason:"希望在散步的时候能买到，感觉整个人都暖和了" },
+  { city:"上海", persona:"中产", loc:"U", reason:"作为女生对热饮有着更多的需求，尤其是打工的时候，热饮是必备品之一，尤其是冬天" },
+  { city:"上海", persona:"中产", loc:"F", reason:"在高铁上喝热饮，感觉整个人都暖和了" },
+  { city:"上海", persona:"中产", loc:"N", reason:"逛街的时候需要热饮，尤其是冬天" },
+  { city:"上海", persona:"中产", loc:"O", reason:"医院的环境比较冷清，喝热饮能让人感觉温暖" },
+  { city:"上海", persona:"中产", loc:"H", reason:"地铁站的环境比较冷，尤其是冬天，喝热饮能让人感觉温暖" },
+  { city:"上海", persona:"中产", loc:"Q", reason:"在散步的时候，喝热饮能让人感觉温暖" },
+  { city:"上海", persona:"中产", loc:"I", reason:"在食堂吃饭的时候，喝热饮能让人感觉温暖" },
+  /* ===== 中产·有娃 · 上海（3 条）===== */
+  { city:"上海", persona:"中产·有娃", loc:"H", reason:"上下班必要的通勤工具，在这里买很方便。" },
+  { city:"上海", persona:"中产·有娃", loc:"B", reason:"方便，喝了能缓解工作的疲劳，缓解紧张的情绪。" },
+  { city:"上海", persona:"中产·有娃", loc:"N", reason:"逛街的时候，累了可以缓解疲劳。" },
+  /* ===== 学生 · 上海（23 条）===== */
+  { city:"上海", persona:"学生", loc:"K", reason:"演唱会现场有热饮的话，喝到热饮会很幸福，尤其是冬天的时候，喝热饮会让人觉得很温暖。" },
+  { city:"上海", persona:"学生", loc:"C", reason:"自习久坐手脚冰冷，瓶装热饮带不下水则人，随时地喝。" },
+  { city:"上海", persona:"学生", loc:"C", reason:"学习到很晚的时候，瓶装热饮方便快速补充能量。" },
+  { city:"上海", persona:"学生", loc:"C", reason:"学习到晚的时候，暖暖的热饮提神醒脑。" },
+  { city:"上海", persona:"学生", loc:"C", reason:"瓶装热饮的好处，无需温酒壶。味道温和，可以缓冲忙碌在冬季，喝到一口" },
+  { city:"上海", persona:"学生", loc:"I", reason:"吃饭时加热饮 或吃完带一瓶备用" },
+  { city:"上海", persona:"学生", loc:"P", reason:"蛋白粉 肌酸 冲泡" },
+  { city:"上海", persona:"学生", loc:"N", reason:"逛街的时候需要喝热水，瓶装热饮方便携带，省去泡沫塑料杯。" },
+  { city:"上海", persona:"学生", loc:"N", reason:"有时候不方便喝热饮，因为不方便于携带，瓶装热饮方便携带，随时喝。" },
+  { city:"上海", persona:"学生", loc:"M", reason:"冬天出差住在酒店的时候，晚上在房间里想喝口热的，瓶装热饮加热后就能喝，不用自己准备保温的冲泡工具，喝方便。" },
+  { city:"上海", persona:"学生", loc:"H", reason:"冬天坐地铁很冷，乘车时，瓶装热饮方便携带，即时饮，能暖身暖心。" },
+  { city:"上海", persona:"学生", loc:"F", reason:"候车/坐车时买一罐，瓶装热饮方便携带，不用到服务台借。" },
+  { city:"上海", persona:"学生", loc:"E", reason:"坐高铁的时候，车上的热水不方便，瓶装饮料或者热饮能加热的罐子，路上喝更享受，缓解车上的疲惫。" },
+  { city:"上海", persona:"学生", loc:"F", reason:"自驾游的时候，瓶装热饮的好处，没有瓶瓶罐罐，只能和自备开水" },
+  { city:"上海", persona:"学生", loc:"Q", reason:"户外散步时，很需要携带一杯暖饮，解渴又舒适" },
+  { city:"上海", persona:"学生", loc:"T", reason:"我冬天去滑雪场的时候，瓶装热饮很有必要，瓶装热饮方便携带，随时喝，滑雪的时候喝一口热饮，感觉很温暖。" },
+  { city:"上海", persona:"学生", loc:"H", reason:"赶地铁时人很少，暖饮可以放松温暖一下" },
+  { city:"上海", persona:"学生", loc:"A", reason:"冬天晚上把热饮加热，便利用就能买到，热饮能快速提早暖胃。" },
+  { city:"上海", persona:"学生", loc:"A", reason:"冬天晚上把热饮加热，便利用就能买到，热饮能快速提早暖胃。" },
+  { city:"上海", persona:"学生", loc:"A", reason:"这种就像很多便利的喝到习惯了，不用特地跑去买，家在宿舍里喝的习惯了" },
+  { city:"上海", persona:"学生", loc:"A", reason:"冬天晚上在宿舍的时候，瓶装热饮加热一下就能用，不用跑下楼买，家在宿舍里喝的习惯了" },
+  { city:"上海", persona:"学生", loc:"A", reason:"冬天晚上在宿舍的时候，瓶装热饮加热一下就能用，不用跑下楼买，家在宿舍里喝的习惯了" },
+  { city:"上海", persona:"学生", loc:"P", reason:"普通饮料需要冰水搅拌太大，而自带热水不方便。瓶装热饮可以立刻泡上身体。" },
+  /* ===== 年轻白领 · 上海（14 条）===== */
+  { city:"上海", persona:"年轻白领", loc:"Q", reason:"走路走累了，喝杯热饮暖暖身，顺便和朋友聊聊天以及观察一下周围风景。" },
+  { city:"上海", persona:"年轻白领", loc:"Q", reason:"滑雪完需要补充热量，喝瓶热饮更容易恢复体能，瓶子可以带回家当纪念品。再过两个月就上冰水了" },
+  { city:"上海", persona:"年轻白领", loc:"T", reason:"这个地方本来就很冷，会需要热饮暖身" },
+  { city:"上海", persona:"年轻白领", loc:"R", reason:"特指严寒景区，比如五岳鲁山" },
+  { city:"上海", persona:"年轻白领", loc:"F", reason:"外出总是喜欢喝热的饮料，很希望有热的，温暖的同时没那么多垃圾。现阶段还没有看到。" },
+  { city:"上海", persona:"年轻白领", loc:"M", reason:"出差的时候希望能在酒店买到热饮，方便携带，不用担心漏水，放在包里就行。" },
+  { city:"上海", persona:"年轻白领", loc:"M", reason:"冬天可以带一瓶温暖的热饮在房间里，异常温暖。" },
+  { city:"上海", persona:"年轻白领", loc:"N", reason:"特别希望在商场，热饮选择多。" },
+  { city:"上海", persona:"年轻白领", loc:"N", reason:"逛街的时候总是想点点饮品" },
+  { city:"上海", persona:"年轻白领", loc:"U", reason:"豪华T9的便利店，因为方便方便，回家路上就可以买来喝了" },
+  { city:"上海", persona:"年轻白领", loc:"B", reason:"办公室每天都会去电柜各种瓶装饮料。" },
+  { city:"上海", persona:"年轻白领", loc:"B", reason:"办公室有热饮，冬天上班就很舒服，喝着热饮有助于提高效率" },
+  { city:"上海", persona:"年轻白领", loc:"T", reason:"在滑雪场滑完的时候，很疲惫，很需要水分补充，但是很多时候都没有热饮" },
+  { city:"上海", persona:"年轻白领", loc:"H", reason:"地铁站服务有些比较好的，但是基本没有热饮的，必须要跑到外面的便利店去买。" },
+  /* ===== 中产 · 哈尔滨（18 条）===== */
+  { city:"哈尔滨", persona:"中产", loc:"B", reason:"办公室里工作累的时候会想喝热饮提神或者暖身，或者办公室的空调开得过于冷的时候" },
+  { city:"哈尔滨", persona:"中产", loc:"B", reason:"办公室温度较低，让工作更有动力，生活更温暖" },
+  { city:"哈尔滨", persona:"中产", loc:"M", reason:"在外的旅人都知道喝热饮对于缓解一天的疲惫是一种很大的安慰" },
+  { city:"哈尔滨", persona:"中产", loc:"F", reason:"出行作为一种乐可以为途中增添多余乐趣" },
+  { city:"哈尔滨", persona:"中产", loc:"L", reason:"希望在电影院能喝到热热乎乎的奶茶或者热饮，让平常的电影也一样" },
+  { city:"哈尔滨", persona:"中产", loc:"N", reason:"希望在商场能喝到热热的奶茶，或者一种舒适的饮品，这样让逛街也能增加不少的乐趣" },
+  { city:"哈尔滨", persona:"中产", loc:"D", reason:"平常开车如果能在加油站买到热饮会很方便" },
+  { city:"哈尔滨", persona:"中产", loc:"E", reason:"有的时候开车出差遇见天冷的时候想买热饮会很方便" },
+  { city:"哈尔滨", persona:"中产", loc:"M", reason:"酒店不想喝冰饮就热饮水的多看看热饮饮也会比较好喝有多种选择" },
+  { city:"哈尔滨", persona:"中产", loc:"R", reason:"景区提供热饮会有更舒适的体验。" },
+  { city:"哈尔滨", persona:"中产", loc:"S", reason:"如果在公园里坐着坐着想要停留的时间更长一些。" },
+  { city:"哈尔滨", persona:"中产", loc:"H", reason:"地铁站售卖热饮会让出行更加便利。" },
+  { city:"哈尔滨", persona:"中产", loc:"I", reason:"一口暖心热饮会全身暖和吃的喝的喝暖食着带回到餐厅配上一杯热饮的好搭配" },
+  { city:"哈尔滨", persona:"中产", loc:"R", reason:"在景区玩累了来瓶热饮暖身缓解劳累又解乏游玩气氛都会很愉" },
+  { city:"哈尔滨", persona:"中产", loc:"D", reason:"跑长途2小时加油站休整一趟缓解疲惫服务站热饮放松心情暖胃护胃" },
+  { city:"哈尔滨", persona:"中产", loc:"B", reason:"方便，工作时有时不方便出去在便利店购买" },
+  { city:"哈尔滨", persona:"中产", loc:"E", reason:"高速休息站喝至多的同时补充能量" },
+  { city:"哈尔滨", persona:"中产", loc:"M", reason:"方便，出差工作住了一天半，待得下榻得开心" },
+  /* ===== 中产·有娃 · 哈尔滨（6 条）===== */
+  { city:"哈尔滨", persona:"中产·有娃", loc:"H", reason:"地铁站可以买一杯热饮, 拿在手里暖暖的。" },
+  { city:"哈尔滨", persona:"中产·有娃", loc:"N", reason:"逛街的时候来一杯, 休闲娱乐, 甜甜的心情愉悦。" },
+  { city:"哈尔滨", persona:"中产·有娃", loc:"B", reason:"办公室时用来润嗓, 滋补养生。" },
+  { city:"哈尔滨", persona:"中产·有娃", loc:"C", reason:"带孩子去图书馆, 会路过别的商铺, 看到奶茶就要买, 因各种原因有的话…" },
+  { city:"哈尔滨", persona:"中产·有娃", loc:"L", reason:"电影院绝对是可乐和冰淇淋担当, 而且没有热的。有热饮就会选择多。" },
+  { city:"哈尔滨", persona:"中产·有娃", loc:"H", reason:"早上会想喝热的。地铁如果有卖的就不用去便利店了, 上班的路上节省时间。" },
+  /* ===== 学生 · 哈尔滨（19 条）===== */
+  { city:"哈尔滨", persona:"学生", loc:"A", reason:"宿舍内大多无法使用大功率加热设备，瓶装热饮可以直接饮用，无需额外准备…" },
+  { city:"哈尔滨", persona:"学生", loc:"J", reason:"在网红街打卡逛街时，瓶装热饮方便携带，不影响逛街拍照，也不用担心外…" },
+  { city:"哈尔滨", persona:"学生", loc:"P", reason:"在剧烈运动锻炼后补充蛋白和热量十分重要，瓶装热饮适合搭配，能快速缓解疲劳…" },
+  { city:"哈尔滨", persona:"学生", loc:"B", reason:"可以在紧张的状态来一杯，不用外卖等" },
+  { city:"哈尔滨", persona:"学生", loc:"D", reason:"开车困了的时候来杯热饮提神" },
+  { city:"哈尔滨", persona:"学生", loc:"T", reason:"冷的时候来一杯暖身" },
+  { city:"哈尔滨", persona:"学生", loc:"R", reason:"逛了一来一杯很有幸福感" },
+  { city:"哈尔滨", persona:"学生", loc:"I", reason:"吃饭的时候来一口汤" },
+  { city:"哈尔滨", persona:"学生", loc:"R", reason:"可以暖手" },
+  { city:"哈尔滨", persona:"学生", loc:"N", reason:"口渴" },
+  { city:"哈尔滨", persona:"学生", loc:"B", reason:"下午犯困时弄个热瓶提神饮料，不用离开工位就能喝" },
+  { city:"哈尔滨", persona:"学生", loc:"D", reason:"长途开车中途歇脚，买瓶加咖啡量下去，比等现磨的快，还能继续赶路" },
+  { city:"哈尔滨", persona:"学生", loc:"A", reason:"晚上复习到很下时候，开一瓶热可可暖手又提神，比泡茶方便多了" },
+  { city:"哈尔滨", persona:"学生", loc:"L", reason:"和爱的人一起品尝一杯好的热饮一定很浪漫------" },
+  { city:"哈尔滨", persona:"学生", loc:"A", reason:"可以在比较长的天气变化宿舍喝热饮" },
+  { city:"哈尔滨", persona:"学生", loc:"C", reason:"热饮对读书很有帮助" },
+  { city:"哈尔滨", persona:"学生", loc:"B", reason:"在办公室喝热饮提高我专心中的热饮体验" },
+  { city:"哈尔滨", persona:"学生", loc:"L", reason:"很有氛围，你想想手里拿着热热的果茶，喝一口温暖相拥看电影，再配…" },
+  { city:"哈尔滨", persona:"学生", loc:"S", reason:"约会逛公园的时候来一杯，这时候一杯热饮恰到好" },
+  /* ===== 年轻白领 · 哈尔滨（11 条）===== */
+  { city:"哈尔滨", persona:"年轻白领", loc:"B", reason:"在办公室来一杯热拿铁，提神醒脑，战斗力满值一整天。" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"I", reason:"吃完午饭来一杯热饮，暖暖胃，很舒服，和午休很搭配。" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"T", reason:"滑雪看点刺激的，一杯热饮可以缓解疲惫和寒冷，快乐的劳累搭配甜甜的热饮。" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"O", reason:"医院经常坐着病的人多，需要带热水的地方多，热饮这里提供了多种选择" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"A", reason:"以前上晚自习的时候就想喝热奶茶，宿舍没咖啡奶茶的快买一杯暖暖心有暖胃" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"C", reason:"可以让人静下心来在这里买到瓶挂热饮能在心静学习时对充电暖" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"S", reason:"让人心情愉悦温暖和谐放松的外空间温暖时的热饮可以提升情绪暖" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"J", reason:"解解解解冬天解解困打盹提提时装时可以缓缓逛街的疲倦化解小心的油腻" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"L", reason:"看电影看点东西，喝着的热酒" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"T", reason:"暖一暖身体，一时用不完可以放在袋" },
+  { city:"哈尔滨", persona:"年轻白领", loc:"Q", reason:"方便携带，不用等待" },
+  /* ===== 中产 · 广州（16 条）===== */
+  { city:"广州", persona:"中产", loc:"B", reason:"工作八小时，想在万恶的办公室中获得一点温暖和慰藉" },
+  { city:"广州", persona:"中产", loc:"H", reason:"上下班路上很冷的时候买来喝，暖暖身子，感觉很舒服" },
+  { city:"广州", persona:"中产", loc:"E", reason:"经常跑高速，路过休息站会下车休息下，特别是冬天，想喝点热的，暖暖身子" },
+  { city:"广州", persona:"中产", loc:"A", reason:"因为我目前是住学生宿舍, 这是我的房间……" },
+  { city:"广州", persona:"中产", loc:"C", reason:"经常在图书馆学习, 有时候想喝一口热的来放松一下" },
+  { city:"广州", persona:"中产", loc:"L", reason:"看电影的时候，喝个热饮感觉是一种很不错的体验" },
+  { city:"广州", persona:"中产", loc:"L", reason:"看电影的时候手里拿个热饮，感觉很舒服" },
+  { city:"广州", persona:"中产", loc:"K", reason:"看演唱会的时候，喝热饮感觉很有氛围" },
+  { city:"广州", persona:"中产", loc:"O", reason:"在医院等候的时候，喝点热饮，温暖身心" },
+  { city:"广州", persona:"中产", loc:"M", reason:"出差住酒店的时候，晚上喝点热饮，感觉很放松" },
+  { city:"广州", persona:"中产", loc:"F", reason:"在高铁上喝热饮，感觉很温暖，一路上也不觉得冷" },
+  { city:"广州", persona:"中产", loc:"G", reason:"在机场等飞机的时候，喝热饮，感觉很舒服" },
+  { city:"广州", persona:"中产", loc:"D", reason:"加油的时候，顺便买个热饮，暖暖身子" },
+  { city:"广州", persona:"中产", loc:"B", reason:"冬天办公室里很冷，想喝点热饮暖暖身子" },
+  { city:"广州", persona:"中产", loc:"Q", reason:"在CityWalk的时候，喝热饮，感觉很有氛围" },
+  { city:"广州", persona:"中产", loc:"H", reason:"冬天等地铁的时候，喝热饮，暖暖身子" },
+  /* ===== 中产·有娃 · 广州（10 条）===== */
+  { city:"广州", persona:"中产·有娃", loc:"U", reason:"在外，想喝热的东西很难找到。" },
+  { city:"广州", persona:"中产·有娃", loc:"H", reason:"因为，很多时候来不及在家喝热饮。" },
+  { city:"广州", persona:"中产·有娃", loc:"N", reason:"逛街，想随时喝点热的，感觉很舒服。" },
+  { city:"广州", persona:"中产·有娃", loc:"N", reason:"购物时想喝热的，尤其是冬天，实在是很需要。商场里能买到就好了。" },
+  { city:"广州", persona:"中产·有娃", loc:"Q", reason:"走路的时候想喝点热的，尤其是晚上散步的时候，能有个热饮在手上，感觉很幸福。" },
+  { city:"广州", persona:"中产·有娃", loc:"U", reason:"在户外露营的时候，想喝热的东西，尤其是晚上，天气冷的时候，特别需要。" },
+  { city:"广州", persona:"中产·有娃", loc:"H", reason:"冬天的时候特别冷，等地铁的时候想喝点热的。" },
+  { city:"广州", persona:"中产·有娃", loc:"S", reason:"冬天在公园散步的时候，喝点热的，感觉很温暖。" },
+  { city:"广州", persona:"中产·有娃", loc:"T", reason:"滑雪的时候，喝点热的，特别舒服。" },
+  { city:"广州", persona:"中产·有娃", loc:"T", reason:"滑雪的时候，喝点热的，特别舒服。" },
+  /* ===== 学生 · 广州（21 条）===== */
+  { city:"广州", persona:"学生", loc:"E", reason:"可以补充能量" },
+  { city:"广州", persona:"学生", loc:"R", reason:"解渴惬意的比需" },
+  { city:"广州", persona:"学生", loc:"T", reason:"在低温环境里上热饮可以快速暖身" },
+  { city:"广州", persona:"学生", loc:"A", reason:"冬天在宿舍冷了可以边看剧边喝" },
+  { city:"广州", persona:"学生", loc:"B", reason:"喜欢在工作做立慢慢喝暖饮" },
+  { city:"广州", persona:"学生", loc:"T", reason:"冷的时候方便直接购买" },
+  { city:"广州", persona:"学生", loc:"C", reason:"方便复习，提高便携性" },
+  { city:"广州", persona:"学生", loc:"T", reason:"可以保暖手，还能合理补充能量" },
+  { city:"广州", persona:"学生", loc:"M", reason:"舟车劳顿后可以缓解疲惫，舒缓心情" },
+  { city:"广州", persona:"学生", loc:"A", reason:"因为我目前是个学生，这是我的刚需" },
+  { city:"广州", persona:"学生", loc:"G", reason:"无论是外出或度假，暖饮总是给人一种安心的感觉" },
+  { city:"广州", persona:"学生", loc:"L", reason:"感觉电影院和暖饮会很搭，是一种观影时不错的选择" },
+  { city:"广州", persona:"学生", loc:"C", reason:"在我阅读时能及时享到热饮，无需跑出去" },
+  { city:"广州", persona:"学生", loc:"N", reason:"大部分便利店的热饮价格比较贵，在商场购买的价格会低一些" },
+  { city:"广州", persona:"学生", loc:"Q", reason:"我希望在我走的路上随时能喝到热饮" },
+  { city:"广州", persona:"学生", loc:"H", reason:"因为地铁我是我经常出行的方式之一" },
+  { city:"广州", persona:"学生", loc:"Q", reason:"因为我希望在我走的路时我喜欢的时间可以买到的" },
+  { city:"广州", persona:"学生", loc:"U", reason:"还有就是上学的地方与上班的附近，主要是因为便捷性" },
+  { city:"广州", persona:"学生", loc:"N", reason:"班组口渴的时候可以买" },
+  { city:"广州", persona:"学生", loc:"Q", reason:"让我累程中更放松" },
+  { city:"广州", persona:"学生", loc:"H", reason:"让等车途中不那么乏味" },
+  /* ===== 年轻白领 · 广州（12 条）===== */
+  { city:"广州", persona:"年轻白领", loc:"F", reason:"希望在高铁站能买到，毕竟平时上一口口的热饮，提神醒脑，尤其是在冬天的时候。" },
+  { city:"广州", persona:"年轻白领", loc:"B", reason:"希望在办公室能提供买到，忙完手上的事情就能来一杯热饮，不用去其他楼层买到再回来。" },
+  { city:"广州", persona:"年轻白领", loc:"H", reason:"希望在地铁站能买到，毕竟通勤路上有一杯暖手又暖心，主要是能提神醒脑更好以后的事情。" },
+  { city:"广州", persona:"年轻白领", loc:"H", reason:"因为平时上班或者出去玩都是坐地铁除去而且是从对所用或乘的一个地方…" },
+  { city:"广州", persona:"年轻白领", loc:"C", reason:"图书馆是一个安静的地方，有一个暖饮略能够更加集中精神看书" },
+  { city:"广州", persona:"年轻白领", loc:"S", reason:"公园也是人群比较多的地方，平时我也会在周末进去，而且公园搭配一些…" },
+  { city:"广州", persona:"年轻白领", loc:"C", reason:"久坐容易手脚发冷，热饮空静无异味，方便带事，不会打扰他人。" },
+  { city:"广州", persona:"年轻白领", loc:"D", reason:"开车出行休息停加油时可以随手快速购买，缓解疲劳。" },
+  { city:"广州", persona:"年轻白领", loc:"L", reason:"冬季影院温度偏低，观影期间长，附装热饮手持方便，饮用感觉更享受氛围，…" },
+  { city:"广州", persona:"年轻白领", loc:"Q", reason:"走在路上的时候暖一杯热饮是刚需" },
+  { city:"广州", persona:"年轻白领", loc:"C", reason:"想要在只学习的一天不用再波多个地点，图书馆就能买到最方便。" },
+  { city:"广州", persona:"年轻白领", loc:"B", reason:"工作到累的时候及时补充能量，不用外卖此类方式过长等待时间。" },
+  /* ===== 中产 · 成都（10 条）===== */
+  { city:"成都", persona:"中产", loc:"C", reason:"在这里可以看书喝热饮料，感觉很舒适。" },
+  { city:"成都", persona:"中产", loc:"Q", reason:"路途漫长，天气寒冷时需要热饮。" },
+  { city:"成都", persona:"中产", loc:"B", reason:"工作忙起来没时间出去买热饮。" },
+  { city:"成都", persona:"中产", loc:"A", reason:"因为我目前是住学生宿舍, 这是我的房间……" },
+  { city:"成都", persona:"中产", loc:"I", reason:"吃完饭想喝热饮暖暖胃。" },
+  { city:"成都", persona:"中产", loc:"N", reason:"逛街时想喝热饮，提神保暖。" },
+  { city:"成都", persona:"中产", loc:"L", reason:"看电影时喝热饮，享受舒适体验。" },
+  { city:"成都", persona:"中产", loc:"F", reason:"旅途劳累时需要热饮提神。" },
+  { city:"成都", persona:"中产", loc:"M", reason:"在酒店休息时，想喝热饮放松。" },
+  { city:"成都", persona:"中产", loc:"J", reason:"逛街累了，想找个地方喝热饮休息。" },
+  /* ===== 中产·有娃 · 成都（10 条）===== */
+  { city:"成都", persona:"中产·有娃", loc:"I", reason:"用小碗装来买到的都很烫" },
+  { city:"成都", persona:"中产·有娃", loc:"B", reason:"我想办公室的冬天很冷" },
+  { city:"成都", persona:"中产·有娃", loc:"J", reason:"我在店铺的时候可以买到" },
+  { city:"成都", persona:"中产·有娃", loc:"I", reason:"户外活动后可以喝" },
+  { city:"成都", persona:"中产·有娃", loc:"B", reason:"饮品，办公室冷的时候我想喝" },
+  { city:"成都", persona:"中产·有娃", loc:"L", reason:"电影结束的时候喝热的更好吃" },
+  { city:"成都", persona:"中产·有娃", loc:"I", reason:"有时候想喝点热的东西，小碗装总是第一" },
+  { city:"成都", persona:"中产·有娃", loc:"I", reason:"食堂的饮水机不够热，不方便" },
+  { city:"成都", persona:"中产·有娃", loc:"Q", reason:"在外面走路的时候，喝热的更舒服" },
+  { city:"成都", persona:"中产·有娃", loc:"I", reason:"有时候想喝点热的东西了，不想等开水壶烧水" },
+  /* ===== 学生 · 成都（22 条）===== */
+  { city:"成都", persona:"学生", loc:"U", reason:"乘车不方便冲泡瓶装热饮即开即喝，暖手又暖胃" },
+  { city:"成都", persona:"学生", loc:"A", reason:"无加热条件瓶装热饮安全方便随时随地喝到热饮" },
+  { city:"成都", persona:"学生", loc:"Q", reason:"街舞完后时间短身体冰适合户外街活动景" },
+  { city:"成都", persona:"学生", loc:"K", reason:"演唱会人太多了，不好买到瓶装热饮" },
+  { city:"成都", persona:"学生", loc:"Q", reason:"户外通话季内的时侯想买个暖手" },
+  { city:"成都", persona:"学生", loc:"S", reason:"在公园里坐在长椅上能喝热饮觉得很治愈" },
+  { city:"成都", persona:"学生", loc:"I", reason:"吃饭前后都会留口渴，冬天想喝热的" },
+  { city:"成都", persona:"学生", loc:"A", reason:"在宿舍内不空调的时候想用来暖手" },
+  { city:"成都", persona:"学生", loc:"N", reason:"逛久了会累，一边逛一边喝热饮感觉好" },
+  { city:"成都", persona:"学生", loc:"T", reason:"滑完雪喝热的整个身体都暖和了" },
+  { city:"成都", persona:"学生", loc:"A", reason:"和同学分享，传递温暖" },
+  { city:"成都", persona:"学生", loc:"O", reason:"医院的病人适合喝暖的" },
+  { city:"成都", persona:"学生", loc:"A", reason:"在宿舍的话，对学生来说是最方便的" },
+  { city:"成都", persona:"学生", loc:"C", reason:"在图书馆的话，可以很好地满足学习者的需要，节约时间" },
+  { city:"成都", persona:"学生", loc:"T", reason:"可以很快地满足滑雪者御寒的需要" },
+  { city:"成都", persona:"学生", loc:"C", reason:"冬天在图书馆自习，坐久了手脚冰凉，要是在馆里直接买到瓶装热饮，就…" },
+  { city:"成都", persona:"学生", loc:"A", reason:"冬天宵夜宿舍里点剧、赶作业、熬得下根本不够，要是有个热下的喝上…" },
+  { city:"成都", persona:"学生", loc:"I", reason:"食堂的热饮选择太少了，大家都是吃的饱， 要是有瓶装热饮，吃完饭…" },
+  { city:"成都", persona:"学生", loc:"C", reason:"因为在学校的图书馆里需要喝热饮，和在教室里需要喝热饮的需求是一样的。" },
+  { city:"成都", persona:"学生", loc:"U", reason:"高速站上没有热的，只有冷的和开水，要是有热的，我就放心考虑，而且很暖和" },
+  { city:"成都", persona:"学生", loc:"K", reason:"演唱会不让带水，演唱会容易口渴，尤其是冬天和天气冷有些大冷天没空" },
+  { city:"成都", persona:"学生", loc:"Q", reason:"citywalk路走步多了，走走停停，很累休息的时候就想要一口热饮" },
+  /* ===== 年轻白领 · 成都（17 条）===== */
+  { city:"成都", persona:"年轻白领", loc:"H", reason:"平时需要喝热的来保持一种良好的状态，如果地铁站有热饮售卖机，或者商店，平时就很方便。" },
+  { city:"成都", persona:"年轻白领", loc:"U", reason:"在高速服务区休息的时候，通常都需要买点东西喝，尤其是冬天的时候，喝热饮更能让人暖和起来。" },
+  { city:"成都", persona:"年轻白领", loc:"S", reason:"在公园里一般都是散步、慢跑、遛狗，喝热饮能带来不一样的感受。" },
+  { city:"成都", persona:"年轻白领", loc:"J", reason:"网红街小店的热饮是吸引顾客的好方式，增加了顾客的购买欲望，提升了店铺的氛围。" },
+  { city:"成都", persona:"年轻白领", loc:"B", reason:"因为经常会出现办公室太冷，或者工作一段时间手脚不舒服的情况，需要一杯热饮来缓解。" },
+  { city:"成都", persona:"年轻白领", loc:"G", reason:"这个地方经常空调开太大，所以我经常在出发前想上想喝的热茶。" },
+  { city:"成都", persona:"年轻白领", loc:"T", reason:"虽然是个运动场，但是运动场需要在路周的人应该也会冷，而且直接在坏环境下喝热饮更有感觉。" },
+  { city:"成都", persona:"年轻白领", loc:"Q", reason:"散步的时候会想要喝点热饮，解渴的同时补充能量。" },
+  { city:"成都", persona:"年轻白领", loc:"H", reason:"坐地铁的时候偶尔会很困，地铁站有热饮的选择常常，很多方便购买。" },
+  { city:"成都", persona:"年轻白领", loc:"M", reason:"出差途中住酒店，酒店房间大大提高了便利性。" },
+  { city:"成都", persona:"年轻白领", loc:"K", reason:"演唱会中需要喝水，有喝东西，大大提升了演唱会观众效果。" },
+  { city:"成都", persona:"年轻白领", loc:"Q", reason:"散步的时候会想要喝点热饮，解渴的同时补充能量。" },
+  { city:"成都", persona:"年轻白领", loc:"J", reason:"比起奶茶更加健康，买小吃零食的时候可以少喝少吃点。" },
+  { city:"成都", persona:"年轻白领", loc:"B", reason:"上班累了的时候可以买点热饮恢复元气。" },
+  { city:"成都", persona:"年轻白领", loc:"H", reason:"有时候在地铁站遇到了希望能来口热饮 但是找不到地方买 所以想要" },
+  { city:"成都", persona:"年轻白领", loc:"M", reason:"闲下来休息的时候想喝点自己喜欢的热饮" },
+  { city:"成都", persona:"年轻白领", loc:"T", reason:"在这种环境下能喝上一杯热饮简直就是YDS 不仅能缓解冷冷 还能消除疲惫" },
+];
+
+/* ───────── 状态 ───────── */
+const state = {
+  selectedCells: new Set()  // keys: "city|persona"
+};
+
+const cellKey = (city, persona) => `${city}|${persona}`;
+const parseKey = k => { const [city, persona] = k.split('|'); return { city, persona }; };
+
+/* ───────── 全局最大值（用于柱高归一）───────── */
+function computeGlobalMaxSubCount() {
+  let max = 1;
+  CITIES.forEach(c => {
+    PERSONAS.forEach(p => {
+      const cellItems = DATA.filter(d => d.city === c && d.persona === p);
+      const cnts = {};
+      cellItems.forEach(it => cnts[it.loc] = (cnts[it.loc] || 0) + 1);
+      Object.values(cnts).forEach(v => { if (v > max) max = v; });
+    });
+  });
+  return max;
+}
+const GLOBAL_MAX = computeGlobalMaxSubCount();
+
+/* ───────── 矩阵渲染 ───────── */
+function renderMatrix() {
+  const matrix = document.getElementById('matrix');
+  matrix.style.gridTemplateColumns = `100px repeat(${CITIES.length}, 1fr)`;
+  matrix.innerHTML = '';
+
+  matrix.appendChild(divEl('mx-head', ''));
+  CITIES.forEach(c => matrix.appendChild(divEl('mx-head', c)));
+
+  PERSONAS.forEach(p => {
+    matrix.appendChild(divEl('mx-row-label', p));
+    CITIES.forEach(c => {
+      const items = DATA.filter(d => d.city === c && d.persona === p);
+      matrix.appendChild(buildCell(c, p, items));
+    });
+  });
+}
+
+function buildCell(city, persona, items) {
+  const cell = document.createElement('div');
+  cell.className = 'mx-cell' + (items.length === 0 ? ' empty' : '');
+  if (state.selectedCells.has(cellKey(city, persona))) {
+    cell.classList.add('selected');
+  }
+
+  // 总数
+  const total = items.length;
+  const head = document.createElement('div');
+  head.className = 'cell-count';
+  head.innerHTML = `${total}<span class="total-label">条</span>`;
+  cell.appendChild(head);
+
+  if (total === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-text';
+    empty.textContent = '— 暂无数据 —';
+    cell.appendChild(empty);
+  } else {
+    // 5 大类堆叠条
+    const catCounts = {};
+    CATEGORIES.forEach(c => catCounts[c.id] = 0);
+    items.forEach(it => { const c = LETTER_TO_CAT[it.loc]; if (c) catCounts[c.id]++; });
+    const bar = document.createElement('div');
+    bar.className = 'stack-bar';
+    CATEGORIES.forEach(c => {
+      if (catCounts[c.id] > 0) {
+        const seg = document.createElement('div');
+        seg.className = 'c-' + c.color;
+        seg.style.width = (catCounts[c.id] / total * 100) + '%';
+        seg.title = `${c.name}: ${catCounts[c.id]}`;
+        bar.appendChild(seg);
+      }
+    });
+    cell.appendChild(bar);
+
+    // 22 子地点（只显示有数据的，按条数降序）
+    const subCounts = {};
+    items.forEach(it => subCounts[it.loc] = (subCounts[it.loc] || 0) + 1);
+    const sortedLetters = Object.keys(subCounts)
+      .sort((a, b) => subCounts[b] - subCounts[a] || LETTER_ORDER.indexOf(a) - LETTER_ORDER.indexOf(b));
+
+    const chart = document.createElement('div');
+    chart.className = 'mini-chart';
+    sortedLetters.forEach(letter => {
+      const cnt = subCounts[letter];
+      const cat = LETTER_TO_CAT[letter];
+      const wrap = document.createElement('div');
+      wrap.className = 'mini-bar-wrap';
+      wrap.title = `${letter} ${LOCATIONS[letter]}: ${cnt} 条`;
+      wrap.innerHTML = `
+        <div class="mini-bar-count">${cnt}</div>
+        <div class="mini-bar c-${cat.color}" style="height:${cnt / GLOBAL_MAX * 100}%"></div>
+      `;
+      cell.appendChild(wrap);
+      chart.appendChild(wrap);
+    });
+    cell.appendChild(chart);
+
+    // 字母标签行
+    const labels = document.createElement('div');
+    labels.style.cssText = 'display:flex;gap:3px;';
+    sortedLetters.forEach(letter => {
+      const lab = document.createElement('div');
+      lab.className = 'mini-label';
+      lab.style.flex = '1';
+      lab.style.textAlign = 'center';
+      lab.style.minWidth = '12px';
+      lab.textContent = letter;
+      lab.title = `${letter} ${LOCATIONS[letter]}`;
+      labels.appendChild(lab);
+    });
+    cell.appendChild(labels);
+  }
+
+  cell.onclick = () => {
+    const key = cellKey(city, persona);
+    if (state.selectedCells.has(key)) state.selectedCells.delete(key);
+    else state.selectedCells.add(key);
+    render();
+  };
+  return cell;
+}
+
+/* ───────── 详情面板 ───────── */
+function renderDetail() {
+  const detail = document.getElementById('detail');
+  const info = document.getElementById('selection-info');
+  const clearBtn = document.getElementById('clear-btn');
+
+  const keys = [...state.selectedCells];
+  if (keys.length === 0) {
+    detail.className = 'detail empty';
+    detail.textContent = '点击上方矩阵中的任意一个或多个格子，查看汇总分布与原文卡片';
+    info.textContent = '';
+    clearBtn.disabled = true;
+    return;
+  }
+
+  // 收集所有选中 cell 的数据，并打来源标签
+  const items = [];
+  keys.forEach(k => {
+    const { city, persona } = parseKey(k);
+    DATA.filter(d => d.city === city && d.persona === persona)
+      .forEach(d => items.push({ ...d, source: `${city}·${persona}` }));
+  });
+
+  detail.className = 'detail';
+  detail.innerHTML = '';
+  info.textContent = `已选 ${keys.length} 格 · 共 ${items.length} 条`;
+  clearBtn.disabled = false;
+
+  // header
+  const head = document.createElement('div');
+  head.className = 'detail-head';
+  const tagsHtml = keys.map(k => {
+    const { city, persona } = parseKey(k);
+    return `<span class="src-tag">${city}·${persona}</span>`;
+  }).join('');
+  head.innerHTML = `
+    <div>
+      <div class="detail-title">汇总视图</div>
+      <div class="detail-sub">${items.length} 条原因 · 涉及 ${new Set(items.map(i=>i.loc)).size} 个子地点</div>
+      <div class="source-tags">${tagsHtml}</div>
+    </div>
+  `;
+  detail.appendChild(head);
+
+  if (items.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:#aaa;text-align:center;padding:30px;font-size:13px';
+    empty.textContent = '所选格子无数据';
+    detail.appendChild(empty);
+    return;
+  }
+
+  // 双图
+  const charts = document.createElement('div');
+  charts.className = 'charts-row';
+
+  // 5 大类
+  const catCounts = {};
+  CATEGORIES.forEach(c => catCounts[c.id] = 0);
+  items.forEach(it => { const c = LETTER_TO_CAT[it.loc]; if (c) catCounts[c.id]++; });
+  const maxCat = Math.max(1, ...Object.values(catCounts));
+  const catBlock = document.createElement('div');
+  catBlock.className = 'chart-block';
+  catBlock.innerHTML = '<h3>5 大类分布</h3>';
+  CATEGORIES.forEach(c => {
+    catBlock.appendChild(buildBarRow(c.name, catCounts[c.id], maxCat, c.color));
+  });
+  charts.appendChild(catBlock);
+
+  // 22 子地点
+  const subCounts = {};
+  items.forEach(it => subCounts[it.loc] = (subCounts[it.loc] || 0) + 1);
+  const maxSub = Math.max(1, ...Object.values(subCounts));
+  const subBlock = document.createElement('div');
+  subBlock.className = 'chart-block';
+  subBlock.innerHTML = '<h3>子地点分布（按条数降序）</h3>';
+  const sortedLetters = Object.keys(subCounts)
+    .sort((a, b) => subCounts[b] - subCounts[a]);
+  sortedLetters.forEach(letter => {
+    const cat = LETTER_TO_CAT[letter];
+    subBlock.appendChild(buildBarRow(`${letter} ${LOCATIONS[letter]}`, subCounts[letter], maxSub, cat.color));
+  });
+  charts.appendChild(subBlock);
+  detail.appendChild(charts);
+
+  // 卡片清单
+  const cardsArea = document.createElement('div');
+  cardsArea.className = 'cards-area';
+  cardsArea.innerHTML = '<h3>原因卡片（按子地点分组）</h3>';
+  const grid = document.createElement('div');
+  grid.className = 'cards-by-sub';
+  sortedLetters.forEach(letter => {
+    const cat = LETTER_TO_CAT[letter];
+    const block = document.createElement('div');
+    block.className = 'sub-block b-' + cat.color;
+    block.innerHTML = `<div class="sub-block-title"><span class="letter">${letter}</span>${LOCATIONS[letter]} · ${subCounts[letter]}</div>`;
+    items.filter(i => i.loc === letter).forEach(it => {
+      const card = document.createElement('div');
+      card.className = 'sub-card';
+      card.innerHTML = `<div class="sub-card-source">${it.source}</div>${escapeHtml(it.reason)}`;
+      block.appendChild(card);
+    });
+    grid.appendChild(block);
+  });
+  cardsArea.appendChild(grid);
+  detail.appendChild(cardsArea);
+}
+
+function buildBarRow(label, cnt, max, color) {
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  const pct = max > 0 ? (cnt / max * 100) : 0;
+  row.innerHTML = `
+    <div class="bar-label">${label}</div>
+    <div class="bar-track">
+      <div class="bar-fill c-${color}" style="width:${pct}%">${cnt > 0 ? cnt : ''}</div>
+    </div>
+  `;
+  return row;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function divEl(cls, text) {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = text;
+  return d;
+}
+
+function clearSelection() {
+  state.selectedCells.clear();
+  render();
+}
+
+function renderLegend() {
+  const wrap = document.getElementById('legend');
+  wrap.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const group = document.createElement('div');
+    group.className = 'legend-group';
+    const title = document.createElement('span');
+    title.className = `legend-group-title c-${cat.color}`;
+    title.textContent = cat.name;
+    group.appendChild(title);
+    const items = document.createElement('div');
+    items.className = 'legend-items';
+    cat.letters.forEach(letter => {
+      const item = document.createElement('span');
+      item.className = 'legend-item';
+      item.innerHTML = `<span class="legend-letter c-${cat.color}">${letter}</span>${LOCATIONS[letter]}`;
+      items.appendChild(item);
+    });
+    group.appendChild(items);
+    wrap.appendChild(group);
+  });
+}
+
+function render() {
+  renderLegend();
+  renderMatrix();
+  renderDetail();
+}
+
+render();
+</script>
+
+</body>
+</html>

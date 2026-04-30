@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>用户场景卡看板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa; color: #222; padding: 20px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .hint { color: #888; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
+  .hint b { color: #444; }
+
+  .nav-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    border: 1px solid #ddd; background: #fff; color: #444;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f5f5f5; }
+  .nav-link.active { background: #222; color: #fff; border-color: #222; }
+
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
+  }
+  .toolbar-right { display: flex; gap: 8px; }
+  .btn {
+    background: #fff; border: 1px solid #ccc; padding: 4px 12px;
+    border-radius: 6px; cursor: pointer; font-size: 12px;
+  }
+  .btn:hover { background: #f5f5f5; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-danger { color: #c62828; }
+
+  /* ── 标签库 ── */
+  .tag-library {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 8px;
+  }
+  .tag-library-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .tag-library-title { font-size: 12px; font-weight: 700; color: #555; }
+  .tag-library-sub { font-size: 11px; color: #999; font-weight: 400; margin-left: 8px; }
+  .tag-library-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+  .lib-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 12px; font-size: 12px;
+    color: #fff; font-weight: 600; cursor: pointer;
+  }
+  .lib-tag.scene-tag { padding: 4px 12px; font-size: 12.5px; }
+  .lib-tag.l1-tag {
+    padding: 5px 14px; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .lib-tag.l2-tag {
+    padding: 2px 9px; font-size: 11px; font-weight: 500;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .lib-tag:hover { box-shadow: 0 0 0 2px rgba(0,0,0,0.15); }
+  .lib-tag .count {
+    background: rgba(255,255,255,0.3); padding: 0 5px;
+    border-radius: 8px; font-size: 10px;
+  }
+  .lib-tag.l2-tag .count { background: rgba(0,0,0,0.08); }
+  .lib-tag .x {
+    cursor: pointer; font-size: 14px; line-height: 1; opacity: 0.7;
+    margin-left: 2px; padding: 0 2px;
+  }
+  .lib-tag .x:hover { opacity: 1; }
+  .l2-parent-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    margin-right: 1px; flex-shrink: 0;
+  }
+
+  .l2-group {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 8px 4px 6px; background: #f9f9f9;
+    border-radius: 14px; border: 1px solid #eee;
+  }
+  .l2-group-label {
+    font-size: 10px; font-weight: 700; color: #fff;
+    padding: 1px 7px; border-radius: 8px; margin-right: 2px;
+    letter-spacing: 0.3px;
+  }
+
+  .add-tag-row {
+    display: flex; gap: 4px; margin-top: 8px; align-items: center;
+  }
+  .add-tag-row input {
+    padding: 4px 8px; font-size: 12px; border: 1px solid #ccc;
+    border-radius: 12px; width: 140px;
+  }
+  .add-tag-row select {
+    padding: 4px 6px; font-size: 12px; border: 1px solid #ccc;
+    border-radius: 12px; background: #fff;
+  }
+  .add-tag-row button {
+    padding: 4px 10px; font-size: 12px; border-radius: 4px;
+    background: #fff; color: #444; border: 1px solid #ccc; cursor: pointer;
+  }
+  .add-tag-row button:hover { background: #f0f0f0; }
+
+  /* ── 矩阵 ── */
+  .matrix {
+    display: grid; background: #eee; border: 1px solid #ddd;
+    border-radius: 10px; overflow: hidden; gap: 1px; margin-top: 4px;
+  }
+  .mx-head, .mx-row-label, .mx-cell { background: #fff; padding: 12px; }
+  .mx-head {
+    background: #f3f4f6; font-weight: 600;
+    text-align: center; font-size: 14px;
+  }
+  .mx-row-label {
+    background: #f3f4f6; font-weight: 600; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mx-cell {
+    cursor: pointer; transition: background 0.15s;
+    min-height: 180px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .mx-cell:hover { background: #f9fafb; }
+  .mx-cell.selected {
+    background: #fff8e1; outline: 2px solid #f5a623; outline-offset: -2px;
+  }
+  .mx-cell.empty { color: #bbb; }
+
+  .cell-count { font-size: 22px; font-weight: 700; line-height: 1; }
+  .cell-count .total-label { font-size: 11px; color: #888; font-weight: normal; margin-left: 4px; }
+
+  .stack-bar {
+    display: flex; height: 7px; border-radius: 4px;
+    overflow: hidden; background: #f0f0f0;
+  }
+  .stack-bar.l1-bar { height: 8px; }
+  .stack-bar > div { transition: opacity 0.15s; }
+  .stack-bar > div:hover { opacity: 0.75; }
+
+  .cell-section-label {
+    font-size: 9px; color: #aaa; font-weight: 700;
+    letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px;
+  }
+
+  .cell-l2 {
+    display: flex; flex-wrap: wrap; gap: 3px; margin-top: 1px;
+  }
+  .cell-l2 .mini-l2 {
+    padding: 1px 6px; border-radius: 8px; font-size: 10px;
+    font-weight: 500; border: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .empty-text { color: #bbb; font-size: 12px; text-align: center; padding: 20px 0; }
+
+  /* ── 详情 ── */
+  .detail {
+    margin-top: 20px; background: #fff;
+    border: 1px solid #eee; border-radius: 10px; padding: 20px;
+  }
+  .detail.empty { color: #aaa; text-align: center; padding: 40px; font-size: 14px; }
+  .detail-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #eee;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .detail-title { font-size: 18px; font-weight: 700; }
+  .detail-sub { color: #666; font-size: 13px; margin-top: 4px; }
+  .source-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .src-tag {
+    background: #fff8e1; border: 1px solid #f5a623;
+    color: #b87900; font-size: 11px; padding: 2px 8px;
+    border-radius: 10px; font-weight: 600;
+  }
+
+  .chart-block h3 { font-size: 13px; font-weight: 600; color: #555; margin: 14px 0 10px; }
+  .chart-block h3 .sub { color: #aaa; font-weight: normal; font-size: 11px; margin-left: 4px; }
+  .bar-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px; font-size: 12px;
+  }
+  .bar-label { width: 110px; color: #444; flex-shrink: 0; }
+  .bar-label .parent-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    margin-right: 4px;
+  }
+  .bar-track { flex: 1; height: 18px; background: #f3f4f6; border-radius: 4px; }
+  .bar-fill {
+    height: 100%; border-radius: 4px; display: flex; align-items: center;
+    padding-left: 6px; color: #fff; font-size: 11px; font-weight: 600; min-width: 22px;
+  }
+
+  .filter-section {
+    margin-top: 14px; padding-top: 10px; border-top: 1px dashed #eee;
+  }
+  .filter-section-title {
+    font-size: 11px; font-weight: 700; color: #888;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .filter-row {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;
+  }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 14px; font-size: 12px;
+    background: #f5f5f5; color: #444; cursor: pointer;
+    border: 1px solid transparent; user-select: none;
+  }
+  .filter-chip:hover { background: #ebebeb; }
+  .filter-chip.active {
+    background: #222; color: #fff; border-color: #222;
+  }
+  .filter-chip .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  }
+
+  .cards-area h3 { font-size: 13px; font-weight: 600; color: #555; margin: 18px 0 10px; }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .photo-card {
+    background: #fff; border: 1px solid #eee; border-radius: 8px;
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .photo-card .photo {
+    width: 100%; aspect-ratio: 3/4; object-fit: cover;
+    background: #f5f5f5; display: block; cursor: zoom-in;
+  }
+  .photo-card .body { padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+  .photo-card .src {
+    display: inline-block; align-self: flex-start;
+    background: #f0f4ff; color: #4a5fb8; font-size: 10px;
+    font-weight: 600; padding: 1px 6px; border-radius: 8px;
+    border: 1px solid #d8e0f5;
+  }
+  .photo-card .text { font-size: 12px; line-height: 1.5; color: #333; }
+  .photo-card .tag-row {
+    display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  }
+  .photo-card .tag-row-label {
+    font-size: 10px; color: #999; font-weight: 600;
+    margin-right: 2px; min-width: 36px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 8px; border-radius: 10px; font-size: 11px;
+    color: #fff; font-weight: 600;
+  }
+  .chip.scene { padding: 3px 10px; font-size: 11.5px; }
+  .chip.l1 { padding: 4px 11px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.3px; }
+  .chip.l2 {
+    padding: 2px 8px; font-size: 10.5px; font-weight: 500;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .chip .x {
+    cursor: pointer; opacity: 0.7; line-height: 1;
+    padding: 0 1px; font-size: 13px;
+  }
+  .chip .x:hover { opacity: 1; }
+  .chip-add {
+    background: #fff; border: 1px dashed #aaa; color: #666;
+    cursor: pointer; padding: 1px 8px; font-weight: normal;
+  }
+  .chip-add:hover { background: #f5f5f5; border-color: #666; }
+
+  .tag-picker {
+    position: absolute; background: #fff; border: 1px solid #ddd;
+    border-radius: 8px; padding: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    z-index: 100; min-width: 240px; max-width: 360px;
+  }
+  .tag-picker-title {
+    font-size: 11px; color: #888; margin-bottom: 8px; font-weight: 600;
+  }
+  .tag-picker .l1-section {
+    margin-bottom: 10px;
+  }
+  .tag-picker .l1-section-head {
+    font-size: 10px; color: #fff; font-weight: 700;
+    padding: 2px 8px; border-radius: 8px; display: inline-block;
+    margin-bottom: 4px; letter-spacing: 0.3px;
+  }
+  .tag-picker .pick-list { display: flex; flex-wrap: wrap; gap: 4px; max-height: 280px; overflow-y: auto; }
+  .tag-picker .pick {
+    cursor: pointer; padding: 3px 9px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+  }
+  .tag-picker .pick.disabled { opacity: 0.35; cursor: not-allowed; }
+  .tag-picker .new-row {
+    display: flex; gap: 4px; margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid #eee; align-items: center; flex-wrap: wrap;
+  }
+  .tag-picker .new-row input {
+    flex: 1; padding: 4px 6px; font-size: 12px;
+    border: 1px solid #ccc; border-radius: 4px; min-width: 100px;
+  }
+  .tag-picker .new-row select {
+    padding: 4px 6px; font-size: 12px; border: 1px solid #ccc;
+    border-radius: 4px; background: #fff;
+  }
+  .tag-picker .new-row button {
+    padding: 4px 10px; font-size: 12px; border-radius: 4px;
+    background: #222; color: #fff; border: none; cursor: pointer;
+  }
+
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; cursor: zoom-out;
+  }
+  .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<h1>用户场景卡看板</h1>
+<div class="hint">
+  三层标签：<b>场景大类</b>（物理位置，固定 6 类）· <b>主题一级</b>（活动情境，固定 7 类·深色系）· <b>主题二级</b>（具体子主题，自由·浅色系，每个二级标签都属于一个一级类）。
+  GPT 自动提取，所有标签都可手动改 / 加 / 删。改动会自动保存在浏览器里。
+</div>
+
+<div class="nav-bar">
+  <a class="nav-link" href="dashboard-v2.html">📍 希望瓶装热饮出现的场景</a>
+  <a class="nav-link" href="dashboard-heating.html">🔥 加热设备选型</a>
+  <a class="nav-link" href="dashboard-devices.html">📷 用户实拍设备</a>
+  <a class="nav-link active" href="dashboard-scenes.html">🌆 用户场景卡</a>
+  <a class="nav-link" href="dashboard-complaints.html">💢 不好的体验</a>
+</div>
+
+<!-- 场景大类 -->
+<div class="tag-library">
+  <div class="tag-library-head">
+    <div class="tag-library-title">
+      场景大类 <span class="tag-library-sub">物理位置 · 固定 6 类</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="exportData()">⬇ 导出数据</button>
+      <button class="btn" onclick="document.getElementById('import-file-input').click()">⬆ 导入数据</button>
+      <input type="file" id="import-file-input" accept="application/json,.json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-danger" onclick="resetAll()">恢复初始数据</button>
+    </div>
+  </div>
+  <div id="scene-library-list" class="tag-library-list"></div>
+</div>
+
+<!-- 主题一级（深色系） -->
+<div class="tag-library">
+  <div class="tag-library-head">
+    <div class="tag-library-title">
+      主题一级 <span class="tag-library-sub">活动 / 情境 · 固定 7 类 · 深色系（点击改色）</span>
+    </div>
+  </div>
+  <div id="l1-library-list" class="tag-library-list"></div>
+</div>
+
+<!-- 主题二级（浅色系，按一级分组） -->
+<div class="tag-library">
+  <div class="tag-library-head">
+    <div class="tag-library-title">
+      主题二级 <span class="tag-library-sub">具体子主题 · 浅色系（自动继承一级色调）· 按一级分组显示；× 全局删除</span>
+    </div>
+  </div>
+  <div id="l2-library-list" class="tag-library-list"></div>
+  <div class="add-tag-row">
+    <input id="new-l2-input" placeholder="新增二级标签…" maxlength="20">
+    <span style="font-size:11px;color:#888">归属：</span>
+    <select id="new-l2-parent"></select>
+    <button onclick="addNewL2()">+ 添加</button>
+  </div>
+</div>
+
+<div class="toolbar">
+  <div id="selection-info" style="font-size:13px;color:#666"></div>
+  <div class="toolbar-right">
+    <button class="btn" id="clear-btn" onclick="clearSelection()" disabled>清空选择</button>
+  </div>
+</div>
+
+<div class="matrix" id="matrix"></div>
+
+<div class="detail empty" id="detail">点击上方矩阵中的任意一个或多个格子，查看场景卡片 + 主题分布</div>
+
+<div id="tag-picker" class="tag-picker" style="display:none"></div>
+
+<div id="lightbox" class="lightbox" style="display:none" onclick="this.style.display='none'"><img id="lightbox-img" src=""></div>
+
+<script>
+/* ───────── 配置 ───────── */
+const CITIES = ['上海', '成都', '广州', '哈尔滨'];
+const PERSONAS = ['学生', '年轻白领', '中产', '中产·有娃'];
+
+/* 场景大类（物理位置）—— 中等亮度 */
+const INIT_SCENE_LIBRARY = [
+  { name: '居住室内',      color: '#FF7043' },
+  { name: '工作/学习地点', color: '#42A5F5' },
+  { name: '公共室内',      color: '#AB47BC' },
+  { name: '户外活动',      color: '#66BB6A' },
+  { name: '乘坐交通中',    color: '#26A69A' },
+  { name: '其他',          color: '#9E9E9E' }
+];
+
+/* 主题一级（活动/情境）—— 深色珠宝色系，与场景大类、二级浅色都明显不同 */
+const INIT_L1_LIBRARY = [
+  { name: '户外',     color: '#1F4F3B' },  // 深森林绿
+  { name: '大聚会',   color: '#7A1F38' },  // 深酒红
+  { name: '密友相聚', color: '#5C2A4C' },  // 深玫瑰紫
+  { name: '节日',     color: '#A8621A' },  // 深琥珀金
+  { name: '窝在家里', color: '#3D3266' },  // 深靛紫
+  { name: '放松享受', color: '#2A5C4F' },  // 深湖青
+  { name: '其他',     color: '#4A4F58' }   // 深石板灰
+];
+
+/* 二级标签：每个 L2 关联一个 parent (L1 name)，颜色由 parent 派生 */
+
+const STORAGE_KEY = 'dashboard-scenes-v2';
+
+/* 初始数据 —— 由 process_scenes.py --patch-html 自动覆盖 */
+const INIT_DATA = [
+  { id:"上海-学生-01", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Frame 2.png", text:"冬天早上下雨，我赶早课没带伞，有一个同学主动和我挤一把伞，那天风特别大，但被伞罩住的地方一直是暖的，现在想起来都觉得很治愈。", scene:"工作/学习地点", theme_l1:"密友相聚", theme_l2:["同学", "分享伞"] },
+  { id:"上海-学生-02", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Frame 3.png", text:"期末周的深夜，我一个人在宿舍窗外煮备考。泡了一碗热热汤面，裹着厚毛毯，那种安静又松弛的感觉，是我整个冬天最舒服的时刻。", scene:"工作/学习地点", theme_l1:"窝在家里", theme_l2:["煮面", "备考", "深夜"] },
+  { id:"上海-学生-03", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Frame 5.png", text:"放寒假时，和好朋友相约去滑雪，一次次的冲刺，让人感到刺激又紧张，难忘的体验", scene:"户外活动", theme_l1:"户外", theme_l2:["滑雪", "朋友"] },
+  { id:"上海-学生-04", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Frame 6.png", text:"点了外卖，在卧室里喝着汽水，吃着炸鸡，看着视频，悠闲又放松", scene:"居住室内", theme_l1:"窝在家里", theme_l2:["看视频", "吃外卖", "放松"] },
+  { id:"上海-学生-05", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Group 16905.png", text:"英语出成绩 努力有了回报", scene:"工作/学习地点", theme_l1:"其他", theme_l2:["学习", "考试"] },
+  { id:"上海-学生-06", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Group 16906.png", text:"在最冷的那个深夜，我对着电脑赶完了期末论文，给自己泡了一碗泡面，暖乎乎的烟火气熏贴了所有疲惫。", scene:"居住室内", theme_l1:"窝在家里", theme_l2:["追剧", "泡面"] },
+  { id:"上海-学生-07", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Group 16907.png", text:"在期末考试后，和同学在冬天一起走着去吃烧烤，聊了很多趣事，很开心", scene:"公共室内", theme_l1:"密友相聚", theme_l2:["烧烤", "聊天"] },
+  { id:"上海-学生-08", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-1.png", text:"周末窝在被窝里看剧，窗外很寒冷，手边放着暖灯和刚烤好的面包，是独属于自己的松弛时刻。", scene:"居住室内", theme_l1:"窝在家里", theme_l2:["追剧", "烤面包"] },
+  { id:"上海-学生-09", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-10.png", text:"跟闺蜜去迪士尼玩，缓解压力的情绪", scene:"户外活动", theme_l1:"户外", theme_l2:["迪士尼", "游玩", "放松"] },
+  { id:"上海-学生-10", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-11.png", text:"偶然看到花开了，冬天快结束了", scene:"户外活动", theme_l1:"户外", theme_l2:["看花", "春天"] },
+  { id:"上海-学生-11", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-12.png", text:"跨年夜和朋友们一起吃火锅，大家围着热气腾腾的锅，边聊肉边倒酒时。外国的风俗很大，但屋子里满是笑声和火锅的香味，那一刻觉得得冬天一点都不冷了。", scene:"居住室内", theme_l1:"密友相聚", theme_l2:["火锅", "跨年", "聚会"] },
+  { id:"上海-学生-12", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-2.png", text:"和朋友围坐火锅，热气袅袅肉香，边刷边聊，冷意一下就没了。", scene:"居住室内", theme_l1:"密友相聚", theme_l2:["火锅", "聊天"] },
+  { id:"上海-学生-13", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-3.png", text:"新游戏出金 是最初的快乐", scene:"居住室内", theme_l1:"窝在家里", theme_l2:["玩游戏", "快乐"] },
+  { id:"上海-学生-14", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-4.png", text:"和朋友一起拼豆 朋友和快乐都难忘", scene:"公共室内", theme_l1:"密友相聚", theme_l2:["拼豆", "朋友"] },
+  { id:"上海-学生-15", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-5.png", text:"在寒冷的冬天，和朋友到街边的KFC吃热乎的炸鸡和热饮。", scene:"公共室内", theme_l1:"密友相聚", theme_l2:["炸鸡", "热饮", "朋友"] },
+  { id:"上海-学生-16", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-6.png", text:"晚上在学校的雪路上走，路灯照着雪，踩上去咯吱吱。下雪的校园夜晚，又冷又安静，特别好看。", scene:"户外活动", theme_l1:"户外", theme_l2:["雪景", "校园"] },
+  { id:"上海-学生-17", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-7.png", text:"来到了心心念念的银山温泉小镇～《千与千寻》里汤婆婆油屋的原型取景地", scene:"户外活动", theme_l1:"户外", theme_l2:["温泉", "旅行"] },
+  { id:"上海-学生-18", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-8.png", text:"在学校图书馆自习时，隔壁座位的陌生人把自己多带的一个暖宝宝悄悄推过来，没说一句话。", scene:"工作/学习地点", theme_l1:"密友相聚", theme_l2:["自习", "陌生人"] },
+  { id:"上海-学生-19", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled-9.png", text:"生理期，可是还要上课，而且是早八，于是赶紧再教学楼附近的便...", scene:"工作/学习地点", theme_l1:"其他", theme_l2:[] },
+  { id:"上海-学生-20", city:"上海", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-上海/Untitled.png", text:"期末复习的深夜，和室友分享零食，互相打气的瞬间，让寒冷的冬夜也变得温暖。", scene:"工作/学习地点", theme_l1:"密友相聚", theme_l2:["分享零食", "互相打气"] },
+  { id:"成都-学生-01", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16318.png", text:"我和k姐去郊外看了雪。我们在雪地里打雪仗堆雪人笑声盖过了寒风，这是最快乐的时刻", scene:"户外活动", theme_l1:"户外", theme_l2:["看雪", "打雪仗", "堆雪人"] },
+  { id:"成都-学生-02", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16319.png", text:"和前任在晚上吃烧串，喝我调的小酒，聊天心里话，很惬意，淡淡的幸福", scene:"居住室内", theme_l1:"密友相聚", theme_l2:["烧串", "聊天", "小酒"] },
+  { id:"成都-学生-03", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16323.png", text:"我去年生日的时候任前送的花，虽然红红的有点土气，但是当时真的很幸福哈哈", scene:"居住室内", theme_l1:"密友相聚", theme_l2:["生日", "送花"] },
+  { id:"成都-学生-04", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16324.png", text:"冬天自己跑出去吃好吃的，还顺便奖励了自己一杯热咖啡", scene:"户外活动", theme_l1:"户外", theme_l2:["吃美食", "喝咖啡"] },
+  { id:"成都-学生-05", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16325.png", text:"户外露营和朋友们一起BBQ，一起喝啤酒，感觉情比金坚", scene:"户外活动", theme_l1:"密友相聚", theme_l2:["BBQ", "喝啤酒", "露营"] },
+  { id:"成都-学生-06", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16326.png", text:"过生日聚会的时候，给每个人买了杯热奶茶，冬天配上热奶茶配上热火锅，简直不要太幸福", scene:"公共室内", theme_l1:"大聚会", theme_l2:["生日聚会", "火锅", "奶茶"] },
+  { id:"成都-学生-07", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16328.png", text:"在公园偶遇流浪猫，蹲在旁边喂了他一会，给他喂了一根火腿肠，想把温暖带给他", scene:"户外活动", theme_l1:"户外", theme_l2:["喂猫", "公园"] },
+  { id:"成都-学生-08", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16331.png", text:"期末时晚上，上室友们都睡觉了，独自一个人刷题", scene:"公共室内", theme_l1:"其他", theme_l2:["刷题", "复习"] },
+  { id:"成都-学生-09", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16333.png", text:"自己-在家里拼乐高，耗时三天终于完成", scene:"居住室内", theme_l1:"窝在家里", theme_l2:["拼乐高", "完成作品"] },
+  { id:"成都-学生-10", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16334.png", text:"一天早上起个大早偶然出门，看见橙色的日出，突然感觉就被治愈了", scene:"户外活动", theme_l1:"户外", theme_l2:["日出", "治愈"] },
+  { id:"成都-学生-11", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16336.png", text:"在寒假回家的路上，感觉看到的所有风景都是对家的渴望", scene:"乘坐交通中", theme_l1:"其他", theme_l2:["回家", "风景"] },
+  { id:"成都-学生-12", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Group 16908.png", text:"2025年冬天去东北玩，我和朋友在雪地里疯玩打雪仗，手冻得通红也不管。玩累了躲进便利店，一...", scene:"户外活动", theme_l1:"户外", theme_l2:["雪景", "打雪仗"] },
+  { id:"成都-学生-13", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-1.png", text:"超级美的日落", scene:"户外活动", theme_l1:"户外", theme_l2:["日落", "海边"] },
+  { id:"成都-学生-14", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-10.png", text:"有一次冬天作业到深夜，宿舍里只剩我一个人，台灯照着桌子上的笔记本，手边放着一杯热饮，显...", scene:"工作/学习地点", theme_l1:"窝在家里", theme_l2:["学习", "深夜"] },
+  { id:"成都-学生-15", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-2.png", text:"第一次做长指甲", scene:"居住室内", theme_l1:"窝在家里", theme_l2:["做指甲"] },
+  { id:"成都-学生-16", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-3.png", text:"我在公交站等车时一位阿姨主动和我分享暖宝宝小的暖贴不仅暖了手更暖了心 让我在寒冬里...", scene:"乘坐交通中", theme_l1:"其他", theme_l2:["分享", "暖宝宝"] },
+  { id:"成都-学生-17", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-4.png", text:"期末周的早上 我早早到教室自习 同桌给我带了热乎的豆浆 温热的豆浆驱散了寒意 让我有了更多...", scene:"工作/学习地点", theme_l1:"窝在家里", theme_l2:["自习", "喝豆浆"] },
+  { id:"成都-学生-18", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-5.png", text:"我们宿舍去乐山吃的晓脚牛肉，很好吃啊啊啊，这个血旺也超级美味，特别鲜", scene:"居住室内", theme_l1:"密友相聚", theme_l2:["火锅", "聚餐"] },
+  { id:"成都-学生-19", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-6.png", text:"在除夕夜，我和我的姐妹们一起放烟花，我特别难忘，那时候很冷", scene:"户外活动", theme_l1:"节日", theme_l2:["除夕", "放烟花"] },
+  { id:"成都-学生-20", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-7.png", text:"在川西旅游时，我朋友因为高反，吃不下东西，民宿老板特地为她做了清淡的晚餐", scene:"其他", theme_l1:"户外", theme_l2:["旅游", "晚餐"] },
+  { id:"成都-学生-21", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-8.png", text:"很难忘去看了一次音乐会，当时乐器演奏时，现场特别震撼", scene:"公共室内", theme_l1:"大聚会", theme_l2:["音乐会", "现场演出"] },
+  { id:"成都-学生-22", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled-9.png", text:"冬天和室友们约着吃火锅，外面刮着冷风，屋里暖洋洋的，大家围着锅边刷肉聊天，手里捧着热饮...", scene:"居住室内", theme_l1:"密友相聚", theme_l2:["火锅", "聊天"] },
+  { id:"成都-学生-23", city:"成都", persona:"学生", image:"原始数据/2025场景（没有暖饮）/学生-成都/Untitled.png", text:"爱播收官后一场巡游", scene:"户外活动", theme_l1:"户外", theme_l2:["巡游"] },
+];
+
+/* ───────── 颜色工具：HSL 派生 L2 ───────── */
+function hexToRgb(hex) {
+  const h = (hex || '#000000').replace('#', '');
+  return [
+    parseInt(h.slice(0,2), 16) || 0,
+    parseInt(h.slice(2,4), 16) || 0,
+    parseInt(h.slice(4,6), 16) || 0
+  ];
+}
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(x =>
+    Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')
+  ).join('');
+}
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return [h * 360, s * 100, l * 100];
+}
+function hslToRgb(h, s, l) {
+  h = ((h % 360) + 360) % 360 / 360; s /= 100; l /= 100;
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return [r * 255, g * 255, b * 255];
+}
+/* 从 L1 深色派生 L2 浅色：保留色相，提亮度 + 略降饱和 */
+function deriveL2Color(l1Hex) {
+  const [r, g, b] = hexToRgb(l1Hex);
+  let [h, s, l] = rgbToHsl(r, g, b);
+  l = 78;                            // 统一亮度，pastel
+  s = Math.max(35, Math.min(s, 55)); // 适度饱和
+  const [r2, g2, b2] = hslToRgb(h, s, l);
+  return rgbToHex(r2, g2, b2);
+}
+/* CSS 色串 → #RRGGBB（color input 用） */
+function cssColorToHex(c) {
+  if (!c) return '#999999';
+  if (c.startsWith('#') && c.length === 7) return c;
+  if (c.startsWith('#') && c.length === 4) {
+    return '#' + c.slice(1).split('').map(x => x+x).join('');
+  }
+  const m = c.match(/\d+/g);
+  if (m && m.length >= 3) {
+    return '#' + m.slice(0,3).map(n => Number(n).toString(16).padStart(2,'0')).join('');
+  }
+  return '#999999';
+}
+
+/* ───────── 状态 + 持久化 ───────── */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    data: state.data,
+    sceneLibrary: state.sceneLibrary,
+    l1Library: state.l1Library,
+    l2Library: state.l2Library
+  }));
+}
+
+const persisted = loadState();
+const state = {
+  data: persisted?.data ?? structuredClone(INIT_DATA),
+  sceneLibrary: persisted?.sceneLibrary ?? structuredClone(INIT_SCENE_LIBRARY),
+  l1Library: persisted?.l1Library ?? structuredClone(INIT_L1_LIBRARY),
+  l2Library: persisted?.l2Library ?? [],
+  selectedCells: new Set(),
+  filterScene: null,
+  filterL1: null,
+  filterL2: null
+};
+
+/* 同步图片路径到最新 INIT_DATA */
+state.data.forEach(item => {
+  const init = INIT_DATA.find(i => i.id === item.id);
+  if (init) item.image = init.image;
+});
+
+/* 数据迁移：旧 elements → theme_l2，default theme_l1='其他' */
+state.data.forEach(item => {
+  if (item.elements && !item.theme_l2) {
+    item.theme_l2 = item.elements;
+    delete item.elements;
+  }
+  if (!item.theme_l2) item.theme_l2 = [];
+  if (!item.theme_l1) item.theme_l1 = '其他';
+});
+
+/* L1 库始终包含全部固定 7 类（即便某类暂无数据） */
+function syncL1Library() {
+  const known = new Set(state.l1Library.map(t => t.name));
+  INIT_L1_LIBRARY.forEach(t => {
+    if (!known.has(t.name)) state.l1Library.push({ ...t });
+  });
+}
+syncL1Library();
+
+/* L2 库自动同步：从 data 抓所有 theme_l2，parent 取首次出现的 theme_l1 */
+function syncL2Library() {
+  const known = new Set(state.l2Library.map(t => t.name));
+  let added = 0;
+  state.data.forEach(d => {
+    (d.theme_l2 || []).forEach(name => {
+      if (!known.has(name)) {
+        const parent = d.theme_l1 || '其他';
+        const parentColor = l1Color(parent);
+        state.l2Library.push({
+          name,
+          parent,
+          color: deriveL2Color(parentColor)
+        });
+        known.add(name);
+        added++;
+      }
+    });
+  });
+  if (added > 0) saveState();
+}
+syncL2Library();
+
+const cellKey = (city, persona) => `${city}|${persona}`;
+const parseKey = k => { const [city, persona] = k.split('|'); return { city, persona }; };
+
+function sceneColor(name) {
+  const t = state.sceneLibrary.find(t => t.name === name);
+  return t ? t.color : '#9E9E9E';
+}
+function l1Color(name) {
+  const t = state.l1Library.find(t => t.name === name);
+  return t ? t.color : '#4A4F58';
+}
+function l2Entry(name) {
+  return state.l2Library.find(t => t.name === name);
+}
+function l2Color(name) {
+  const t = l2Entry(name);
+  if (!t) return '#e0e0e0';
+  return t.color;
+}
+function l2Parent(name) {
+  return l2Entry(name)?.parent || '其他';
+}
+
+function sceneCount(name) {
+  return state.data.filter(d => d.scene === name).length;
+}
+function l1Count(name) {
+  return state.data.filter(d => d.theme_l1 === name).length;
+}
+function l2Count(name) {
+  return state.data.filter(d => (d.theme_l2 || []).includes(name)).length;
+}
+
+/* ───────── 标签库渲染 ───────── */
+function renderSceneLibrary() {
+  const wrap = document.getElementById('scene-library-list');
+  wrap.innerHTML = '';
+  state.sceneLibrary.forEach(t => {
+    const el = document.createElement('span');
+    el.className = 'lib-tag scene-tag';
+    el.style.background = t.color;
+    el.title = '点击改颜色';
+    el.innerHTML = `<span>${escapeHtml(t.name)}</span> <span class="count">${sceneCount(t.name)}</span>`;
+    el.onclick = () => pickColor(t, () => { saveState(); render(); });
+    wrap.appendChild(el);
+  });
+}
+
+function renderL1Library() {
+  const wrap = document.getElementById('l1-library-list');
+  wrap.innerHTML = '';
+  state.l1Library.forEach(t => {
+    const el = document.createElement('span');
+    el.className = 'lib-tag l1-tag';
+    el.style.background = t.color;
+    el.title = '点击改颜色';
+    el.innerHTML = `<span>${escapeHtml(t.name)}</span> <span class="count">${l1Count(t.name)}</span>`;
+    el.onclick = () => {
+      pickColor(t, () => {
+        // L1 改色后，对应 L2（未自定义）也跟着派生
+        state.l2Library.forEach(l2 => {
+          if (l2.parent === t.name && !l2._customColor) {
+            l2.color = deriveL2Color(t.color);
+          }
+        });
+        saveState(); render();
+      });
+    };
+    wrap.appendChild(el);
+  });
+}
+
+function renderL2Library() {
+  const wrap = document.getElementById('l2-library-list');
+  wrap.innerHTML = '';
+
+  // 按 L1 分组
+  const grouped = {};
+  state.l2Library.forEach(t => {
+    const p = t.parent || '其他';
+    if (!grouped[p]) grouped[p] = [];
+    grouped[p].push(t);
+  });
+
+  // 按 L1 顺序展示
+  let any = false;
+  state.l1Library.forEach(l1 => {
+    const list = grouped[l1.name] || [];
+    if (list.length === 0) return;
+    any = true;
+    // 按使用数降序
+    list.sort((a, b) => l2Count(b.name) - l2Count(a.name));
+
+    const group = document.createElement('div');
+    group.className = 'l2-group';
+    const label = document.createElement('span');
+    label.className = 'l2-group-label';
+    label.style.background = l1.color;
+    label.textContent = l1.name;
+    group.appendChild(label);
+
+    list.forEach(t => {
+      const cnt = l2Count(t.name);
+      const el = document.createElement('span');
+      el.className = 'lib-tag l2-tag';
+      el.style.background = t.color;
+      el.style.color = '#3a3a3a';
+      el.title = '点击改颜色，× 全局删除';
+      el.innerHTML = `<span>${escapeHtml(t.name)}</span> <span class="count">${cnt}</span> <span class="x" title="全局删除">×</span>`;
+      el.onclick = (e) => {
+        if (e.target.classList.contains('x')) return;
+        pickColor(t, () => { t._customColor = true; saveState(); render(); });
+      };
+      el.querySelector('.x').onclick = (e) => {
+        e.stopPropagation();
+        if (!confirm(`删除二级标签「${t.name}」？这会从所有卡片移除（共 ${cnt} 处）。`)) return;
+        state.l2Library = state.l2Library.filter(x => x.name !== t.name);
+        state.data.forEach(d => { d.theme_l2 = (d.theme_l2 || []).filter(n => n !== t.name); });
+        if (state.filterL2 === t.name) state.filterL2 = null;
+        saveState(); render();
+      };
+      group.appendChild(el);
+    });
+    wrap.appendChild(group);
+  });
+
+  if (!any) {
+    wrap.innerHTML = '<span style="color:#bbb;font-size:12px;">还没有二级标签 —— 跑 process_scenes.py 让 GPT 提取，或在下面手动添加</span>';
+  }
+}
+
+function refreshNewL2Parent() {
+  const sel = document.getElementById('new-l2-parent');
+  sel.innerHTML = '';
+  state.l1Library.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.name;
+    opt.textContent = t.name;
+    sel.appendChild(opt);
+  });
+}
+
+function addNewL2() {
+  const input = document.getElementById('new-l2-input');
+  const sel = document.getElementById('new-l2-parent');
+  const name = input.value.trim();
+  if (!name) return;
+  if (state.l2Library.some(t => t.name === name)) {
+    alert('已存在该二级标签'); return;
+  }
+  const parent = sel.value || '其他';
+  state.l2Library.push({
+    name, parent,
+    color: deriveL2Color(l1Color(parent))
+  });
+  input.value = '';
+  saveState(); render();
+}
+
+function pickColor(targetObj, onChange) {
+  const picker = document.createElement('input');
+  picker.type = 'color';
+  picker.value = cssColorToHex(targetObj.color);
+  picker.style.cssText = 'position:fixed;left:-9999px';
+  document.body.appendChild(picker);
+  picker.oninput = () => { targetObj.color = picker.value; onChange(); };
+  picker.onchange = () => picker.remove();
+  picker.click();
+}
+
+/* ───────── 矩阵 ───────── */
+function renderMatrix() {
+  const matrix = document.getElementById('matrix');
+  matrix.style.gridTemplateColumns = `100px repeat(${CITIES.length}, 1fr)`;
+  matrix.innerHTML = '';
+
+  matrix.appendChild(divEl('mx-head', ''));
+  CITIES.forEach(c => matrix.appendChild(divEl('mx-head', c)));
+
+  PERSONAS.forEach(p => {
+    matrix.appendChild(divEl('mx-row-label', p));
+    CITIES.forEach(c => {
+      const items = state.data.filter(d => d.city === c && d.persona === p);
+      matrix.appendChild(buildCell(c, p, items));
+    });
+  });
+}
+
+function buildCell(city, persona, items) {
+  const cell = document.createElement('div');
+  cell.className = 'mx-cell' + (items.length === 0 ? ' empty' : '');
+  if (state.selectedCells.has(cellKey(city, persona))) cell.classList.add('selected');
+
+  const head = document.createElement('div');
+  head.className = 'cell-count';
+  head.innerHTML = `${items.length}<span class="total-label">人</span>`;
+  cell.appendChild(head);
+
+  if (items.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-text';
+    empty.textContent = '— 暂无数据 —';
+    cell.appendChild(empty);
+  } else {
+    const total = items.length;
+
+    /* 主题一级 堆叠条（深色，主视觉） */
+    const l1Cnt = {};
+    items.forEach(it => {
+      const s = it.theme_l1 || '其他';
+      l1Cnt[s] = (l1Cnt[s] || 0) + 1;
+    });
+    cell.appendChild(elText('cell-section-label', '主题一级'));
+    const l1Bar = document.createElement('div');
+    l1Bar.className = 'stack-bar l1-bar';
+    state.l1Library.forEach(t => {
+      if (l1Cnt[t.name]) {
+        const seg = document.createElement('div');
+        seg.style.background = t.color;
+        seg.style.width = (l1Cnt[t.name] / total * 100) + '%';
+        seg.title = `${t.name}: ${l1Cnt[t.name]}`;
+        l1Bar.appendChild(seg);
+      }
+    });
+    cell.appendChild(l1Bar);
+
+    /* L1 文字列表（top 3） */
+    const l1Sorted = Object.entries(l1Cnt).sort((a,b) => b[1]-a[1]).slice(0, 3);
+    const l1List = document.createElement('div');
+    l1List.style.cssText = 'font-size:11px;color:#444;display:flex;flex-wrap:wrap;gap:6px;';
+    l1Sorted.forEach(([name, cnt]) => {
+      const r = document.createElement('span');
+      r.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${l1Color(name)};margin-right:3px;vertical-align:middle"></span>${escapeHtml(name)} <b>${cnt}</b>`;
+      l1List.appendChild(r);
+    });
+    cell.appendChild(l1List);
+
+    /* 场景大类 mini bar */
+    const sceneCnt = {};
+    items.forEach(it => {
+      const s = it.scene || '其他';
+      sceneCnt[s] = (sceneCnt[s] || 0) + 1;
+    });
+    cell.appendChild(elText('cell-section-label', '场景'));
+    const sBar = document.createElement('div');
+    sBar.className = 'stack-bar';
+    state.sceneLibrary.forEach(t => {
+      if (sceneCnt[t.name]) {
+        const seg = document.createElement('div');
+        seg.style.background = t.color;
+        seg.style.width = (sceneCnt[t.name] / total * 100) + '%';
+        seg.title = `${t.name}: ${sceneCnt[t.name]}`;
+        sBar.appendChild(seg);
+      }
+    });
+    cell.appendChild(sBar);
+
+    /* L2 top 元素胶囊 */
+    const l2Cnt = {};
+    items.forEach(it => (it.theme_l2 || []).forEach(e => {
+      l2Cnt[e] = (l2Cnt[e] || 0) + 1;
+    }));
+    const topL2 = Object.entries(l2Cnt).sort((a,b) => b[1]-a[1]).slice(0, 6);
+    if (topL2.length > 0) {
+      cell.appendChild(elText('cell-section-label', '主题二级 top'));
+      const box = document.createElement('div');
+      box.className = 'cell-l2';
+      topL2.forEach(([name, cnt]) => {
+        const e = document.createElement('span');
+        e.className = 'mini-l2';
+        e.style.background = l2Color(name);
+        e.style.color = '#3a3a3a';
+        e.textContent = cnt > 1 ? `${name}·${cnt}` : name;
+        box.appendChild(e);
+      });
+      cell.appendChild(box);
+    }
+  }
+
+  cell.onclick = () => {
+    const key = cellKey(city, persona);
+    if (state.selectedCells.has(key)) state.selectedCells.delete(key);
+    else state.selectedCells.add(key);
+    render();
+  };
+  return cell;
+}
+
+/* ───────── 详情 ───────── */
+function renderDetail() {
+  const detail = document.getElementById('detail');
+  const info = document.getElementById('selection-info');
+  const clearBtn = document.getElementById('clear-btn');
+
+  const keys = [...state.selectedCells];
+  if (keys.length === 0) {
+    detail.className = 'detail empty';
+    detail.textContent = '点击上方矩阵中的任意一个或多个格子，查看场景卡片 + 主题分布';
+    info.textContent = '';
+    clearBtn.disabled = true;
+    return;
+  }
+
+  const items = [];
+  keys.forEach(k => {
+    const { city, persona } = parseKey(k);
+    state.data.filter(d => d.city === city && d.persona === persona)
+      .forEach(d => items.push(d));
+  });
+
+  detail.className = 'detail';
+  detail.innerHTML = '';
+  info.textContent = `已选 ${keys.length} 格 · 共 ${items.length} 张场景卡`;
+  clearBtn.disabled = false;
+
+  const head = document.createElement('div');
+  head.className = 'detail-head';
+  const tagsHtml = keys.map(k => {
+    const { city, persona } = parseKey(k);
+    return `<span class="src-tag">${city}·${persona}</span>`;
+  }).join('');
+  const allL2 = new Set(items.flatMap(i => i.theme_l2 || []));
+  head.innerHTML = `
+    <div>
+      <div class="detail-title">汇总视图</div>
+      <div class="detail-sub">${items.length} 张场景卡 · ${allL2.size} 种二级主题</div>
+      <div class="source-tags">${tagsHtml}</div>
+    </div>
+  `;
+  detail.appendChild(head);
+
+  /* 主题一级柱图 */
+  const l1Cnt = {};
+  items.forEach(it => {
+    const s = it.theme_l1 || '其他';
+    l1Cnt[s] = (l1Cnt[s] || 0) + 1;
+  });
+  const l1Max = Math.max(1, ...Object.values(l1Cnt));
+  const chartL1 = document.createElement('div');
+  chartL1.className = 'chart-block';
+  chartL1.innerHTML = '<h3>主题一级分布<span class="sub">活动 / 情境</span></h3>';
+  state.l1Library.forEach(t => {
+    if (l1Cnt[t.name]) {
+      chartL1.appendChild(buildBarRow(t.name, l1Cnt[t.name], l1Max, t.color));
+    }
+  });
+  detail.appendChild(chartL1);
+
+  /* 场景大类柱图 */
+  const sceneCnt = {};
+  items.forEach(it => {
+    const s = it.scene || '其他';
+    sceneCnt[s] = (sceneCnt[s] || 0) + 1;
+  });
+  const sceneMax = Math.max(1, ...Object.values(sceneCnt));
+  const chartScene = document.createElement('div');
+  chartScene.className = 'chart-block';
+  chartScene.innerHTML = '<h3>场景大类分布<span class="sub">物理位置</span></h3>';
+  state.sceneLibrary.forEach(t => {
+    if (sceneCnt[t.name]) {
+      chartScene.appendChild(buildBarRow(t.name, sceneCnt[t.name], sceneMax, t.color));
+    }
+  });
+  detail.appendChild(chartScene);
+
+  /* 主题二级柱图（top 15） */
+  const l2Cnt = {};
+  items.forEach(it => (it.theme_l2 || []).forEach(e => {
+    l2Cnt[e] = (l2Cnt[e] || 0) + 1;
+  }));
+  const topL2 = Object.entries(l2Cnt).sort((a,b) => b[1]-a[1]).slice(0, 15);
+  if (topL2.length > 0) {
+    const l2Max = Math.max(1, ...topL2.map(x => x[1]));
+    const chartL2 = document.createElement('div');
+    chartL2.className = 'chart-block';
+    chartL2.innerHTML = `<h3>主题二级 top ${topL2.length}<span class="sub">共 ${Object.keys(l2Cnt).length} 个</span></h3>`;
+    topL2.forEach(([name, cnt]) => {
+      const row = buildBarRow(name, cnt, l2Max, l2Color(name));
+      // 加 parent dot
+      const label = row.querySelector('.bar-label');
+      label.innerHTML = `<span class="parent-dot" style="background:${l1Color(l2Parent(name))}" title="${l2Parent(name)}"></span>${escapeHtml(name)}`;
+      chartL2.appendChild(row);
+    });
+    detail.appendChild(chartL2);
+  }
+
+  /* 卡片网格 + 三层筛选 */
+  const cardsArea = document.createElement('div');
+  cardsArea.className = 'cards-area';
+  cardsArea.innerHTML = '<h3>场景卡片（点缩略图放大；点 chip 修改/添加标签）</h3>';
+
+  // L1 筛选
+  const l1Filter = document.createElement('div');
+  l1Filter.className = 'filter-section';
+  l1Filter.innerHTML = '<div class="filter-section-title">按主题一级</div>';
+  const l1Row = document.createElement('div');
+  l1Row.className = 'filter-row';
+  l1Row.appendChild(makeFilterChip(`全部 ${items.length}`, null,
+    state.filterL1 === null, () => { state.filterL1 = null; render(); }));
+  Object.entries(l1Cnt).sort((a,b) => b[1]-a[1]).forEach(([name, cnt]) => {
+    l1Row.appendChild(makeFilterChip(`${name} ${cnt}`, l1Color(name),
+      state.filterL1 === name,
+      () => { state.filterL1 = (state.filterL1 === name) ? null : name; render(); }));
+  });
+  l1Filter.appendChild(l1Row);
+  cardsArea.appendChild(l1Filter);
+
+  // 场景筛选
+  const sceneFilter = document.createElement('div');
+  sceneFilter.className = 'filter-section';
+  sceneFilter.innerHTML = '<div class="filter-section-title">按场景大类</div>';
+  const sceneRow = document.createElement('div');
+  sceneRow.className = 'filter-row';
+  sceneRow.appendChild(makeFilterChip('全部', null,
+    state.filterScene === null, () => { state.filterScene = null; render(); }));
+  Object.entries(sceneCnt).sort((a,b) => b[1]-a[1]).forEach(([name, cnt]) => {
+    sceneRow.appendChild(makeFilterChip(`${name} ${cnt}`, sceneColor(name),
+      state.filterScene === name,
+      () => { state.filterScene = (state.filterScene === name) ? null : name; render(); }));
+  });
+  sceneFilter.appendChild(sceneRow);
+  cardsArea.appendChild(sceneFilter);
+
+  // L2 筛选
+  if (topL2.length > 0) {
+    const l2Filter = document.createElement('div');
+    l2Filter.className = 'filter-section';
+    l2Filter.innerHTML = '<div class="filter-section-title">按主题二级</div>';
+    const l2Row = document.createElement('div');
+    l2Row.className = 'filter-row';
+    l2Row.appendChild(makeFilterChip('全部', null,
+      state.filterL2 === null, () => { state.filterL2 = null; render(); }));
+    Object.entries(l2Cnt).sort((a,b) => b[1]-a[1]).forEach(([name, cnt]) => {
+      l2Row.appendChild(makeFilterChip(`${name} ${cnt}`, l2Color(name),
+        state.filterL2 === name,
+        () => { state.filterL2 = (state.filterL2 === name) ? null : name; render(); }));
+    });
+    l2Filter.appendChild(l2Row);
+    cardsArea.appendChild(l2Filter);
+  }
+
+  // 应用筛选
+  let visible = items;
+  if (state.filterL1) visible = visible.filter(it => it.theme_l1 === state.filterL1);
+  if (state.filterScene) visible = visible.filter(it => it.scene === state.filterScene);
+  if (state.filterL2) visible = visible.filter(it => (it.theme_l2 || []).includes(state.filterL2));
+
+  // 全部时按标签数量从多到少分组：优先一级主题，其次场景大类
+  if (!state.filterL1 && !state.filterScene && !state.filterL2) {
+    visible = visible.slice().sort((a, b) => {
+      const al1 = a.theme_l1 || '', bl1 = b.theme_l1 || '';
+      const ac1 = l1Cnt[al1] || 0, bc1 = l1Cnt[bl1] || 0;
+      if (ac1 !== bc1) return bc1 - ac1;
+      if (al1 !== bl1) return al1 < bl1 ? -1 : 1;
+      const as = a.scene || '', bs = b.scene || '';
+      const ac2 = sceneCnt[as] || 0, bc2 = sceneCnt[bs] || 0;
+      if (ac2 !== bc2) return bc2 - ac2;
+      if (as !== bs) return as < bs ? -1 : 1;
+      return 0;
+    });
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'cards-grid';
+  grid.style.marginTop = '12px';
+  visible.forEach(it => grid.appendChild(buildPhotoCard(it)));
+  if (visible.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:#aaa;font-size:13px;padding:20px;grid-column:1/-1;text-align:center';
+    empty.textContent = '— 当前筛选下没有卡片 —';
+    grid.appendChild(empty);
+  }
+  cardsArea.appendChild(grid);
+  detail.appendChild(cardsArea);
+}
+
+function makeFilterChip(label, color, active, onclick) {
+  const c = document.createElement('span');
+  c.className = 'filter-chip' + (active ? ' active' : '');
+  if (color) {
+    c.innerHTML = `<span class="dot" style="background:${color}"></span>${escapeHtml(label)}`;
+  } else {
+    c.textContent = label;
+  }
+  c.onclick = onclick;
+  return c;
+}
+
+function buildPhotoCard(item) {
+  const card = document.createElement('div');
+  card.className = 'photo-card';
+
+  const img = document.createElement('img');
+  img.className = 'photo';
+  img.src = item.image;
+  img.alt = '';
+  img.onclick = () => openLightbox(item.image);
+  img.onerror = () => { img.style.display = 'none'; };
+  card.appendChild(img);
+
+  const body = document.createElement('div');
+  body.className = 'body';
+  body.innerHTML = `
+    <span class="src">${item.city}·${item.persona}</span>
+    <div class="text">${escapeHtml(item.text || '')}</div>
+  `;
+
+  /* 主题一级（单选，深色） */
+  const l1Row = document.createElement('div');
+  l1Row.className = 'tag-row';
+  l1Row.innerHTML = `<span class="tag-row-label">一级</span>`;
+  const l1Chip = document.createElement('span');
+  l1Chip.className = 'chip l1';
+  l1Chip.style.background = l1Color(item.theme_l1);
+  l1Chip.style.cursor = 'pointer';
+  l1Chip.title = '点击修改主题一级';
+  l1Chip.textContent = item.theme_l1 || '其他';
+  l1Chip.onclick = (e) => { e.stopPropagation(); openL1Picker(l1Chip, item); };
+  l1Row.appendChild(l1Chip);
+  body.appendChild(l1Row);
+
+  /* 主题二级（多选，浅色） */
+  const l2Row = document.createElement('div');
+  l2Row.className = 'tag-row';
+  l2Row.innerHTML = `<span class="tag-row-label">二级</span>`;
+  (item.theme_l2 || []).forEach(name => {
+    const chip = document.createElement('span');
+    chip.className = 'chip l2';
+    chip.style.background = l2Color(name);
+    chip.style.color = '#3a3a3a';
+    chip.innerHTML = `${escapeHtml(name)} <span class="x">×</span>`;
+    chip.querySelector('.x').onclick = (e) => {
+      e.stopPropagation();
+      item.theme_l2 = (item.theme_l2 || []).filter(n => n !== name);
+      saveState(); render();
+    };
+    l2Row.appendChild(chip);
+  });
+  const addL2Btn = document.createElement('span');
+  addL2Btn.className = 'chip l2 chip-add';
+  addL2Btn.textContent = '+ 加';
+  addL2Btn.onclick = (e) => { e.stopPropagation(); openL2Picker(addL2Btn, item); };
+  l2Row.appendChild(addL2Btn);
+  body.appendChild(l2Row);
+
+  /* 场景大类（单选） */
+  const sceneRow = document.createElement('div');
+  sceneRow.className = 'tag-row';
+  sceneRow.innerHTML = `<span class="tag-row-label">场景</span>`;
+  const sceneChip = document.createElement('span');
+  sceneChip.className = 'chip scene';
+  sceneChip.style.background = sceneColor(item.scene);
+  sceneChip.style.cursor = 'pointer';
+  sceneChip.title = '点击修改场景大类';
+  sceneChip.textContent = item.scene || '未分类';
+  sceneChip.onclick = (e) => { e.stopPropagation(); openScenePicker(sceneChip, item); };
+  sceneRow.appendChild(sceneChip);
+  body.appendChild(sceneRow);
+
+  card.appendChild(body);
+  return card;
+}
+
+/* ───────── 标签选择浮层 ───────── */
+function openScenePicker(anchor, item) {
+  const picker = document.getElementById('tag-picker');
+  picker.innerHTML = '<div class="tag-picker-title">选场景大类（物理位置）</div>';
+  const list = document.createElement('div');
+  list.className = 'pick-list';
+  state.sceneLibrary.forEach(t => {
+    const el = document.createElement('span');
+    el.className = 'pick' + (item.scene === t.name ? ' disabled' : '');
+    el.style.background = t.color;
+    el.style.color = '#fff';
+    el.textContent = t.name;
+    if (item.scene !== t.name) {
+      el.onclick = () => {
+        item.scene = t.name;
+        saveState(); closeTagPicker(); render();
+      };
+    }
+    list.appendChild(el);
+  });
+  picker.appendChild(list);
+  positionPicker(picker, anchor);
+}
+
+function openL1Picker(anchor, item) {
+  const picker = document.getElementById('tag-picker');
+  picker.innerHTML = '<div class="tag-picker-title">选主题一级（活动 / 情境）</div>';
+  const list = document.createElement('div');
+  list.className = 'pick-list';
+  state.l1Library.forEach(t => {
+    const el = document.createElement('span');
+    el.className = 'pick' + (item.theme_l1 === t.name ? ' disabled' : '');
+    el.style.background = t.color;
+    el.style.color = '#fff';
+    el.textContent = t.name;
+    if (item.theme_l1 !== t.name) {
+      el.onclick = () => {
+        item.theme_l1 = t.name;
+        saveState(); closeTagPicker(); render();
+      };
+    }
+    list.appendChild(el);
+  });
+  picker.appendChild(list);
+  positionPicker(picker, anchor);
+}
+
+function openL2Picker(anchor, item) {
+  const picker = document.getElementById('tag-picker');
+  picker.innerHTML = '<div class="tag-picker-title">选已有二级标签（按一级分组），或新建</div>';
+
+  // 按 L1 分组展示已有 L2
+  const grouped = {};
+  state.l2Library.forEach(t => {
+    const p = t.parent || '其他';
+    if (!grouped[p]) grouped[p] = [];
+    grouped[p].push(t);
+  });
+
+  state.l1Library.forEach(l1 => {
+    const list = grouped[l1.name] || [];
+    if (list.length === 0) return;
+    list.sort((a, b) => l2Count(b.name) - l2Count(a.name));
+
+    const sec = document.createElement('div');
+    sec.className = 'l1-section';
+    const head = document.createElement('span');
+    head.className = 'l1-section-head';
+    head.style.background = l1.color;
+    head.textContent = l1.name;
+    sec.appendChild(head);
+    const ul = document.createElement('div');
+    ul.className = 'pick-list';
+    list.forEach(t => {
+      const has = (item.theme_l2 || []).includes(t.name);
+      const el = document.createElement('span');
+      el.className = 'pick' + (has ? ' disabled' : '');
+      el.style.background = t.color;
+      el.style.color = '#3a3a3a';
+      el.textContent = t.name;
+      if (!has) el.onclick = () => {
+        item.theme_l2 = item.theme_l2 || [];
+        item.theme_l2.push(t.name);
+        saveState(); closeTagPicker(); render();
+      };
+      ul.appendChild(el);
+    });
+    sec.appendChild(ul);
+    picker.appendChild(sec);
+  });
+
+  // 新建二级标签：name + parent 选择
+  const newRow = document.createElement('div');
+  newRow.className = 'new-row';
+  const input = document.createElement('input');
+  input.placeholder = '新建二级标签…';
+  input.maxLength = 20;
+  const sel = document.createElement('select');
+  state.l1Library.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.name;
+    opt.textContent = t.name;
+    if (t.name === item.theme_l1) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  const btn = document.createElement('button');
+  btn.textContent = '添加';
+  newRow.appendChild(input);
+  newRow.appendChild(sel);
+  newRow.appendChild(btn);
+
+  const create = () => {
+    const name = input.value.trim();
+    if (!name) return;
+    const parent = sel.value || '其他';
+    if (!state.l2Library.some(t => t.name === name)) {
+      state.l2Library.push({
+        name, parent,
+        color: deriveL2Color(l1Color(parent))
+      });
+    }
+    item.theme_l2 = item.theme_l2 || [];
+    if (!item.theme_l2.includes(name)) item.theme_l2.push(name);
+    saveState(); closeTagPicker(); render();
+  };
+  btn.onclick = create;
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') create(); });
+  picker.appendChild(newRow);
+
+  positionPicker(picker, anchor);
+  setTimeout(() => input.focus(), 0);
+}
+
+function positionPicker(picker, anchor) {
+  const rect = anchor.getBoundingClientRect();
+  picker.style.display = 'block';
+  picker.style.left = (rect.left + window.scrollX) + 'px';
+  picker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  setTimeout(() => {
+    document.addEventListener('click', closeOnOutside, { once: true });
+  }, 0);
+}
+function closeOnOutside(e) {
+  const picker = document.getElementById('tag-picker');
+  if (!picker.contains(e.target)) closeTagPicker();
+  else document.addEventListener('click', closeOnOutside, { once: true });
+}
+function closeTagPicker() {
+  document.getElementById('tag-picker').style.display = 'none';
+}
+
+/* ───────── lightbox ───────── */
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').style.display = 'flex';
+}
+
+/* ───────── helpers ───────── */
+function buildBarRow(label, cnt, max, color) {
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  const pct = max > 0 ? (cnt / max * 100) : 0;
+  row.innerHTML = `
+    <div class="bar-label">${escapeHtml(label)}</div>
+    <div class="bar-track">
+      <div class="bar-fill" style="background:${color};width:${pct}%">${cnt > 0 ? cnt : ''}</div>
+    </div>
+  `;
+  return row;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function divEl(cls, text) {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = text;
+  return d;
+}
+function elText(cls, text) {
+  return divEl(cls, text);
+}
+function clearSelection() { state.selectedCells.clear(); render(); }
+
+function resetAll() {
+  if (!confirm('恢复到初始数据？所有手动改动会丢失。')) return;
+  state.data = structuredClone(INIT_DATA);
+  state.sceneLibrary = structuredClone(INIT_SCENE_LIBRARY);
+  state.l1Library = structuredClone(INIT_L1_LIBRARY);
+  state.l2Library = [];
+  state.selectedCells.clear();
+  state.filterScene = null;
+  state.filterL1 = null;
+  state.filterL2 = null;
+  // 重新迁移 + 同步
+  state.data.forEach(item => {
+    if (item.elements && !item.theme_l2) {
+      item.theme_l2 = item.elements;
+      delete item.elements;
+    }
+    if (!item.theme_l2) item.theme_l2 = [];
+    if (!item.theme_l1) item.theme_l1 = '其他';
+  });
+  syncL2Library();
+  saveState(); render();
+}
+
+/* ───────── 导出 / 导入 ───────── */
+function exportData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  const payload = {
+    app: 'ginger-dashboard',
+    key: STORAGE_KEY,
+    exportedAt: new Date().toISOString(),
+    data: raw ? JSON.parse(raw) : null
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  a.href = url;
+  a.download = `${STORAGE_KEY}_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const payload = JSON.parse(e.target.result);
+      const incoming = (payload && typeof payload === 'object' && 'data' in payload) ? payload.data : payload;
+      if (!incoming || typeof incoming !== 'object') throw new Error('文件内容无效');
+      if (payload.key && payload.key !== STORAGE_KEY) {
+        if (!confirm(`这份文件来自 "${payload.key}"，与当前页面 "${STORAGE_KEY}" 不一致。仍然导入？`)) return;
+      }
+      if (!confirm('导入后将覆盖当前所有标签和分类数据，是否继续？')) return;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(incoming));
+      location.reload();
+    } catch (err) {
+      alert('导入失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function render() {
+  renderSceneLibrary();
+  renderL1Library();
+  renderL2Library();
+  refreshNewL2Parent();
+  renderMatrix();
+  renderDetail();
+}
+
+document.getElementById('new-l2-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addNewL2();
+});
+
+render();
+</script>
+
+</body>
+</html>

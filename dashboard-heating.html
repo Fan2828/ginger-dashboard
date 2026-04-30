@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>加热设备选型看板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa;
+    color: #222;
+    padding: 20px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .hint { color: #888; font-size: 13px; margin-bottom: 16px; }
+
+  .nav-bar {
+    display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    border: 1px solid #ddd; background: #fff; color: #444;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f5f5f5; }
+  .nav-link.active { background: #222; color: #fff; border-color: #222; }
+
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .clear-btn {
+    background: #fff; border: 1px solid #ccc; padding: 4px 12px;
+    border-radius: 6px; cursor: pointer; font-size: 12px;
+  }
+  .clear-btn:hover { background: #f5f5f5; }
+  .clear-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── 图例 ── */
+  .legend-bar {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+    font-size: 12px;
+  }
+  .legend-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .legend-group-title {
+    font-weight: 700;
+    color: #fff;
+    padding: 1px 8px;
+    border-radius: 4px;
+    align-self: flex-start;
+    font-size: 11px;
+  }
+  .legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #444;
+    white-space: nowrap;
+  }
+  .legend-chip {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+
+  /* ── 矩阵 ── */
+  .matrix {
+    display: grid;
+    background: #eee;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    gap: 1px;
+  }
+  .mx-head, .mx-row-label, .mx-cell {
+    background: #fff;
+    padding: 12px;
+  }
+  .mx-head {
+    background: #f3f4f6;
+    font-weight: 600;
+    text-align: center;
+    font-size: 14px;
+  }
+  .mx-row-label {
+    background: #f3f4f6;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .mx-cell {
+    cursor: pointer;
+    transition: background 0.15s;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .mx-cell:hover { background: #f9fafb; }
+  .mx-cell.selected {
+    background: #fff8e1;
+    outline: 2px solid #f5a623;
+    outline-offset: -2px;
+  }
+  .mx-cell.empty { color: #bbb; }
+
+  .cell-count {
+    font-size: 22px;
+    font-weight: 700;
+    color: #222;
+    line-height: 1;
+  }
+  .cell-count .total-label { font-size: 11px; color: #888; font-weight: normal; margin-left: 4px; }
+
+  .stack-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f0f0f0;
+  }
+  .stack-bar > div { transition: opacity 0.15s; }
+  .stack-bar > div:hover { opacity: 0.75; }
+
+  .mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 70px;
+    padding-top: 4px;
+    border-bottom: 1px solid #eee;
+    margin-top: auto;
+  }
+  .mini-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 18px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .mini-bar-count {
+    font-size: 9px;
+    color: #666;
+    font-weight: 600;
+    margin-bottom: 1px;
+  }
+  .mini-bar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    transition: opacity 0.15s;
+  }
+  .mini-bar:hover { opacity: 0.7; }
+  .mini-label {
+    font-size: 10px;
+    color: #555;
+    margin-top: 2px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .empty-text {
+    color: #bbb;
+    font-size: 12px;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  /* ── 详情面板 ── */
+  .detail {
+    margin-top: 20px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .detail.empty { color: #aaa; text-align: center; padding: 40px; font-size: 14px; }
+  .detail-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .detail-title { font-size: 18px; font-weight: 700; }
+  .detail-sub { color: #666; font-size: 13px; margin-top: 4px; }
+  .source-tags {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;
+  }
+  .src-tag {
+    background: #fff8e1; border: 1px solid #f5a623;
+    color: #b87900; font-size: 11px; padding: 2px 8px;
+    border-radius: 10px; font-weight: 600;
+  }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+  .chart-block h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .bar-label { width: 110px; color: #444; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 18px; background: #f3f4f6; border-radius: 4px; position: relative; }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 22px;
+  }
+
+  .cards-area h3 { font-size: 13px; font-weight: 600; color: #555; margin: 16px 0 10px; }
+  .cards-by-sub {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+  .sub-block {
+    background: #fafafa;
+    border-left: 4px solid;
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .sub-block-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+  }
+  .sub-card {
+    background: #fff;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    border: 1px solid #eee;
+    position: relative;
+  }
+  .sub-card-source {
+    display: inline-block;
+    background: #f0f4ff;
+    color: #4a5fb8;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-bottom: 3px;
+    border: 1px solid #d8e0f5;
+  }
+
+  /* 颜色变量 — 与 image2 对应 */
+  .c-green  { background: #4CAF50; }
+  .c-teal   { background: #26A69A; }
+  .c-pink   { background: #EC6FA9; }
+  .c-purple { background: #9C7BD1; }
+
+  .b-green  { border-color: #4CAF50; }
+  .b-teal   { border-color: #26A69A; }
+  .b-pink   { border-color: #EC6FA9; }
+  .b-purple { border-color: #9C7BD1; }
+</style>
+</head>
+<body>
+
+<h1>加热设备选型看板</h1>
+<div class="hint">不同城市 × 人群对加热设备款式的偏好。点击格子（可多选）查看汇总分布与原文。</div>
+
+<div class="nav-bar">
+  <a class="nav-link" href="dashboard-v2.html">📍 希望瓶装热饮出现的场景</a>
+  <a class="nav-link active" href="dashboard-heating.html">🔥 加热设备选型</a>
+  <a class="nav-link" href="dashboard-devices.html">📷 用户实拍设备</a>
+  <a class="nav-link" href="dashboard-scenes.html">🌆 用户场景卡</a>
+  <a class="nav-link" href="dashboard-complaints.html">💢 不好的体验</a>
+</div>
+
+<div id="legend" class="legend-bar"></div>
+
+<div class="toolbar">
+  <div id="selection-info" style="font-size:13px;color:#666"></div>
+  <button class="clear-btn" id="clear-btn" onclick="clearSelection()" disabled>清空选择</button>
+</div>
+
+<div class="matrix" id="matrix"></div>
+
+<div class="detail empty" id="detail">点击上方矩阵中的任意一个或多个格子，查看汇总分布与原文卡片</div>
+
+<script>
+/* ───────── 配置 ───────── */
+const CITIES = ['上海', '成都', '广州', '哈尔滨'];
+const PERSONAS = ['学生', '年轻白领', '中产', '中产·有娃'];
+
+/* 4 大类（颜色对应 image2）×7 子型号 */
+const CATEGORIES = [
+  { id: 'pad',       name: '加热杯垫',     color: 'green',  devices: ['加热杯垫'] },
+  { id: 'cup',       name: '加热杯',       color: 'teal',   devices: ['加热杯 A', '加热杯 B'] },
+  { id: 'dispenser', name: '加热饮水机',   color: 'pink',   devices: ['加热饮水机 A', '加热饮水机 B', '加热饮水机 C'] },
+  { id: 'other',     name: '其他',         color: 'purple', devices: ['其他'] }
+];
+
+const DEVICE_ORDER = [];
+CATEGORIES.forEach(c => c.devices.forEach(d => DEVICE_ORDER.push(d)));
+const DEVICE_TO_CAT = {};
+CATEGORIES.forEach(c => c.devices.forEach(d => DEVICE_TO_CAT[d] = c));
+
+/* ───────── 数据（目前仅 上海·学生）───────── */
+let DATA = [
+  /* ===== 中产 · 上海（6 条）===== */
+  { city:"上海", persona:"中产", device:"加热杯 A", reason:"放在办公室用，在办公室里的时间比较久，所以比较喜欢可以放久个小时、又比较可爱。" },
+  { city:"上海", persona:"中产", device:"加热杯 A", reason:"银颜值的选择，电力续航好，并且重量刚好，可以随时加热。" },
+  { city:"上海", persona:"中产", device:"加热杯 B", reason:"这个任何环境都可以使用，而且不用单独清洗杯具，很方便" },
+  { city:"上海", persona:"中产", device:"加热杯 A", reason:"它能够保持很好的保温，或者是直接在杯中冲泡。另外它的功能的确很强大，平常喝的茶，弄个奶茶也行。自然它能用电源的或者是放在办公室里，它比较多用一点，功能性比较强" },
+  { city:"上海", persona:"中产", device:"加热杯 A", reason:"我看重的是保温杯，这个性能确实是异常智能，简单而且多变，适合放在家里，就算我热水多冬天必须温4个小时" },
+  { city:"上海", persona:"中产", device:"加热杯 B", reason:"我觉得这个值是我买了热水壶又没时间，又可以放上加热的杯，热量也很久合适加热量" },
+  /* ===== 中产·有娃 · 上海（1 条）===== */
+  { city:"上海", persona:"中产·有娃", device:"加热杯垫", reason:"比较方便，比较小巧，还是恒温的，可以保持一定的温度，随时都可以喝不会担心冷掉。而且不占用地方，比较美观。" },
+  /* ===== 学生 · 上海（8 条）===== */
+  { city:"上海", persona:"学生", device:"加热杯垫", reason:"我会选择加热杯垫，它体积小不占地方，放在宿舍或桌子上就能用，把瓶装饮水放上去就能保持保温，冬天手冷加班的时候，随时都能喝到温乎乎的热饮，不用反复去加热。" },
+  { city:"上海", persona:"学生", device:"加热杯 B", reason:"上学通勤时用，随时加热瓶装饮料，冬天喝着更暖。" },
+  { city:"上海", persona:"学生", device:"加热杯 A", reason:"因为瓶装饮料经常会变凉，这个设备能快速把饮料加热到适宜的温度，不用倒出来再加热，很方便。我会在教室、通勤路上使用它。" },
+  { city:"上海", persona:"学生", device:"加热杯垫", reason:"h感觉方便好用，体积小巧，不占地方，会在宿舍使用，会用他加热牛奶或者客饮咖啡类的饮品" },
+  { city:"上海", persona:"学生", device:"加热杯 B", reason:"我很喜欢这个加热杯，因为这个加热杯，只要把瓶子放在里面就可以加热，我觉得非常方便，并且在宿舍室友间可以使用。也不需要把瓶装饮料倒出来之类比较繁琐的事情，总体来说比较便利，也比较方便携带…" },
+  { city:"上海", persona:"学生", device:"加热杯 A", reason:"可以放在桌面上，也可以随身携带，感觉很方便，直接把饮品放在里面就好了" },
+  { city:"上海", persona:"学生", device:"加热杯 B", reason:"热水神器，有了它冬天随时随地都能喝到暖饮" },
+  { city:"上海", persona:"学生", device:"加热杯 A", reason:"它用起来很方便，感觉宿舍里，图书馆里都能，因为很小所以可以随身携带。平时买了可可饮料一凉了，打开倒在哪里？就能慢慢热，不怕喝到的热饮温度忽高忽低，随时都能喝到温乎乎的东西" },
+  /* ===== 年轻白领 · 上海（6 条）===== */
+  { city:"上海", persona:"年轻白领", device:"加热杯垫", reason:"我很喜欢喝茶，可以选择杯垫，使用场景为常年桌面，我觉得整体样子都可以加热" },
+  { city:"上海", persona:"年轻白领", device:"加热杯垫", reason:"我觉得这个杯子是一个外星的，就是我可以把它带来学校比较适合我直接开机无缝切换成热水的选择。这样我就可以直接把我的饮料放在杯子上，节约等待。完全方便简单，整体很简单，同时都可以从热水了。" },
+  { city:"上海", persona:"年轻白领", device:"加热杯垫", reason:"因为我有很多想喝的奶茶都是在家或者是办公室，所以我觉得这种加热杯垫很好，因为经常会7点放在饮料架子上，这样可以一些喝到的，不用自己再去烧水泡水" },
+  { city:"上海", persona:"年轻白领", device:"加热杯垫", reason:"从家里带到办公室使用也很方便，整体设计很合理" },
+  { city:"上海", persona:"年轻白领", device:"加热杯垫", reason:"非常的小巧实用，相对比较安全" },
+  { city:"上海", persona:"年轻白领", device:"加热饮水机 A", reason:"如果我能用饮水机的杠上面，直接热热饮水。" },
+  /* ===== 中产 · 哈尔滨（5 条）===== */
+  { city:"哈尔滨", persona:"中产", device:"加热杯垫", reason:"当然是它啦！我喜欢在工作时和在家闲暇时煮一杯咖啡，有的时候热咖啡的手具用的惯不顺手，感觉很麻烦，也无法为其加热，这个就完美解决了我的痛点" },
+  { city:"哈尔滨", persona:"中产", device:"加热杯 A", reason:"我感觉这是很好的咖啡伴侣 可以加热 可以携带 可以调节温度" },
+  { city:"哈尔滨", persona:"中产", device:"加热杯 A", reason:"将购买的瓶装饮品放入其中调整至想要的温度进行加热，很方便" },
+  { city:"哈尔滨", persona:"中产", device:"加热饮水机 B", reason:"可能会在办公室使用，便携快捷。" },
+  { city:"哈尔滨", persona:"中产", device:"加热杯垫", reason:"很感兴趣 因为有了杯垫可以随时地加热不用等不用煮 不用杯煮别人 小巧不占地方" },
+  /* ===== 中产·有娃 · 哈尔滨（2 条）===== */
+  { city:"哈尔滨", persona:"中产·有娃", device:"加热杯 B", reason:"加热杯套比较轻便，方便携带，出差旅行也不沉，不占地方，加热效果可以恒温，比较喜欢。" },
+  { city:"哈尔滨", persona:"中产·有娃", device:"加热杯 A", reason:"把热茶装进去，带着出差用，或者开会的时候用很不错，小巧方便，还有多温度选择，可以适用于很多场景" },
+  /* ===== 学生 · 哈尔滨（9 条）===== */
+  { city:"哈尔滨", persona:"学生", device:"加热杯垫", reason:"感觉得方便 我会在公司使用加热牛奶" },
+  { city:"哈尔滨", persona:"学生", device:"加热杯垫", reason:"方便，不用加水也不用倒的啥，在办公室或者家里更适用" },
+  { city:"哈尔滨", persona:"学生", device:"加热杯垫", reason:"这个加热杯垫很好用，感觉得温恒温，也不用烧水太麻烦，宿舍或者家里学习的时候用来保温很好，不过不适用在不太小的电器" },
+  { city:"哈尔滨", persona:"学生", device:"加热杯垫", reason:"冬天寒冷在家里刷手机，用加热杯垫温着牛奶，想想的确是一个很温暖的" },
+  { city:"哈尔滨", persona:"学生", device:"加热杯 A", reason:"在家里冬天热水" },
+  { city:"哈尔滨", persona:"学生", device:"加热杯 A", reason:"加热杯用于母婴饮水加热更加方便" },
+  { city:"哈尔滨", persona:"学生", device:"加热杯 B", reason:"我会考虑饮水器，因为市面上的烧热饮太多也比较好了，这个能根据时间长短加热到理想的温度，避免喝了太多过热的饮料带来的伤害。 我会在宿舍、办公室和家里使用它，不管是学习、工作还是出门，都能找到适用高效的模式，用户对温度的控制的饮水机，方便又安心。" },
+  { city:"哈尔滨", persona:"学生", device:"加热杯 B", reason:"这个瓶子本特别可爱所以买来试着，看着挺抽象挺有意思的" },
+  { city:"哈尔滨", persona:"学生", device:"加热杯 B", reason:"包装很可爱，在办公室会用" },
+  /* ===== 年轻白领 · 哈尔滨（4 条）===== */
+  { city:"哈尔滨", persona:"年轻白领", device:"加热杯 B", reason:"这个加热杯真的太好了，用起来可以暖手，功能性杠杠的！而且外观也很赞！非常喜欢。" },
+  { city:"哈尔滨", persona:"年轻白领", device:"加热杯垫", reason:"许先提倡电器设备要有安全性，其次能可以融入的场合多，功能简约，方便携带。用在他的平面设计和室内设计的案子，不会突兀整体性，总的来说。" },
+  { city:"哈尔滨", persona:"年轻白领", device:"加热杯垫", reason:"最近收到很多需求，努力为其量身定制配套制器物器为客户设计的区域设计加热局域宜的产品不至于温度过高或低温度过低或食品的口感都能得到良好的保温性能并会选择可以长久保温食用" },
+  { city:"哈尔滨", persona:"年轻白领", device:"加热杯垫", reason:"最适合伴侣什么样的好伴侣加热，平日思明，防冷外界温度，放在办公室里，易于冬，不用总插电电源。" },
+  /* ===== 中产 · 广州（5 条）===== */
+  { city:"广州", persona:"中产", device:"加热杯 B", reason:"对一些瓶瓶罐罐，利用它免得冷的饮品。可以在预设温度的情况下，安全性有极大加点" },
+  { city:"广州", persona:"中产", device:"加热杯垫", reason:"它的主要功能是“保温”，所以放在上面的热咖啡、热茶、热牛奶不至于变冷，始终保持在55℃左右最适口的温度。我会在家里或餐室内" },
+  { city:"广州", persona:"中产", device:"加热杯 A", reason:"这款加热杯看着很方便，不用反复烧水加热，而是一直能以稳定的热度保持的温暖。冬天再也不怕喝冷掉的茶，感觉能让饮下一直保持适合的温热状态，适合会议" },
+  { city:"广州", persona:"中产", device:"加热杯垫", reason:"会在家里或办公室用来加热奶茶或咖啡午时分" },
+  { city:"广州", persona:"中产", device:"加热杯 A", reason:"适合办公室里，喜欢什么热什么，方便、快捷" },
+  /* ===== 中产·有娃 · 广州（4 条）===== */
+  { city:"广州", persona:"中产·有娃", device:"加热杯垫", reason:"方便，小巧，可以放在办公室桌面" },
+  { city:"广州", persona:"中产·有娃", device:"加热杯垫", reason:"特别适合放在自己的办公桌上，那冬天上班的时候时时刻刻都能喝到热水，非常方便。" },
+  { city:"广州", persona:"中产·有娃", device:"加热杯垫", reason:"会感兴趣的，平时上班喝的瓶装热饮很容易凉，有这个加热杯垫就不用反复去微波炉热了。平时在办公室、家里的书桌都能用，把瓶装饮料放上去就能一直温着，喝到的一直是热乎的，很方便。" },
+  { city:"广州", persona:"中产·有娃", device:"加热杯 B", reason:"比较便携，可以室内也可以室外活动的时候使用，不会太重，加热的比较均匀" },
+  /* ===== 学生 · 广州（8 条）===== */
+  { city:"广州", persona:"学生", device:"加热杯垫", reason:"在工作的区域准备一个加热杯垫单独热水杯不用来水了" },
+  { city:"广州", persona:"学生", device:"加热杯垫", reason:"会，因为可能喝得比较多，主要在家里使用，比如喝咖啡等场景。不用担心反复加热，随手拿就能喝到热的水" },
+  { city:"广州", persona:"学生", device:"加热杯垫", reason:"会的，会在家里单纯的使用" },
+  { city:"广州", persona:"学生", device:"加热杯垫", reason:"取暖性能会更好了没有问题，但又是保暖的状态，把它单独入这个电子加热杯垫热水瓶，还是蛮方便的" },
+  { city:"广州", persona:"学生", device:"加热杯 A", reason:"平常出门的时候会带着，和一些朋友饮料进去加热，或者在家喝奶茶的时候用它自己喜欢的饮水" },
+  { city:"广州", persona:"学生", device:"加热饮水机 B", reason:"这个加热方便携带形式可以当冰水" },
+  { city:"广州", persona:"学生", device:"加热饮水机 C", reason:"想喝热水的时候可以马上就加热，比如在宿舍上学的时候，放在宿舍里一样。" },
+  { city:"广州", persona:"学生", device:"加热饮水机 A", reason:"单位饮水是热的，也可以放饮料进去泡热" },
+  /* ===== 年轻白领 · 广州（4 条）===== */
+  { city:"广州", persona:"年轻白领", device:"加热饮水机 A", reason:"当然会选择饮水机，再也不用烧热水自己泡茶放凉到合适的饮水了。像上班的时候就很实用，上班的时候想喝上一口暖呼呼的，出门带也方便。" },
+  { city:"广州", persona:"年轻白领", device:"加热杯 B", reason:"感兴趣，因为首先有两个保温盖在加热安全性方面的保障，再者就是造型也独特，首款无电源的加热杯，使用起来也很方便，公司有点奶奶的样子配自己的水加点热。" },
+  { city:"广州", persona:"年轻白领", device:"加热杯垫", reason:"很想小试，冬天想热饮没有热量，加热杯垫能恒温保温，随时可以喝到温热饮品，实用且方便，会放在办公室桌面，单身族佳伴侣。" },
+  { city:"广州", persona:"年轻白领", device:"加热饮水机 B", reason:"冬天早上喝一杯热水，这种加热方式更为简便，节约温水出门的几分钟准备。" },
+  /* ===== 中产 · 成都（5 条）===== */
+  { city:"成都", persona:"中产", device:"加热杯垫", reason:"我可能会暖火锅，因为冬天很多热饮放太久就会凉了，其它的那几款比较麻烦，我会在办公室用" },
+  { city:"成都", persona:"中产", device:"加热杯 A", reason:"有了它，再也不用担心热饮放凉后的冰凉了，还可以搭配自己喜欢的温度，实在是怕懒人的救星" },
+  { city:"成都", persona:"中产", device:"加热杯垫", reason:"从小到大都喜欢喝热饮，家里也有很多热饮机，但加热杯垫更方便" },
+  { city:"成都", persona:"中产", device:"加热杯垫", reason:"在办公室使用，接通电源，调节好温度，再把瓶盖热饮放上去。可以随时喝到暖暖的热饮" },
+  { city:"成都", persona:"中产", device:"加热杯垫", reason:"我觉得加热杯垫是最小巧方便的，我会在我的茶座上办公和看电影，想喝热饮的时候直接放上去等一会儿就可以了。十分的方便" },
+  /* ===== 中产·有娃 · 成都（3 条）===== */
+  { city:"成都", persona:"中产·有娃", device:"加热杯垫", reason:"感觉冬天用着方便，随时可以喝到热水" },
+  { city:"成都", persona:"中产·有娃", device:"加热杯垫", reason:"在办公室这种小型的地方使用，成为办公桌随时使用" },
+  { city:"成都", persona:"中产·有娃", device:"加热杯 A", reason:"对喜欢加热杯很必需品，不需要插电，随身随走，方便携带。室内办公桌，户外，出游差的交通工具上使用" },
+  /* ===== 学生 · 成都（9 条）===== */
+  { city:"成都", persona:"学生", device:"加热杯垫", reason:"方便在学校可以加热很多东西" },
+  { city:"成都", persona:"学生", device:"加热杯 A", reason:"他的温度控制得还挺准，一天喝两杯热的，能保温一个很长的时间，平时没事拿着，都很舒服的" },
+  { city:"成都", persona:"学生", device:"加热杯垫", reason:"我会在学期日上学的时候把热水放在上面 随时能喝到热热的水" },
+  { city:"成都", persona:"学生", device:"加热杯 A", reason:"方便，温度也可以控制，自己可以加热不同的饮料，方便很多。就是需要注意的是，喝的时候要慢慢喝，温度控制得好，比较暖和，不会很大力喝的时候，温度控制得好，外出携带也方便。" },
+  { city:"成都", persona:"学生", device:"加热杯垫", reason:"这是最小巧的那种，保持小手手暖和，安全性也高" },
+  { city:"成都", persona:"学生", device:"加热杯 A", reason:"我觉得以后带着就更好了，不管加班或是平时47，一直都很方便的选择，刚好可以从口，入口温温热热，感觉非常舒服" },
+  { city:"成都", persona:"学生", device:"加热杯垫", reason:"空的时候喝小巧的，不占地方，就在家或者在上班天拿其他热的喝的季节带来么久" },
+  { city:"成都", persona:"学生", device:"加热杯垫", reason:"在工作的时候或者带着会方便些想热水也不麻烦多了" },
+  { city:"成都", persona:"学生", device:"加热杯垫", reason:"冬天很暖和放在家里，喝的时候更好了，平时在家里喝水的时候就放在加热杯垫上，感觉很舒服的，平时喝的时候就觉得很舒服的就好了" },
+  /* ===== 年轻白领 · 成都（5 条）===== */
+  { city:"成都", persona:"年轻白领", device:"加热杯垫", reason:"感觉很方便，都是放到桌面上就可以加热了，最适合在办公室使用哦，喝写字楼白领" },
+  { city:"成都", persona:"年轻白领", device:"加热杯 B", reason:"感觉这个对于学生来说是非常方便的，而且又没有噪音，早晨、晚上、喝咖啡、喝奶茶、也比较长久。" },
+  { city:"成都", persona:"年轻白领", device:"加热杯 A", reason:"感觉很棒，大大提升我的幸福感。我大多都会在冬天的早上使用" },
+  { city:"成都", persona:"年轻白领", device:"加热杯 A", reason:"都是从早晨的方向来 我就在上班的时候就看到这个对我的影响非常大 互相增加热饮水泡好的热十分钟" },
+  { city:"成都", persona:"年轻白领", device:"加热杯 A", reason:"家里或办公室备一个，当自己需要喝热的的时候就能随时喝了，暖心～以前可以喝了，泡完就忘记。是泡茶、奶茶、咖啡、牛奶等，不用担心；" },
+];
+
+/* ───────── 状态 ───────── */
+const state = { selectedCells: new Set() };
+const cellKey = (city, persona) => `${city}|${persona}`;
+const parseKey = k => { const [city, persona] = k.split('|'); return { city, persona }; };
+
+/* ───────── 全局最大值 ───────── */
+function computeGlobalMaxSubCount() {
+  let max = 1;
+  CITIES.forEach(c => {
+    PERSONAS.forEach(p => {
+      const cellItems = DATA.filter(d => d.city === c && d.persona === p);
+      const cnts = {};
+      cellItems.forEach(it => cnts[it.device] = (cnts[it.device] || 0) + 1);
+      Object.values(cnts).forEach(v => { if (v > max) max = v; });
+    });
+  });
+  return max;
+}
+const GLOBAL_MAX = computeGlobalMaxSubCount();
+
+/* ───────── 矩阵渲染 ───────── */
+function renderMatrix() {
+  const matrix = document.getElementById('matrix');
+  matrix.style.gridTemplateColumns = `100px repeat(${CITIES.length}, 1fr)`;
+  matrix.innerHTML = '';
+
+  matrix.appendChild(divEl('mx-head', ''));
+  CITIES.forEach(c => matrix.appendChild(divEl('mx-head', c)));
+
+  PERSONAS.forEach(p => {
+    matrix.appendChild(divEl('mx-row-label', p));
+    CITIES.forEach(c => {
+      const items = DATA.filter(d => d.city === c && d.persona === p);
+      matrix.appendChild(buildCell(c, p, items));
+    });
+  });
+}
+
+function buildCell(city, persona, items) {
+  const cell = document.createElement('div');
+  cell.className = 'mx-cell' + (items.length === 0 ? ' empty' : '');
+  if (state.selectedCells.has(cellKey(city, persona))) cell.classList.add('selected');
+
+  const total = items.length;
+  const head = document.createElement('div');
+  head.className = 'cell-count';
+  head.innerHTML = `${total}<span class="total-label">条</span>`;
+  cell.appendChild(head);
+
+  if (total === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-text';
+    empty.textContent = '— 暂无数据 —';
+    cell.appendChild(empty);
+  } else {
+    // 4 大类堆叠条
+    const catCounts = {};
+    CATEGORIES.forEach(c => catCounts[c.id] = 0);
+    items.forEach(it => { const c = DEVICE_TO_CAT[it.device]; if (c) catCounts[c.id]++; });
+    const bar = document.createElement('div');
+    bar.className = 'stack-bar';
+    CATEGORIES.forEach(c => {
+      if (catCounts[c.id] > 0) {
+        const seg = document.createElement('div');
+        seg.className = 'c-' + c.color;
+        seg.style.width = (catCounts[c.id] / total * 100) + '%';
+        seg.title = `${c.name}: ${catCounts[c.id]}`;
+        bar.appendChild(seg);
+      }
+    });
+    cell.appendChild(bar);
+
+    // 子型号迷你柱状图（按条数降序，仅有数据）
+    const subCounts = {};
+    items.forEach(it => subCounts[it.device] = (subCounts[it.device] || 0) + 1);
+    const sortedDevices = Object.keys(subCounts)
+      .sort((a, b) => subCounts[b] - subCounts[a] || DEVICE_ORDER.indexOf(a) - DEVICE_ORDER.indexOf(b));
+
+    const chart = document.createElement('div');
+    chart.className = 'mini-chart';
+    sortedDevices.forEach(device => {
+      const cnt = subCounts[device];
+      const cat = DEVICE_TO_CAT[device];
+      const wrap = document.createElement('div');
+      wrap.className = 'mini-bar-wrap';
+      wrap.title = `${device}: ${cnt} 条`;
+      wrap.innerHTML = `
+        <div class="mini-bar-count">${cnt}</div>
+        <div class="mini-bar c-${cat.color}" style="height:${cnt / GLOBAL_MAX * 100}%"></div>
+      `;
+      chart.appendChild(wrap);
+    });
+    cell.appendChild(chart);
+
+    // 标签行
+    const labels = document.createElement('div');
+    labels.style.cssText = 'display:flex;gap:3px;';
+    sortedDevices.forEach(device => {
+      const lab = document.createElement('div');
+      lab.className = 'mini-label';
+      lab.style.flex = '1';
+      lab.style.textAlign = 'center';
+      lab.style.minWidth = '18px';
+      lab.textContent = shortLabel(device);
+      lab.title = device;
+      labels.appendChild(lab);
+    });
+    cell.appendChild(labels);
+  }
+
+  cell.onclick = () => {
+    const key = cellKey(city, persona);
+    if (state.selectedCells.has(key)) state.selectedCells.delete(key);
+    else state.selectedCells.add(key);
+    render();
+  };
+  return cell;
+}
+
+/* 子型号短标：杯垫、杯A、杯B、机A、机B、机C、其他 */
+function shortLabel(device) {
+  if (device === '加热杯垫') return '杯垫';
+  if (device.startsWith('加热杯 ')) return '杯' + device.slice(-1);
+  if (device.startsWith('加热饮水机 ')) return '机' + device.slice(-1);
+  return '其他';
+}
+
+/* ───────── 详情面板 ───────── */
+function renderDetail() {
+  const detail = document.getElementById('detail');
+  const info = document.getElementById('selection-info');
+  const clearBtn = document.getElementById('clear-btn');
+
+  const keys = [...state.selectedCells];
+  if (keys.length === 0) {
+    detail.className = 'detail empty';
+    detail.textContent = '点击上方矩阵中的任意一个或多个格子，查看汇总分布与原文卡片';
+    info.textContent = '';
+    clearBtn.disabled = true;
+    return;
+  }
+
+  const items = [];
+  keys.forEach(k => {
+    const { city, persona } = parseKey(k);
+    DATA.filter(d => d.city === city && d.persona === persona)
+      .forEach(d => items.push({ ...d, source: `${city}·${persona}` }));
+  });
+
+  detail.className = 'detail';
+  detail.innerHTML = '';
+  info.textContent = `已选 ${keys.length} 格 · 共 ${items.length} 条`;
+  clearBtn.disabled = false;
+
+  const head = document.createElement('div');
+  head.className = 'detail-head';
+  const tagsHtml = keys.map(k => {
+    const { city, persona } = parseKey(k);
+    return `<span class="src-tag">${city}·${persona}</span>`;
+  }).join('');
+  head.innerHTML = `
+    <div>
+      <div class="detail-title">汇总视图</div>
+      <div class="detail-sub">${items.length} 条原因 · 涉及 ${new Set(items.map(i=>i.device)).size} 种型号</div>
+      <div class="source-tags">${tagsHtml}</div>
+    </div>
+  `;
+  detail.appendChild(head);
+
+  if (items.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:#aaa;text-align:center;padding:30px;font-size:13px';
+    empty.textContent = '所选格子无数据';
+    detail.appendChild(empty);
+    return;
+  }
+
+  const charts = document.createElement('div');
+  charts.className = 'charts-row';
+
+  // 4 大类
+  const catCounts = {};
+  CATEGORIES.forEach(c => catCounts[c.id] = 0);
+  items.forEach(it => { const c = DEVICE_TO_CAT[it.device]; if (c) catCounts[c.id]++; });
+  const maxCat = Math.max(1, ...Object.values(catCounts));
+  const catBlock = document.createElement('div');
+  catBlock.className = 'chart-block';
+  catBlock.innerHTML = '<h3>4 大类分布</h3>';
+  CATEGORIES.forEach(c => {
+    catBlock.appendChild(buildBarRow(c.name, catCounts[c.id], maxCat, c.color));
+  });
+  charts.appendChild(catBlock);
+
+  // 7 子型号
+  const subCounts = {};
+  items.forEach(it => subCounts[it.device] = (subCounts[it.device] || 0) + 1);
+  const maxSub = Math.max(1, ...Object.values(subCounts));
+  const subBlock = document.createElement('div');
+  subBlock.className = 'chart-block';
+  subBlock.innerHTML = '<h3>子型号分布（按条数降序）</h3>';
+  const sortedDevices = Object.keys(subCounts)
+    .sort((a, b) => subCounts[b] - subCounts[a]);
+  sortedDevices.forEach(device => {
+    const cat = DEVICE_TO_CAT[device];
+    subBlock.appendChild(buildBarRow(device, subCounts[device], maxSub, cat.color));
+  });
+  charts.appendChild(subBlock);
+  detail.appendChild(charts);
+
+  // 卡片清单
+  const cardsArea = document.createElement('div');
+  cardsArea.className = 'cards-area';
+  cardsArea.innerHTML = '<h3>原因卡片（按型号分组）</h3>';
+  const grid = document.createElement('div');
+  grid.className = 'cards-by-sub';
+  sortedDevices.forEach(device => {
+    const cat = DEVICE_TO_CAT[device];
+    const block = document.createElement('div');
+    block.className = 'sub-block b-' + cat.color;
+    block.innerHTML = `<div class="sub-block-title">${device} · ${subCounts[device]}</div>`;
+    items.filter(i => i.device === device).forEach(it => {
+      const card = document.createElement('div');
+      card.className = 'sub-card';
+      card.innerHTML = `<div class="sub-card-source">${it.source}</div>${escapeHtml(it.reason)}`;
+      block.appendChild(card);
+    });
+    grid.appendChild(block);
+  });
+  cardsArea.appendChild(grid);
+  detail.appendChild(cardsArea);
+}
+
+function buildBarRow(label, cnt, max, color) {
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  const pct = max > 0 ? (cnt / max * 100) : 0;
+  row.innerHTML = `
+    <div class="bar-label">${label}</div>
+    <div class="bar-track">
+      <div class="bar-fill c-${color}" style="width:${pct}%">${cnt > 0 ? cnt : ''}</div>
+    </div>
+  `;
+  return row;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function divEl(cls, text) {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = text;
+  return d;
+}
+
+function clearSelection() {
+  state.selectedCells.clear();
+  render();
+}
+
+function renderLegend() {
+  const wrap = document.getElementById('legend');
+  wrap.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const group = document.createElement('div');
+    group.className = 'legend-group';
+    const title = document.createElement('span');
+    title.className = `legend-group-title c-${cat.color}`;
+    title.textContent = cat.name;
+    group.appendChild(title);
+    const items = document.createElement('div');
+    items.className = 'legend-items';
+    cat.devices.forEach(device => {
+      const item = document.createElement('span');
+      item.className = 'legend-item';
+      item.innerHTML = `<span class="legend-chip c-${cat.color}"></span>${device}`;
+      items.appendChild(item);
+    });
+    group.appendChild(items);
+    wrap.appendChild(group);
+  });
+}
+
+function render() {
+  renderLegend();
+  renderMatrix();
+  renderDetail();
+}
+
+render();
+</script>
+
+</body>
+</html>

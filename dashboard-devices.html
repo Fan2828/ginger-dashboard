@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>暖饮加热设备看板（用户实拍）</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa; color: #222; padding: 20px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .hint { color: #888; font-size: 13px; margin-bottom: 16px; }
+
+  .nav-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    border: 1px solid #ddd; background: #fff; color: #444;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f5f5f5; }
+  .nav-link.active { background: #222; color: #fff; border-color: #222; }
+
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
+  }
+  .toolbar-right { display: flex; gap: 8px; }
+  .btn {
+    background: #fff; border: 1px solid #ccc; padding: 4px 12px;
+    border-radius: 6px; cursor: pointer; font-size: 12px;
+  }
+  .btn:hover { background: #f5f5f5; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #222; color: #fff; border-color: #222; }
+  .btn-primary:hover { background: #444; }
+  .btn-danger { color: #c62828; }
+
+  /* ── 标签库管理 ── */
+  .tag-library {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 12px;
+  }
+  .tag-library-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .tag-library-title { font-size: 12px; font-weight: 700; color: #555; }
+  .tag-library-list {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .lib-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 12px; font-size: 12px;
+    color: #fff; font-weight: 600; cursor: pointer;
+  }
+  .lib-tag:hover { box-shadow: 0 0 0 2px rgba(0,0,0,0.15); }
+  .lib-tag .count { background: rgba(255,255,255,0.25); padding: 0 5px; border-radius: 8px; font-size: 10px; }
+  .lib-tag .x {
+    cursor: pointer; font-size: 14px; line-height: 1; opacity: 0.7;
+    margin-left: 2px; padding: 0 2px;
+  }
+  .lib-tag .x:hover { opacity: 1; }
+
+  /* ── 矩阵 ── */
+  .matrix {
+    display: grid; background: #eee; border: 1px solid #ddd;
+    border-radius: 10px; overflow: hidden; gap: 1px;
+  }
+  .mx-head, .mx-row-label, .mx-cell { background: #fff; padding: 12px; }
+  .mx-head {
+    background: #f3f4f6; font-weight: 600;
+    text-align: center; font-size: 14px;
+  }
+  .mx-row-label {
+    background: #f3f4f6; font-weight: 600; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mx-cell {
+    cursor: pointer; transition: background 0.15s;
+    min-height: 160px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .mx-cell:hover { background: #f9fafb; }
+  .mx-cell.selected {
+    background: #fff8e1; outline: 2px solid #f5a623; outline-offset: -2px;
+  }
+  .mx-cell.empty { color: #bbb; }
+
+  .cell-count { font-size: 22px; font-weight: 700; line-height: 1; }
+  .cell-count .total-label { font-size: 11px; color: #888; font-weight: normal; margin-left: 4px; }
+
+  .stack-bar {
+    display: flex; height: 8px; border-radius: 4px;
+    overflow: hidden; background: #f0f0f0;
+  }
+  .stack-bar > div { transition: opacity 0.15s; }
+  .stack-bar > div:hover { opacity: 0.75; }
+
+  .mini-list { font-size: 11px; color: #555; }
+  .mini-list .row {
+    display: flex; align-items: center; gap: 4px; padding: 2px 0;
+  }
+  .mini-list .swatch {
+    display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+  }
+  .mini-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini-list .cnt { font-weight: 700; color: #333; }
+
+  .empty-text { color: #bbb; font-size: 12px; text-align: center; padding: 20px 0; }
+
+  /* ── 详情 ── */
+  .detail {
+    margin-top: 20px; background: #fff;
+    border: 1px solid #eee; border-radius: 10px; padding: 20px;
+  }
+  .detail.empty { color: #aaa; text-align: center; padding: 40px; font-size: 14px; }
+  .detail-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #eee;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .detail-title { font-size: 18px; font-weight: 700; }
+  .detail-sub { color: #666; font-size: 13px; margin-top: 4px; }
+  .source-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .src-tag {
+    background: #fff8e1; border: 1px solid #f5a623;
+    color: #b87900; font-size: 11px; padding: 2px 8px;
+    border-radius: 10px; font-weight: 600;
+  }
+
+  /* 标签分布柱图 */
+  .chart-block h3 { font-size: 13px; font-weight: 600; color: #555; margin: 12px 0 10px; }
+  .bar-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px; font-size: 12px;
+  }
+  .bar-label { width: 110px; color: #444; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 18px; background: #f3f4f6; border-radius: 4px; }
+  .bar-fill {
+    height: 100%; border-radius: 4px; display: flex; align-items: center;
+    padding-left: 6px; color: #fff; font-size: 11px; font-weight: 600; min-width: 22px;
+  }
+
+  /* 标签筛选条 */
+  .filter-row {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #eee;
+  }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 14px; font-size: 12px;
+    background: #f5f5f5; color: #444; cursor: pointer;
+    border: 1px solid transparent; user-select: none;
+  }
+  .filter-chip:hover { background: #ebebeb; }
+  .filter-chip.active {
+    background: #222; color: #fff; border-color: #222;
+  }
+  .filter-chip .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  }
+
+  /* 图片卡片 */
+  .cards-area h3 { font-size: 13px; font-weight: 600; color: #555; margin: 18px 0 10px; }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .photo-card {
+    background: #fff; border: 1px solid #eee; border-radius: 8px;
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .photo-card .photo {
+    width: 100%; aspect-ratio: 1/1; object-fit: cover;
+    background: #f5f5f5; display: block; cursor: zoom-in;
+  }
+  .photo-card .body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .photo-card .src {
+    display: inline-block; align-self: flex-start;
+    background: #f0f4ff; color: #4a5fb8; font-size: 10px;
+    font-weight: 600; padding: 1px 6px; border-radius: 8px;
+    border: 1px solid #d8e0f5;
+  }
+  .photo-card .text { font-size: 12px; line-height: 1.5; color: #333; }
+  .photo-card .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 8px; border-radius: 10px; font-size: 11px;
+    color: #fff; font-weight: 600;
+  }
+  .chip .x {
+    cursor: pointer; opacity: 0.7; line-height: 1;
+    padding: 0 1px; font-size: 13px;
+  }
+  .chip .x:hover { opacity: 1; }
+  .chip-add {
+    background: #fff; border: 1px dashed #aaa; color: #666;
+    cursor: pointer; padding: 1px 8px;
+  }
+  .chip-add:hover { background: #f5f5f5; border-color: #666; }
+
+  /* tag picker popover */
+  .tag-picker {
+    position: absolute; background: #fff; border: 1px solid #ddd;
+    border-radius: 8px; padding: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 100; min-width: 200px;
+  }
+  .tag-picker .pick-list { display: flex; flex-wrap: wrap; gap: 4px; max-height: 200px; overflow-y: auto; }
+  .tag-picker .pick {
+    cursor: pointer; padding: 3px 9px; border-radius: 10px;
+    font-size: 11px; color: #fff; font-weight: 600;
+  }
+  .tag-picker .pick.disabled { opacity: 0.35; cursor: not-allowed; }
+  .tag-picker .new-row {
+    display: flex; gap: 4px; margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid #eee;
+  }
+  .tag-picker .new-row input {
+    flex: 1; padding: 4px 6px; font-size: 12px;
+    border: 1px solid #ccc; border-radius: 4px; min-width: 0;
+  }
+  .tag-picker .new-row button {
+    padding: 4px 10px; font-size: 12px; border-radius: 4px;
+    background: #222; color: #fff; border: none; cursor: pointer;
+  }
+
+  /* 图片 lightbox */
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; cursor: zoom-out;
+  }
+  .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<h1>暖饮加热设备看板（用户实拍）</h1>
+<div class="hint">用户上传的"我会用什么加热"实拍照片 + 文字描述。可手动给每张图打标签、新增类别；改动会自动保存在浏览器里。</div>
+
+<div class="nav-bar">
+  <a class="nav-link" href="dashboard-v2.html">📍 希望瓶装热饮出现的场景</a>
+  <a class="nav-link" href="dashboard-heating.html">🔥 加热设备选型</a>
+  <a class="nav-link active" href="dashboard-devices.html">📷 用户实拍设备</a>
+  <a class="nav-link" href="dashboard-scenes.html">🌆 用户场景卡</a>
+  <a class="nav-link" href="dashboard-complaints.html">💢 不好的体验</a>
+</div>
+
+<!-- 标签库 -->
+<div class="tag-library">
+  <div class="tag-library-head">
+    <div class="tag-library-title">标签库（点 × 删除整个类别；自动统计每类条数）</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="exportData()">⬇ 导出数据</button>
+      <button class="btn" onclick="document.getElementById('import-file-input').click()">⬆ 导入数据</button>
+      <input type="file" id="import-file-input" accept="application/json,.json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-danger" onclick="resetAll()">恢复初始数据</button>
+    </div>
+  </div>
+  <div id="tag-library-list" class="tag-library-list"></div>
+</div>
+
+<div class="toolbar">
+  <div id="selection-info" style="font-size:13px;color:#666"></div>
+  <div class="toolbar-right">
+    <button class="btn" id="clear-btn" onclick="clearSelection()" disabled>清空选择</button>
+  </div>
+</div>
+
+<div class="matrix" id="matrix"></div>
+
+<div class="detail empty" id="detail">点击上方矩阵中的任意一个或多个格子，查看实拍图片 + 文字 + 标签</div>
+
+<!-- 全局 tag picker -->
+<div id="tag-picker" class="tag-picker" style="display:none"></div>
+
+<!-- lightbox -->
+<div id="lightbox" class="lightbox" style="display:none" onclick="this.style.display='none'"><img id="lightbox-img" src=""></div>
+
+<script>
+/* ───────── 配置 ───────── */
+const CITIES = ['上海', '成都', '广州', '哈尔滨'];
+const PERSONAS = ['学生', '年轻白领', '中产', '中产·有娃'];
+
+/* 调色板（自动给新标签分配） */
+const PALETTE = [
+  '#F44336', '#FF9800', '#FFC107', '#4CAF50', '#26A69A',
+  '#2196F3', '#5C6BC0', '#9C27B0', '#E91E63', '#795548', '#607D8B'
+];
+
+/* 初始标签库（来自第一轮分类） */
+const INIT_TAG_LIBRARY = [
+  { name: '微波炉',   color: '#F44336' },
+  { name: '养生壶',   color: '#FF9800' },
+  { name: '保温杯',   color: '#2196F3' },
+  { name: '加热杯垫', color: '#4CAF50' },
+  { name: '暖奶器',   color: '#26A69A' },
+  { name: '隔水加热', color: '#9C27B0' },
+  { name: '其他',     color: '#9E9E9E' }
+];
+
+/* 初始数据：上海·学生 15 条（图片在 上海-学生-加热设备/） */
+const IMG_DIR = '上海-学生-加热设备/';
+const INIT_DATA = [
+  { id:"上海-中产-01", city:"上海", persona:"中产", image:"原始数据/加热设备/中产-上海/Group 16438.png", text:"锅，加热牛奶，比比较有仪式感，比比较温馨，晚上也比较有空做这些。", tags:["锅"] },
+  { id:"上海-中产-02", city:"上海", persona:"中产", image:"原始数据/加热设备/中产-上海/Group 16439.png", text:"加热杯垫，生活实用小品", tags:["加热杯垫"] },
+  { id:"上海-中产-03", city:"上海", persona:"中产", image:"原始数据/加热设备/中产-上海/Group 17165.png", text:"冲泡类咖啡，奶茶等", tags:["微波炉"] },
+  { id:"上海-中产-04", city:"上海", persona:"中产", image:"原始数据/加热设备/中产-上海/Group 17166.png", text:"红枣茶", tags:["养生壶"] },
+  { id:"上海-中产-05", city:"上海", persona:"中产", image:"原始数据/加热设备/中产-上海/Group 17167.png", text:"蒸锅，我主要用来热牛奶", tags:["隔水加热"] },
+  { id:"上海-中产-06", city:"上海", persona:"中产", image:"原始数据/加热设备/中产-上海/Group 17364.png", text:"我都是泡面碗热饮瓶的外部，基本上不会用其他电器。", tags:["热饮瓶"] },
+  { id:"上海-中产-07", city:"上海", persona:"中产", image:"原始数据/加热设备/中产-上海/Untitled-1.png", text:"这个设备主要是放在家里面，烧开了热水之后，把利乐包装者是小的瓶装饮料放在里面浸泡", tags:["隔水加热"] },
+  { id:"上海-中产-08", city:"上海", persona:"中产", image:"原始数据/加热设备/中产-上海/Untitled.png", text:"这个设备放在办公室里用，它主要是用来加热冲泡的饮料，或者是一些泡的茶叶", tags:["加热杯垫"] },
+  { id:"哈尔滨-中产-01", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Group 17108.png", text:"在家烧水 或者直接泡茶", tags:["保温杯"] },
+  { id:"哈尔滨-中产-02", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Group 17109.png", text:"加热果汁 有时候也可以是咖啡", tags:["养生壶"] },
+  { id:"哈尔滨-中产-03", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Group 17110.png", text:"出门前我会自制一些无糖茶。或者咖啡饮品用保温杯装着，冬天喝起来方便", tags:["保温杯"] },
+  { id:"哈尔滨-中产-04", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Group 17111.png", text:"在家时，我会用它煮茶、烧热水。放一些自己喜欢的小料", tags:["养生壶"] },
+  { id:"哈尔滨-中产-05", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled-1.png", text:"纯钛保温杯，长期使用无异味而且非常轻便", tags:["保温杯"] },
+  { id:"哈尔滨-中产-06", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled-2.png", text:"懒的时候会用 直接拧进去水里面加热，一般会热一些乌龙茶之类的", tags:["养生壶"] },
+  { id:"哈尔滨-中产-07", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled-3.png", text:"米家便携热饮水机 出差的时候会 热一些矿泉水 方便实用", tags:["便携热水机"] },
+  { id:"哈尔滨-中产-08", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled-4.png", text:"煮茶的电陶炉", tags:["电陶炉"] },
+  { id:"哈尔滨-中产-09", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled-5.png", text:"家用烧水壶", tags:["电热水壶"] },
+  { id:"哈尔滨-中产-10", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled-6.png", text:"有的时候会往里面放一些热饮，比如咖啡、热水等保持温度。", tags:["保温杯"] },
+  { id:"哈尔滨-中产-11", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled-7.png", text:"烧热水必备。", tags:["养生壶"] },
+  { id:"哈尔滨-中产-12", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled.png", text:"再办公室时使用，可以长时间保温，很方便", tags:["加热杯垫"] },
+  { id:"广州-中产-01", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Group 17386.png", text:"奶/豆奶：很多玻璃瓶装的豆奶（如维他奶）或鲜奶，放在加热垫上温热后，口感会像刚挤出来...", tags:["加热杯垫"] },
+  { id:"广州-中产-02", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Group 17389.png", text:"公司里面的热饮机", tags:["热饮机"] },
+  { id:"广州-中产-03", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Group 17398.png", text:"吃饭的时候，用来保温汤或者茶水", tags:["加热杯垫"] },
+  { id:"广州-中产-04", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Group 17399.png", text:"在冬天晚上的时候，用来保温牛奶、桃胶，或者汤", tags:["保温杯"] },
+  { id:"广州-中产-05", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Untitled-1.png", text:"微波炉加热适广泛。碗装、玻璃杯的饮品都可以", tags:["微波炉"] },
+  { id:"广州-中产-06", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Untitled-2.png", text:"一般在办公室或者家里用，用来加热并保持温度的花茶、姜茶或燕麦奶，方便随时喝上温度合适的热...", tags:["保温杯"] },
+  { id:"广州-中产-07", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Untitled.png", text:"保持水温，可煮，但是得防止触碰。用来加热陶瓷杯的饮品", tags:["加热杯垫"] },
+  { id:"成都-中产-01", city:"成都", persona:"中产", image:"原始数据/加热设备/中产-成都/Group 16444.png", text:"天冷久坐办公室，我常会用保温杯保温。大多数用来装自制饮品，比如红枣枸杞水、玫瑰花茶这些。", tags:["保温杯"] },
+  { id:"成都-中产-02", city:"成都", persona:"中产", image:"原始数据/加热设备/中产-成都/Group 16445.png", text:"回到家后，在美的养生壶里适量清水，将瓶装水直接放入水中隔水加热。选择热奶模式，就是47度，不会高温损坏塑料瓶，还能把饮品加热到适口，喝着更安心。", tags:["养生壶"] },
+  { id:"成都-中产-03", city:"成都", persona:"中产", image:"原始数据/加热设备/中产-成都/Group 17361.png", text:"冬天早上，用热水壶烧开的水来加热盒装牛奶", tags:["电热水壶"] },
+  { id:"成都-中产-04", city:"成都", persona:"中产", image:"原始数据/加热设备/中产-成都/Group 17366.png", text:"冬天喂孩子不舒服的时候，用锅来煮梨汤", tags:["锅"] },
+  { id:"成都-中产-05", city:"成都", persona:"中产", image:"原始数据/加热设备/中产-成都/Group 17367.png", text:"有时候奶茶没喝完，想喝的时候冷掉了，会倒在碗里去微波炉加热", tags:["微波炉"] },
+  { id:"上海-学生-01", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15706.png", text:"我会用热水壶，加热茶叶，喝起来温度刚好，也不用专门找便利店加热，很方便", tags:["养生壶"] },
+  { id:"上海-学生-02", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15707.png", text:"我有一个养生壶，一般用来加热花茶之类的", tags:["养生壶"] },
+  { id:"上海-学生-03", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15708.png", text:"保温杯。我在上课的时候会用保温杯，把加热好的瓶装热饮倒进去，能保温好几个小时，冬天路上喝到的还是很快变凉。", tags:["保温杯"] },
+  { id:"上海-学生-04", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15709.png", text:"冬天在家时，用热便利店买的瓶装热饮，喝起来更暖更舒服。", tags:["微波炉"] },
+  { id:"上海-学生-05", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15710.png", text:"杯子或者碗 热水泡奶 起床图个方便", tags:["隔水加热"] },
+  { id:"上海-学生-06", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15711.png", text:"上学时会用，用来保温热咖啡、热牛奶或者热茶，能长时间保持适宜饮用的温度，为方便随时喝到温热的饮品。", tags:["保温杯"] },
+  { id:"上海-学生-07", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15712.png", text:"保温杯 冬天偶尔用 有点重 不太常用", tags:["保温杯"] },
+  { id:"上海-学生-08", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15713.png", text:"在家时使用，用来加热牛奶或者豆浆类的饮品", tags:["微波炉"] },
+  { id:"上海-学生-09", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15714.png", text:"在家的时候会用，用来加热凉掉的瓶装热饮、煮的热汤或者牛奶，快速升温。", tags:["微波炉"] },
+  { id:"上海-学生-10", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15715.png", text:"会在方便插电的时候，用来加热饮品，一般用来加热小包装产品", tags:["加热杯垫"] },
+  { id:"上海-学生-11", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15717.png", text:"会在长途的时候，用来保存饮品", tags:["保温杯"] },
+  { id:"上海-学生-12", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15718.png", text:"这是个暖奶器，可以加热奶茶、牛奶，也不用注水插电即可用", tags:["暖奶器"] },
+  { id:"上海-学生-13", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15719.png", text:"在学校时使用，一般是泡茶，或者加热k拿铁咖啡", tags:["泡茶器"] },
+  { id:"上海-学生-14", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15720.png", text:"对于那种常温的瓶装饮料，为了加热我只能隔着小锅用热水加热", tags:["隔水加热"] },
+  { id:"上海-学生-15", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15721.png", text:"保温杯 上课/自习时用，用来装瓶装热饮，能长时间保温，随时喝都是...", tags:["保温杯"] },
+  { id:"上海-学生-16", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 7139.png", text:"家里自己冲泡的暖饮可以加热", tags:["微波炉"] },
+  { id:"上海-学生-17", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 7140.png", text:"我白天买了一杯热饮或者是热奶茶，到了晚上时可以用这个保温的设备加热", tags:["保温杯"] },
+  { id:"哈尔滨-学生-01", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16858.png", text:"保温杯喝热饮的效果好一点", tags:["保温杯"] },
+  { id:"哈尔滨-学生-02", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16859.png", text:"在卧室用杯子喝热饮方便一点", tags:["热饮杯"] },
+  { id:"哈尔滨-学生-03", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16860.png", text:"从不锈钢盆里捞出来，用纸垫着倒进保温杯里。", tags:["保温杯"] },
+  { id:"哈尔滨-学生-04", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16861.png", text:"在宿舍，一个大不锈钢盆，我就用这个把瓶装饮料放在开水里面加热。", tags:["隔水加热"] },
+  { id:"哈尔滨-学生-05", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16862.png", text:"热奶或者装的喝不完但是还是凉的时候用", tags:["加热杯垫"] },
+  { id:"哈尔滨-学生-06", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16863.png", text:"用来热露露哈哈 在家晚上工作时，喜欢喝一些热奶", tags:["养生壶"] },
+  { id:"哈尔滨-学生-07", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16864.png", text:"加热茶", tags:["保温杯"] },
+  { id:"哈尔滨-学生-08", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16865.png", text:"奶茶", tags:["养生壶"] },
+  { id:"哈尔滨-学生-09", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16867.png", text:"加热牛奶来做可", tags:["电热水壶"] },
+  { id:"哈尔滨-学生-10", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16868.png", text:"一般加热咖啡", tags:["加热杯垫"] },
+  { id:"哈尔滨-学生-11", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16869.png", text:"热奶咖啡或者茶泡好的水，赶时间的时候一个一分钟就能喝", tags:["微波炉"] },
+  { id:"哈尔滨-学生-12", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16870.png", text:"用锅煮牛奶或者热豆浆，小火慢慢加热不容易糊底，还能闻到香味", tags:["锅"] },
+  { id:"哈尔滨-学生-13", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16871.png", text:"早上用来加热装牛奶", tags:["锅"] },
+  { id:"哈尔滨-学生-14", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16872.png", text:"在酒店加热一些瓶装饮料", tags:["瓶装饮料"] },
+  { id:"哈尔滨-学生-15", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16873.png", text:"w我的妈妈容易肚子疼，所以我买来用来加热一些红糖水", tags:["养生壶"] },
+  { id:"哈尔滨-学生-16", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16874.png", text:"烧水的时候会用到然后去加热牛奶", tags:["电热水壶"] },
+  { id:"哈尔滨-学生-17", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16875.png", text:"我会在宿舍或者家里用它来加热，冲泡热茶、咖啡或速溶饮品。它主要用来处理清水，方便我调配自...", tags:["饮料加热器"] },
+  { id:"哈尔滨-学生-18", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16876.png", text:"我会在办公室或宿舍使用它，用来保温刚泡好的热饮，或者对微凉的瓶装热饮进行加热。它很积小巧。", tags:["加热杯垫"] },
+  { id:"广州-学生-01", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/-1.png", text:"保温杯，去图书馆的时候，可以保温茶叶", tags:["保温杯"] },
+  { id:"广州-学生-02", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/-2.png", text:"加热杯垫", tags:["加热杯垫"] },
+  { id:"广州-学生-03", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/-3.png", text:"出门上学的时候，用，加热水或者牛奶跟茶", tags:["保温杯"] },
+  { id:"广州-学生-04", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16844.png", text:"使用微波炉加热牛奶很方便", tags:["微波炉"] },
+  { id:"广州-学生-05", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16845.png", text:"保温杯可以更好保温热饮", tags:["保温杯"] },
+  { id:"广州-学生-06", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16846.png", text:"主要是在通勤路上、外出时用，用来保持饮品的温度。大多用来装刚泡好的热茶、热咖啡或...", tags:["保温杯"] },
+  { id:"广州-学生-07", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16847.png", text:"冬天在家/周末宅时会用，尤其是想喝几瓶装热饮慢慢喝，不想反复加热、又怕喝到凉掉的饮料...", tags:["饮料加热器"] },
+  { id:"广州-学生-08", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16848.png", text:"保温杯", tags:["保温杯"] },
+  { id:"广州-学生-09", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16850.png", text:"烧水壶", tags:["电热水壶"] },
+  { id:"广州-学生-10", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16852.png", text:"加热杯垫", tags:["加热杯垫"] },
+  { id:"广州-学生-11", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16853.png", text:"加热垫，可以在家热牛奶的时候保温", tags:["加热杯垫"] },
+  { id:"广州-学生-12", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16854.png", text:"在宿舍或自己房间里用，拿来保温热水", tags:["保温杯"] },
+  { id:"广州-学生-13", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16855.png", text:"在炒菜的时候，偶尔会用来加热自家煮的糖水或者凉茶", tags:["锅"] },
+  { id:"广州-学生-14", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16856.png", text:"在家里用，加热水或者玉米汁榨浆水，豆浆", tags:["豆浆机"] },
+  { id:"广州-学生-15", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16857.png", text:"养生壶", tags:["养生壶"] },
+  { id:"广州-学生-16", city:"广州", persona:"学生", image:"原始数据/加热设备/学生-广州/Group 16890.png", text:"烧水壶，便捷携带想喝热水直接煮", tags:["保温杯"] },
+  { id:"成都-学生-01", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15720.png", text:"加热塑方便不用洗", tags:["加热杯垫"] },
+  { id:"成都-学生-02", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15721.png", text:"保温杯，通勤外出使用 保温杯瓶装热饮 随时能喝到温热的产品", tags:["保温杯"] },
+  { id:"成都-学生-03", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15722.png", text:"早上如果时间紧迫的话一般我会用烧水壶来隔水加热牛奶", tags:["隔水加热"] },
+  { id:"成都-学生-04", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15723.png", text:"平时出门或者上课前，会把热好的牛奶、花茶倒进保温杯里，这样路上和自习的时候都能喝到热的，...", tags:["保温杯"] },
+  { id:"成都-学生-05", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15724.png", text:"微波炉简单好操作", tags:["微波炉"] },
+  { id:"成都-学生-06", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15725.png", text:"我会用保温垫来保温，是我爸爸买的保温茶的，我拿来保温我的饮料。", tags:["加热杯垫"] },
+  { id:"成都-学生-07", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15726.png", text:"保温袋，我拿它来装一些热饮，k 尽可能保温", tags:["保温袋"] },
+  { id:"成都-学生-08", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15727.png", text:"保温杯用来储存接的热水或者，冲泡的热饮", tags:["保温杯"] },
+  { id:"成都-学生-09", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15728.png", text:"加热杯垫，学校冬天用 给瓶装e热 饮保温 避免饮品快速变凉", tags:["加热杯垫"] },
+  { id:"成都-学生-10", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15729.png", text:"会，我会用微波炉加热饮料，但是是倒出来加热，怕塑料有问题。", tags:["微波炉"] },
+  { id:"成都-学生-11", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15730.png", text:"烧水壶用的，我拿她来加热一些包装饮品，或者烧热水喝", tags:["电热水壶"] },
+  { id:"成都-学生-12", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Group 15731.png", text:"烧水锅拿来烧热水，用于冲泡牛奶之类的", tags:["锅"] },
+  { id:"成都-学生-13", city:"成都", persona:"学生", image:"原始数据/加热设备/学生-成都/Untitled.png", text:"电磁炉加热", tags:["电磁炉"] },
+  { id:"上海-中产有娃-01", city:"上海", persona:"中产·有娃", image:"原始数据/加热设备/有娃-上海/Group 17381.png", text:"玻璃瓶或者其他可加热的瓶子会直接放在这个机器上，调温度加热。", tags:["暖奶器"] },
+  { id:"上海-中产有娃-02", city:"上海", persona:"中产·有娃", image:"原始数据/加热设备/有娃-上海/Group 17382.png", text:"瓶子是塑料的，就会在这个杯子里倒满热水，把饮料带瓶子放进去用热水暖热。", tags:["隔水加热"] },
+  { id:"哈尔滨-中产有娃-01", city:"哈尔滨", persona:"中产·有娃", image:"原始数据/加热设备/有娃-哈尔滨/Untitled-1.png", text:"微波炉加热很快就能喝，不用多等，非常方便。", tags:["微波炉"] },
+  { id:"哈尔滨-中产有娃-02", city:"哈尔滨", persona:"中产·有娃", image:"原始数据/加热设备/有娃-哈尔滨/Untitled-2.png", text:"在早上没有吃饭的时候可以把奶先热一下再倒在保温杯里，或者是茶水泡好之后带着。", tags:["保温杯"] },
+  { id:"哈尔滨-中产有娃-03", city:"哈尔滨", persona:"中产·有娃", image:"原始数据/加热设备/有娃-哈尔滨/Untitled-3.png", text:"瓶装的奶或者是茶可以放在锅里热一下，方便高效，定个时间就可以做别的。", tags:["锅"] },
+  { id:"哈尔滨-中产有娃-04", city:"哈尔滨", persona:"中产·有娃", image:"原始数据/加热设备/有娃-哈尔滨/Untitled.png", text:"加热杯垫很方便，可以恒定温度，不会凉。", tags:["加热杯垫"] },
+  { id:"广州-中产有娃-01", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Group 17106.png", text:"加热杯垫，会用来加热盒装杯瓶装的饮料", tags:["加热杯垫"] },
+  { id:"广州-中产有娃-02", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Group 17107.png", text:"微波炉加热饮料，但是比较麻烦，需要倒出来", tags:["微波炉"] },
+  { id:"广州-中产有娃-03", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Untitled-1.png", text:"上班或者出门的时候都带着它，早上装的热咖啡或者热水，一上午都还是热的。冬天喝饮料全靠它保温...", tags:["保温杯"] },
+  { id:"广州-中产有娃-04", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Untitled-2.png", text:"上班的时候，早上用微波炉加热牛奶，方便快捷。", tags:["微波炉"] },
+  { id:"广州-中产有娃-05", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Untitled-3.png", text:"把瓶装热饮放在装了温水的烧水壶中静置十分钟加热。", tags:["隔水加热"] },
+  { id:"广州-中产有娃-06", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Untitled-4.png", text:"主要在家或者办公室里用加热垫，加热牛奶、茶饮等饮料", tags:["加热杯垫"] },
+  { id:"广州-中产有娃-07", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Untitled-5.png", text:"保温杯，主要用来保温咖啡，热饮降温的没那么快", tags:["保温杯"] },
+  { id:"广州-中产有娃-08", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Untitled.png", text:"早上赶时间或者在家喝饮料的时候，用，比如牛奶、瓶装咖啡、煮的热饮，丢进去热一下很快就能喝上...", tags:["微波炉"] },
+  { id:"成都-中产有娃-01", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Group 16448.png", text:"冬天加热杯子很友好，随时喝热水", tags:["加热杯垫"] },
+  { id:"成都-中产有娃-02", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Group 17168.png", text:"一般就加热一些水或者把瓶装的饮品扔去加热", tags:["电热水壶"] },
+  { id:"成都-中产有娃-03", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Group 17365.png", text:"小型热饮杯，办公室防办公桌旁边很方便，冬日再也不怕水冷了", tags:["加热杯垫"] },
+  { id:"成都-中产有娃-04", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Group 17457.png", text:"会用保温杯来装下午茶要喝的热咖啡", tags:["保温杯"] },
+  { id:"成都-中产有娃-05", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Group 17458.png", text:"早上的时候会用烧开的水kk来加热瓶装牛奶", tags:["隔水加热"] },
+  { id:"成都-中产有娃-06", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Untitled-1.png", text:"普通隔水加热，这种因概算比较常见的了，加热点奶奶饮料啊非常方便但是要注意不要太久了不然...", tags:["隔水加热"] },
+  { id:"成都-中产有娃-07", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Untitled.png", text:"温奶器 因为老大生完孩子后基本不用了 所以我就会用来加热热如茶啊 饮料啊 属于不浪费了", tags:["暖奶器"] },
+  { id:"上海-年轻白领-01", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Group 17097.png", text:"所有需要加热的瓶装或者易拉罐饮料，我觉得得尤其适合可口可乐巧克力，必须一直是热的才有幸福感", tags:["加热杯垫"] },
+  { id:"上海-年轻白领-02", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Group 17098.png", text:"杯垫适合放在办公室和家里，比如各种养生茶，果茶饮品，奶茶等等", tags:["加热杯垫"] },
+  { id:"上海-年轻白领-03", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Group 17100.png", text:"保温杯，用来保温。", tags:["保温杯"] },
+  { id:"上海-年轻白领-04", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Group 17101.png", text:"电热水壶，平时上班的时候来煮我的红豆薏米水", tags:["养生壶"] },
+  { id:"上海-年轻白领-05", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Untitled-1.png", text:"特别适合用来保温或者煮草本水，拌点枸杞、黄芪、觉参之类的一起煮", tags:["养生壶"] },
+  { id:"上海-年轻白领-06", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Untitled-2.png", text:"桌面加热垫，加热塑料瓶子", tags:["加热杯垫"] },
+  { id:"上海-年轻白领-07", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Untitled-3.png", text:"养生壶，加热一切的饮料", tags:["养生壶"] },
+  { id:"上海-年轻白领-08", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Untitled-4.png", text:"保暖一些茶饮", tags:["保温杯"] },
+  { id:"上海-年轻白领-09", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Untitled-5.png", text:"用来制作冲泡热饮品", tags:["电热水壶"] },
+  { id:"上海-年轻白领-10", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Untitled.png", text:"雪平锅很适合用来加热，导热快，而且还可以自己往里面加料 diy，比如水果切片", tags:["锅"] },
+  { id:"哈尔滨-年轻白领-01", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-1.png", text:"外出需要喝热水时就会选择保温杯。", tags:["保温杯"] },
+  { id:"哈尔滨-年轻白领-02", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-10.png", text:"自己冲的奶茶咖啡", tags:["保温杯"] },
+  { id:"哈尔滨-年轻白领-03", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-2.png", text:"微波炉，居家休闲时用来快速加热瓶装茶饮品，短时间升温，驱散寒冷。", tags:["微波炉"] },
+  { id:"哈尔滨-年轻白领-04", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-3.png", text:"保温杯，上班时常用，盛装热茶，长效保温，随时能喝到温热饮品。", tags:["保温杯"] },
+  { id:"哈尔滨-年轻白领-05", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-4.png", text:"保温杯，保温杯放热饮保温效果好，并且可以提醒自己多喝热水。", tags:["保温杯"] },
+  { id:"哈尔滨-年轻白领-06", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-5.png", text:"微波炉，我会把饮料倒到碗里，放在微波炉加热，这样温度比较高，而且热得快。", tags:["微波炉"] },
+  { id:"哈尔滨-年轻白领-07", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-6.png", text:"微波热奶挺快的早上没吃早餐几十秒就可以喝上", tags:["微波炉"] },
+  { id:"哈尔滨-年轻白领-08", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-7.png", text:"热水壶烧了开水之后，将热饮放入热水中", tags:["隔水加热"] },
+  { id:"哈尔滨-年轻白领-09", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-8.png", text:"带着出门的时候", tags:["保温杯"] },
+  { id:"哈尔滨-年轻白领-10", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-9.png", text:"可以加热白开水矿泉水还可以用来煮茶叶热茶水以及纯牛奶和鲜奶还有加热豆浆部分烧水还可以直...", tags:["电热水壶"] },
+  { id:"哈尔滨-年轻白领-11", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled.png", text:"养生壶，在办公室内加热养生茶水。", tags:["养生壶"] },
+  { id:"广州-年轻白领-01", city:"广州", persona:"年轻白领", image:"原始数据/加热设备/白领-广州/Group 17104.png", text:"用小巧的加热垫慢慢保温，恰起来自能随时喝到温热的饮品，可以减少很多时间。", tags:["加热杯垫"] },
+  { id:"广州-年轻白领-02", city:"广州", persona:"年轻白领", image:"原始数据/加热设备/白领-广州/Group 17105.png", text:"配上轻便的保温杯，出门携带方便，走到哪冷了喝，想喝杯热的，随时可以喝得到，而不...", tags:["保温杯"] },
+  { id:"广州-年轻白领-03", city:"广州", persona:"年轻白领", image:"原始数据/加热设备/白领-广州/Untitled-1.png", text:"会放在陶瓷碗当中再放入微波炉加热3分钟左右", tags:["微波炉"] },
+  { id:"广州-年轻白领-04", city:"广州", persona:"年轻白领", image:"原始数据/加热设备/白领-广州/Untitled.png", text:"用电陶炉直接加热饮品，或者拿个锅放在电陶炉加热3分钟左右", tags:["加热杯垫"] },
+  { id:"成都-年轻白领-01", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Group 17099.png", text:"在家里用这个加热垫，可以快速升温。比较安全，又方便。", tags:["加热杯垫"] },
+  { id:"成都-年轻白领-02", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Group 17102.png", text:"水浴加热，在家里比如理期时会用到，会加热一些牛奶类或者红豆薏米水", tags:["锅"] },
+  { id:"成都-年轻白领-03", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Group 17103.png", text:"上班路上，平时出门的时候会用这种杯套能保持时间的。保留合适的温度，基本上能喝管...", tags:["保温杯"] },
+  { id:"成都-年轻白领-04", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Untitled-1.png", text:"在公司也有养生壶，白天的时候有时候可以泡一些养生的搭配，给自己补血，橙皮，梨子，大枣", tags:["养生壶"] },
+  { id:"成都-年轻白领-05", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Untitled-2.png", text:"烧水壶，在冬天的下午加热小奶茶牛奶茶，喝上暖暖的", tags:["养生壶"] },
+  { id:"成都-年轻白领-06", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Untitled-3.png", text:"加热巴氏鲜牛奶（新希望）瓶装牛奶，适合早餐", tags:["微波炉"] },
+  { id:"成都-年轻白领-07", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Untitled-4.png", text:"在家自制一些暖饮，加热牛奶的时候就会用到这个烧水壶，具有加热功能，而且操作简单，好清洗；", tags:["养生壶"] },
+  { id:"成都-年轻白领-08", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Untitled-5.png", text:"在家或者需要外出的时候，把一些热饮进行保温的时候会用到保温杯；", tags:["保温杯"] },
+  { id:"成都-年轻白领-09", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Untitled.png", text:"我会用保温杯装一些热茶热饮，比如枸杞大枣，这样子一天都是暖的，而且很养生", tags:["保温杯"] },
+];
+
+const STORAGE_KEY = 'dashboard-devices-v1';
+
+/* ───────── 状态 + 持久化 ───────── */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    data: state.data, tagLibrary: state.tagLibrary
+  }));
+}
+
+const persisted = loadState();
+const state = {
+  data: persisted?.data ?? structuredClone(INIT_DATA),
+  tagLibrary: persisted?.tagLibrary ?? structuredClone(INIT_TAG_LIBRARY),
+  selectedCells: new Set(),
+  filterTag: null  // 详情区按此标签筛选卡片；null=全部
+};
+
+/* 维持图片路径与初始一致（即便有旧数据也用最新路径） */
+state.data.forEach(item => {
+  const init = INIT_DATA.find(i => i.id === item.id);
+  if (init) item.image = init.image;
+});
+
+/* 自动补全标签库：把数据里出现但库里没有的标签加进来（颜色自动分配） */
+function syncTagLibrary() {
+  const known = new Set(state.tagLibrary.map(t => t.name));
+  const seen = new Set();
+  state.data.forEach(d => d.tags.forEach(t => seen.add(t)));
+  let added = 0;
+  seen.forEach(name => {
+    if (!known.has(name)) {
+      state.tagLibrary.push({ name, color: nextColor() });
+      added++;
+    }
+  });
+  if (added > 0) saveState();
+}
+syncTagLibrary();
+
+const cellKey = (city, persona) => `${city}|${persona}`;
+const parseKey = k => { const [city, persona] = k.split('|'); return { city, persona }; };
+
+function tagColor(name) {
+  const t = state.tagLibrary.find(t => t.name === name);
+  return t ? t.color : '#9E9E9E';
+}
+
+function tagCount(name) {
+  return state.data.filter(d => d.tags.includes(name)).length;
+}
+
+function nextColor() {
+  const used = new Set(state.tagLibrary.map(t => t.color));
+  return PALETTE.find(c => !used.has(c)) || PALETTE[state.tagLibrary.length % PALETTE.length];
+}
+
+/* ───────── 标签库渲染 ───────── */
+function renderTagLibrary() {
+  const wrap = document.getElementById('tag-library-list');
+  wrap.innerHTML = '';
+  state.tagLibrary.forEach(t => {
+    const cnt = tagCount(t.name);
+    const el = document.createElement('span');
+    el.className = 'lib-tag';
+    el.style.background = t.color;
+    el.title = '点击改颜色';
+    el.innerHTML = `<span class="lib-name">${escapeHtml(t.name)}</span> <span class="count">${cnt}</span> <span class="x" title="删除该类别（会从所有卡片移除）">×</span>`;
+    /* 点 chip 主体（避开 ×）改颜色 */
+    el.onclick = (e) => {
+      if (e.target.classList.contains('x')) return;
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.value = rgbToHex(t.color);
+      picker.style.cssText = 'position:fixed;left:-9999px';
+      document.body.appendChild(picker);
+      picker.oninput = () => { t.color = picker.value; saveState(); render(); };
+      picker.onchange = () => { picker.remove(); };
+      picker.click();
+    };
+    el.querySelector('.x').onclick = (e) => {
+      e.stopPropagation();
+      if (!confirm(`删除标签「${t.name}」？这会从所有卡片移除该标签（共 ${cnt} 处）。`)) return;
+      state.tagLibrary = state.tagLibrary.filter(x => x.name !== t.name);
+      state.data.forEach(d => { d.tags = d.tags.filter(n => n !== t.name); });
+      saveState(); render();
+    };
+    wrap.appendChild(el);
+  });
+}
+
+/* 颜色字符串规整成 #RRGGBB（color input 只认这个）*/
+function rgbToHex(c) {
+  if (!c) return '#999999';
+  if (c.startsWith('#') && c.length === 7) return c;
+  if (c.startsWith('#') && c.length === 4) {
+    return '#' + c.slice(1).split('').map(x => x+x).join('');
+  }
+  const m = c.match(/\d+/g);
+  if (m && m.length >= 3) {
+    return '#' + m.slice(0,3).map(n => Number(n).toString(16).padStart(2,'0')).join('');
+  }
+  return '#999999';
+}
+
+/* ───────── 矩阵 ───────── */
+function renderMatrix() {
+  const matrix = document.getElementById('matrix');
+  matrix.style.gridTemplateColumns = `100px repeat(${CITIES.length}, 1fr)`;
+  matrix.innerHTML = '';
+
+  matrix.appendChild(divEl('mx-head', ''));
+  CITIES.forEach(c => matrix.appendChild(divEl('mx-head', c)));
+
+  PERSONAS.forEach(p => {
+    matrix.appendChild(divEl('mx-row-label', p));
+    CITIES.forEach(c => {
+      const items = state.data.filter(d => d.city === c && d.persona === p);
+      matrix.appendChild(buildCell(c, p, items));
+    });
+  });
+}
+
+function buildCell(city, persona, items) {
+  const cell = document.createElement('div');
+  cell.className = 'mx-cell' + (items.length === 0 ? ' empty' : '');
+  if (state.selectedCells.has(cellKey(city, persona))) cell.classList.add('selected');
+
+  const head = document.createElement('div');
+  head.className = 'cell-count';
+  head.innerHTML = `${items.length}<span class="total-label">人</span>`;
+  cell.appendChild(head);
+
+  if (items.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-text';
+    empty.textContent = '— 暂无数据 —';
+    cell.appendChild(empty);
+  } else {
+    /* 标签计数（含未打标签 = 待分类） */
+    const tagCnt = {};
+    let untagged = 0;
+    items.forEach(it => {
+      if (it.tags.length === 0) untagged++;
+      else it.tags.forEach(t => tagCnt[t] = (tagCnt[t] || 0) + 1);
+    });
+
+    const total = Object.values(tagCnt).reduce((a,b)=>a+b, 0) + untagged;
+
+    /* 堆叠条 */
+    const bar = document.createElement('div');
+    bar.className = 'stack-bar';
+    state.tagLibrary.forEach(t => {
+      if (tagCnt[t.name]) {
+        const seg = document.createElement('div');
+        seg.style.background = t.color;
+        seg.style.width = (tagCnt[t.name] / total * 100) + '%';
+        seg.title = `${t.name}: ${tagCnt[t.name]}`;
+        bar.appendChild(seg);
+      }
+    });
+    if (untagged > 0) {
+      const seg = document.createElement('div');
+      seg.style.background = '#ddd';
+      seg.style.width = (untagged / total * 100) + '%';
+      seg.title = `待分类: ${untagged}`;
+      bar.appendChild(seg);
+    }
+    cell.appendChild(bar);
+
+    /* 文字列表 */
+    const list = document.createElement('div');
+    list.className = 'mini-list';
+    const sorted = Object.entries(tagCnt).sort((a,b) => b[1]-a[1]);
+    sorted.forEach(([name, cnt]) => {
+      const r = document.createElement('div');
+      r.className = 'row';
+      r.innerHTML = `<span class="swatch" style="background:${tagColor(name)}"></span><span class="name">${escapeHtml(name)}</span><span class="cnt">${cnt}</span>`;
+      list.appendChild(r);
+    });
+    if (untagged > 0) {
+      const r = document.createElement('div');
+      r.className = 'row';
+      r.innerHTML = `<span class="swatch" style="background:#ddd"></span><span class="name" style="color:#999">待分类</span><span class="cnt">${untagged}</span>`;
+      list.appendChild(r);
+    }
+    cell.appendChild(list);
+  }
+
+  cell.onclick = () => {
+    const key = cellKey(city, persona);
+    if (state.selectedCells.has(key)) state.selectedCells.delete(key);
+    else state.selectedCells.add(key);
+    render();
+  };
+  return cell;
+}
+
+/* ───────── 详情 ───────── */
+function renderDetail() {
+  const detail = document.getElementById('detail');
+  const info = document.getElementById('selection-info');
+  const clearBtn = document.getElementById('clear-btn');
+
+  const keys = [...state.selectedCells];
+  if (keys.length === 0) {
+    detail.className = 'detail empty';
+    detail.textContent = '点击上方矩阵中的任意一个或多个格子，查看实拍图片 + 文字 + 标签';
+    info.textContent = '';
+    clearBtn.disabled = true;
+    return;
+  }
+
+  const items = [];
+  keys.forEach(k => {
+    const { city, persona } = parseKey(k);
+    state.data.filter(d => d.city === city && d.persona === persona)
+      .forEach(d => items.push(d));
+  });
+
+  detail.className = 'detail';
+  detail.innerHTML = '';
+  info.textContent = `已选 ${keys.length} 格 · 共 ${items.length} 人`;
+  clearBtn.disabled = false;
+
+  const head = document.createElement('div');
+  head.className = 'detail-head';
+  const tagsHtml = keys.map(k => {
+    const { city, persona } = parseKey(k);
+    return `<span class="src-tag">${city}·${persona}</span>`;
+  }).join('');
+  head.innerHTML = `
+    <div>
+      <div class="detail-title">汇总视图</div>
+      <div class="detail-sub">${items.length} 张实拍图 · ${new Set(items.flatMap(i=>i.tags)).size} 种类别</div>
+      <div class="source-tags">${tagsHtml}</div>
+    </div>
+  `;
+  detail.appendChild(head);
+
+  /* 标签分布柱图 */
+  const tagCnt = {};
+  let untagged = 0;
+  items.forEach(it => {
+    if (it.tags.length === 0) untagged++;
+    else it.tags.forEach(t => tagCnt[t] = (tagCnt[t] || 0) + 1);
+  });
+  const max = Math.max(1, untagged, ...Object.values(tagCnt));
+  const chart = document.createElement('div');
+  chart.className = 'chart-block';
+  chart.innerHTML = '<h3>类别分布</h3>';
+  Object.entries(tagCnt).sort((a,b)=>b[1]-a[1]).forEach(([name, cnt]) => {
+    chart.appendChild(buildBarRow(name, cnt, max, tagColor(name)));
+  });
+  if (untagged > 0) chart.appendChild(buildBarRow('待分类', untagged, max, '#bbb'));
+  detail.appendChild(chart);
+
+  /* 卡片网格 + 标签筛选 */
+  const cardsArea = document.createElement('div');
+  cardsArea.className = 'cards-area';
+  cardsArea.innerHTML = '<h3>实拍图片（点缩略图放大查看；点 + 添加 / 修改标签）</h3>';
+
+  // 筛选条
+  const filterRow = document.createElement('div');
+  filterRow.className = 'filter-row';
+  const presentTags = Object.keys(tagCnt).sort((a,b) => tagCnt[b]-tagCnt[a]);
+  const filterAll = document.createElement('span');
+  filterAll.className = 'filter-chip' + (state.filterTag === null ? ' active' : '');
+  filterAll.textContent = `全部 ${items.length}`;
+  filterAll.onclick = () => { state.filterTag = null; render(); };
+  filterRow.appendChild(filterAll);
+  presentTags.forEach(name => {
+    const c = document.createElement('span');
+    c.className = 'filter-chip' + (state.filterTag === name ? ' active' : '');
+    c.style.setProperty('--tag-color', tagColor(name));
+    c.innerHTML = `<span class="dot" style="background:${tagColor(name)}"></span>${escapeHtml(name)} ${tagCnt[name]}`;
+    c.onclick = () => {
+      state.filterTag = (state.filterTag === name) ? null : name;
+      render();
+    };
+    filterRow.appendChild(c);
+  });
+  if (untagged > 0) {
+    const c = document.createElement('span');
+    c.className = 'filter-chip' + (state.filterTag === '__untagged__' ? ' active' : '');
+    c.innerHTML = `<span class="dot" style="background:#bbb"></span>待分类 ${untagged}`;
+    c.onclick = () => {
+      state.filterTag = (state.filterTag === '__untagged__') ? null : '__untagged__';
+      render();
+    };
+    filterRow.appendChild(c);
+  }
+  cardsArea.appendChild(filterRow);
+
+  // 应用筛选
+  let visible = items;
+  if (state.filterTag === '__untagged__') {
+    visible = items.filter(it => it.tags.length === 0);
+  } else if (state.filterTag) {
+    visible = items.filter(it => it.tags.includes(state.filterTag));
+  } else {
+    // 全部：按标签数量从多到少分组（同一标签的卡片放在一起；待分类放最后）
+    const primaryTagOf = (it) => {
+      if (!it.tags || it.tags.length === 0) return null;
+      return it.tags.slice().sort((x, y) => (tagCnt[y] || 0) - (tagCnt[x] || 0))[0];
+    };
+    visible = items.slice().sort((a, b) => {
+      const pa = primaryTagOf(a), pb = primaryTagOf(b);
+      if (pa === null && pb === null) return 0;
+      if (pa === null) return 1;
+      if (pb === null) return -1;
+      const ca = tagCnt[pa] || 0, cb = tagCnt[pb] || 0;
+      if (ca !== cb) return cb - ca;
+      if (pa !== pb) return pa < pb ? -1 : 1;
+      return 0;
+    });
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'cards-grid';
+  visible.forEach(it => grid.appendChild(buildPhotoCard(it)));
+  if (visible.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:#aaa;font-size:13px;padding:20px;grid-column:1/-1;text-align:center';
+    empty.textContent = '— 该标签下没有图片 —';
+    grid.appendChild(empty);
+  }
+  cardsArea.appendChild(grid);
+  detail.appendChild(cardsArea);
+}
+
+function buildPhotoCard(item) {
+  const card = document.createElement('div');
+  card.className = 'photo-card';
+
+  const img = document.createElement('img');
+  img.className = 'photo';
+  img.src = item.image;
+  img.alt = '';
+  img.onclick = () => openLightbox(item.image);
+  img.onerror = () => { img.style.display = 'none'; };
+  card.appendChild(img);
+
+  const body = document.createElement('div');
+  body.className = 'body';
+  body.innerHTML = `
+    <span class="src">${item.city}·${item.persona}</span>
+    <div class="text">${escapeHtml(item.text)}</div>
+  `;
+
+  const tagsBox = document.createElement('div');
+  tagsBox.className = 'tags';
+  item.tags.forEach(name => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.style.background = tagColor(name);
+    chip.innerHTML = `${escapeHtml(name)} <span class="x">×</span>`;
+    chip.querySelector('.x').onclick = (e) => {
+      e.stopPropagation();
+      item.tags = item.tags.filter(n => n !== name);
+      saveState(); render();
+    };
+    tagsBox.appendChild(chip);
+  });
+  /* + 按钮 */
+  const addBtn = document.createElement('span');
+  addBtn.className = 'chip chip-add';
+  addBtn.textContent = '+ 添加标签';
+  addBtn.onclick = (e) => { e.stopPropagation(); openTagPicker(addBtn, item); };
+  tagsBox.appendChild(addBtn);
+
+  body.appendChild(tagsBox);
+  card.appendChild(body);
+  return card;
+}
+
+/* ───────── 标签选择浮层 ───────── */
+function openTagPicker(anchor, item) {
+  const picker = document.getElementById('tag-picker');
+  picker.innerHTML = '';
+
+  const list = document.createElement('div');
+  list.className = 'pick-list';
+  state.tagLibrary.forEach(t => {
+    const has = item.tags.includes(t.name);
+    const el = document.createElement('span');
+    el.className = 'pick' + (has ? ' disabled' : '');
+    el.style.background = t.color;
+    el.textContent = t.name;
+    if (!has) el.onclick = () => {
+      item.tags.push(t.name);
+      saveState(); closeTagPicker(); render();
+    };
+    list.appendChild(el);
+  });
+  picker.appendChild(list);
+
+  const newRow = document.createElement('div');
+  newRow.className = 'new-row';
+  newRow.innerHTML = `<input placeholder="新建标签…" maxlength="20"><button>添加</button>`;
+  const input = newRow.querySelector('input');
+  const btn = newRow.querySelector('button');
+  const create = () => {
+    const name = input.value.trim();
+    if (!name) return;
+    if (state.tagLibrary.some(t => t.name === name)) {
+      if (!item.tags.includes(name)) item.tags.push(name);
+    } else {
+      state.tagLibrary.push({ name, color: nextColor() });
+      item.tags.push(name);
+    }
+    saveState(); closeTagPicker(); render();
+  };
+  btn.onclick = create;
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') create(); });
+  picker.appendChild(newRow);
+
+  /* 定位 */
+  const rect = anchor.getBoundingClientRect();
+  picker.style.display = 'block';
+  picker.style.left = (rect.left + window.scrollX) + 'px';
+  picker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  setTimeout(() => input.focus(), 0);
+
+  /* 点外部关闭 */
+  setTimeout(() => {
+    document.addEventListener('click', closeOnOutside, { once: true });
+  }, 0);
+}
+function closeOnOutside(e) {
+  const picker = document.getElementById('tag-picker');
+  if (!picker.contains(e.target)) closeTagPicker();
+  else document.addEventListener('click', closeOnOutside, { once: true });
+}
+function closeTagPicker() {
+  document.getElementById('tag-picker').style.display = 'none';
+}
+
+/* ───────── lightbox ───────── */
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').style.display = 'flex';
+}
+
+/* ───────── helpers ───────── */
+function buildBarRow(label, cnt, max, color) {
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  const pct = max > 0 ? (cnt / max * 100) : 0;
+  row.innerHTML = `
+    <div class="bar-label">${escapeHtml(label)}</div>
+    <div class="bar-track">
+      <div class="bar-fill" style="background:${color};width:${pct}%">${cnt > 0 ? cnt : ''}</div>
+    </div>
+  `;
+  return row;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function divEl(cls, text) {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = text;
+  return d;
+}
+
+function clearSelection() { state.selectedCells.clear(); render(); }
+
+function resetAll() {
+  if (!confirm('恢复到初始数据？所有手动标签改动会丢失。')) return;
+  state.data = structuredClone(INIT_DATA);
+  state.tagLibrary = structuredClone(INIT_TAG_LIBRARY);
+  state.selectedCells.clear();
+  saveState(); render();
+}
+
+/* ───────── 导出 / 导入 ───────── */
+function exportData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  const payload = {
+    app: 'ginger-dashboard',
+    key: STORAGE_KEY,
+    exportedAt: new Date().toISOString(),
+    data: raw ? JSON.parse(raw) : null
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  a.href = url;
+  a.download = `${STORAGE_KEY}_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const payload = JSON.parse(e.target.result);
+      const incoming = (payload && typeof payload === 'object' && 'data' in payload) ? payload.data : payload;
+      if (!incoming || typeof incoming !== 'object') throw new Error('文件内容无效');
+      if (payload.key && payload.key !== STORAGE_KEY) {
+        if (!confirm(`这份文件来自 "${payload.key}"，与当前页面 "${STORAGE_KEY}" 不一致。仍然导入？`)) return;
+      }
+      if (!confirm('导入后将覆盖当前所有标签和分类数据，是否继续？')) return;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(incoming));
+      location.reload();
+    } catch (err) {
+      alert('导入失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function render() {
+  renderTagLibrary();
+  renderMatrix();
+  renderDetail();
+}
+
+render();
+</script>
+
+</body>
+</html>

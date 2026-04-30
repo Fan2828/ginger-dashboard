@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>不好的体验 · 评价看板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa; color: #222; padding: 20px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .hint { color: #888; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
+  .hint b { color: #444; }
+
+  .nav-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    border: 1px solid #ddd; background: #fff; color: #444;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f5f5f5; }
+  .nav-link.active { background: #222; color: #fff; border-color: #222; }
+
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
+  }
+  .toolbar-right { display: flex; gap: 8px; }
+  .btn {
+    background: #fff; border: 1px solid #ccc; padding: 4px 12px;
+    border-radius: 6px; cursor: pointer; font-size: 12px;
+  }
+  .btn:hover { background: #f5f5f5; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-danger { color: #c62828; }
+
+  /* ───────── 三级视觉规范（务必保持差异度） ───────── */
+  /* L1：大 · 实心填充 · 白字粗体（主视觉锚点） */
+  /* L2：中 · 浅色填充（L1 派生 pastel）· 深字（语义分组） */
+  /* L3：小 · 白底 + 左侧色条 · 浅灰字（叶子） */
+
+  .pill-l1 {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 16px; border-radius: 18px;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.5px;
+    color: #fff; line-height: 1.1;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .pill-l2 {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 3px 11px; border-radius: 11px;
+    font-size: 12px; font-weight: 600;
+    color: #2a2a2a; line-height: 1.2;
+  }
+  .pill-l3 {
+    display: inline-flex; align-items: center; gap: 2px;
+    padding: 1.5px 8px 1.5px 6px; border-radius: 4px;
+    font-size: 10.5px; font-weight: 500;
+    color: #555; line-height: 1.2;
+    background: #fff;
+    border-left: 3px solid #999;
+    border-top: 1px solid #eee;
+    border-right: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+  }
+  .pill-l3::before {
+    content: '›';
+    color: #aaa; font-size: 11px; margin-right: 1px;
+    line-height: 1; font-weight: 700;
+  }
+
+  .pill-l1 .count, .pill-l2 .count {
+    background: rgba(255,255,255,0.32);
+    padding: 0 6px; border-radius: 9px;
+    font-size: 10.5px; font-weight: 600;
+  }
+  .pill-l2 .count { background: rgba(0,0,0,0.08); }
+  .pill-l3 .count {
+    background: #f5f5f5; padding: 0 5px;
+    border-radius: 7px; font-size: 9.5px;
+    color: #777; margin-left: 2px;
+  }
+
+  .pill-l1 .x, .pill-l2 .x, .pill-l3 .x {
+    cursor: pointer; opacity: 0.7;
+    margin-left: 1px; padding: 0 2px;
+    line-height: 1;
+  }
+  .pill-l1 .x { font-size: 14px; }
+  .pill-l2 .x { font-size: 12px; }
+  .pill-l3 .x { font-size: 11px; color: #aaa; }
+  .pill-l1 .x:hover, .pill-l2 .x:hover, .pill-l3 .x:hover { opacity: 1; }
+
+  .pill-l1, .pill-l2, .pill-l3 { cursor: pointer; transition: box-shadow 0.15s, transform 0.15s; }
+  .pill-l1:hover, .pill-l2:hover, .pill-l3:hover {
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.12);
+  }
+
+  /* ───────── 标签库 ───────── */
+  .tag-library {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 8px;
+  }
+  .tag-library-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .tag-library-title { font-size: 12px; font-weight: 700; color: #555; }
+  .tag-library-sub { font-size: 11px; color: #999; font-weight: 400; margin-left: 8px; }
+  .tag-library-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+  .lib-group {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 8px 4px 6px; background: #f9f9f9;
+    border-radius: 14px; border: 1px solid #eee;
+    margin: 2px;
+  }
+  .lib-group-label {
+    font-size: 10.5px; font-weight: 700; color: #fff;
+    padding: 2px 8px; border-radius: 8px; margin-right: 2px;
+    letter-spacing: 0.3px;
+  }
+
+  .add-tag-row {
+    display: flex; gap: 4px; margin-top: 8px; align-items: center;
+    flex-wrap: wrap;
+  }
+  .add-tag-row input {
+    padding: 4px 8px; font-size: 12px; border: 1px solid #ccc;
+    border-radius: 12px; width: 160px;
+  }
+  .add-tag-row select {
+    padding: 4px 6px; font-size: 12px; border: 1px solid #ccc;
+    border-radius: 12px; background: #fff;
+  }
+  .add-tag-row button {
+    padding: 4px 10px; font-size: 12px; border-radius: 4px;
+    background: #fff; color: #444; border: 1px solid #ccc; cursor: pointer;
+  }
+  .add-tag-row button:hover { background: #f0f0f0; }
+  .add-tag-row span { font-size: 11px; color: #888; }
+
+  /* ───────── 概览图 ───────── */
+  .overview {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    padding: 14px 16px; margin: 14px 0;
+  }
+  .overview h3 { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 10px; }
+  .overview h3 .sub { color: #aaa; font-weight: normal; font-size: 11px; margin-left: 6px; }
+  .bar-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 5px; font-size: 12px;
+  }
+  .bar-label {
+    min-width: 90px; color: #444; flex-shrink: 0;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .bar-label .dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .bar-track { flex: 1; height: 16px; background: #f3f4f6; border-radius: 4px; }
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    display: flex; align-items: center; padding-left: 6px;
+    color: #fff; font-size: 11px; font-weight: 600; min-width: 22px;
+  }
+
+  /* ───────── 筛选区 ───────── */
+  .filter-section {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 8px;
+  }
+  .filter-section-title {
+    font-size: 11px; font-weight: 700; color: #888;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 14px; font-size: 12px;
+    background: #f5f5f5; color: #444; cursor: pointer;
+    border: 1px solid transparent; user-select: none;
+  }
+  .filter-chip:hover { background: #ebebeb; }
+  .filter-chip.active { background: #222; color: #fff; border-color: #222; }
+  .filter-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ───────── 评价卡 ───────── */
+  .cards-area { margin-top: 14px; }
+  .cards-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .cards-head h3 { font-size: 14px; font-weight: 600; color: #444; }
+  .cards-head .meta { font-size: 12px; color: #888; }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .review-card {
+    background: #fff; border: 1px solid #eee; border-radius: 12px;
+    padding: 14px; display: flex; flex-direction: column; gap: 12px;
+    transition: box-shadow 0.15s;
+  }
+  .review-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .review-card .card-l1-row {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .review-card .card-text {
+    font-size: 13px; line-height: 1.6; color: #2c2c2c;
+    background: #fafafa; border: 1px solid #eee; border-radius: 8px;
+    padding: 12px; min-height: 70px;
+    cursor: text; white-space: pre-wrap; word-break: break-word;
+  }
+  .review-card .card-text:hover { background: #f5f5f5; }
+  .review-card .card-text:empty::before {
+    content: '— 无文字描述 —'; color: #bbb;
+  }
+  .review-card .l2l3-row {
+    display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+  }
+  .chip-add {
+    display: inline-flex; align-items: center;
+    background: #fff; border: 1px dashed #aaa; color: #777;
+    cursor: pointer; padding: 1px 9px; font-size: 11px;
+    border-radius: 10px; line-height: 1.4;
+  }
+  .chip-add:hover { background: #f5f5f5; border-color: #666; color: #333; }
+  .chip-add.l3 {
+    border-radius: 4px; padding: 1px 7px; font-size: 10px;
+  }
+
+  /* ───────── 标签选择器 ───────── */
+  .tag-picker {
+    position: absolute; background: #fff; border: 1px solid #ddd;
+    border-radius: 8px; padding: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    z-index: 100; min-width: 260px; max-width: 360px;
+  }
+  .tag-picker-title {
+    font-size: 11px; color: #888; margin-bottom: 8px; font-weight: 600;
+  }
+  .tag-picker .group-section { margin-bottom: 10px; }
+  .tag-picker .group-head {
+    font-size: 10px; color: #fff; font-weight: 700;
+    padding: 2px 8px; border-radius: 8px; display: inline-block;
+    margin-bottom: 5px; letter-spacing: 0.3px;
+  }
+  .tag-picker .pick-list { display: flex; flex-wrap: wrap; gap: 4px; max-height: 260px; overflow-y: auto; }
+  .tag-picker .pick {
+    cursor: pointer; padding: 3px 9px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+  }
+  .tag-picker .pick.disabled { opacity: 0.4; cursor: not-allowed; }
+  .tag-picker .new-row {
+    display: flex; gap: 4px; margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid #eee; align-items: center; flex-wrap: wrap;
+  }
+  .tag-picker .new-row input {
+    flex: 1; padding: 4px 6px; font-size: 12px;
+    border: 1px solid #ccc; border-radius: 4px; min-width: 100px;
+  }
+  .tag-picker .new-row select {
+    padding: 4px 6px; font-size: 12px;
+    border: 1px solid #ccc; border-radius: 4px; background: #fff;
+  }
+  .tag-picker .new-row button {
+    padding: 4px 10px; font-size: 12px; border-radius: 4px;
+    background: #222; color: #fff; border: none; cursor: pointer;
+  }
+
+  textarea.editing {
+    width: 100%; font-size: 13px; line-height: 1.6; color: #2c2c2c;
+    background: #fff; border: 1px solid #f5a623; border-radius: 8px;
+    padding: 12px; min-height: 90px; font-family: inherit; resize: vertical;
+    outline: none;
+  }
+</style>
+</head>
+<body>
+
+<h1>不好的体验 · 评价看板</h1>
+<div class="hint">
+  三层标签的视觉等级：<b>一级</b>（困扰类型，固定 8 类，<span style="background:#FFA726;color:#fff;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:700">大 · 实心</span>）
+  · <b>二级</b>（语义分组，<span style="background:#FCD49A;color:#333;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:600">中 · pastel</span>）
+  · <b>三级</b>（具体子项，<span style="border-left:3px solid #FFA726;background:#fff;color:#555;padding:0 6px;border-top:1px solid #eee;border-right:1px solid #eee;border-bottom:1px solid #eee;font-size:10.5px">› 小 · 白底</span>）。
+  GPT 自动提取，所有标签都可手动改 / 加 / 删，改动自动保存在浏览器里。
+</div>
+
+<div class="nav-bar">
+  <a class="nav-link" href="dashboard-v2.html">📍 希望瓶装热饮出现的场景</a>
+  <a class="nav-link" href="dashboard-heating.html">🔥 加热设备选型</a>
+  <a class="nav-link" href="dashboard-devices.html">📷 用户实拍设备</a>
+  <a class="nav-link" href="dashboard-scenes.html">🌆 用户场景卡</a>
+  <a class="nav-link active" href="dashboard-complaints.html">💢 不好的体验</a>
+</div>
+
+<!-- 一级标签库 -->
+<div class="tag-library">
+  <div class="tag-library-head">
+    <div class="tag-library-title">
+      一级 · 困扰类型 <span class="tag-library-sub">固定 8 类 · 实心填充（点击改色）</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="exportData()">⬇ 导出数据</button>
+      <button class="btn" onclick="document.getElementById('import-file-input').click()">⬆ 导入数据</button>
+      <input type="file" id="import-file-input" accept="application/json,.json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-danger" onclick="resetAll()">恢复初始数据</button>
+    </div>
+  </div>
+  <div id="l1-library-list" class="tag-library-list"></div>
+</div>
+
+<!-- 二级标签库 -->
+<div class="tag-library">
+  <div class="tag-library-head">
+    <div class="tag-library-title">
+      二级 · 语义分组 <span class="tag-library-sub">pastel 浅色（自动继承一级色调）· 按一级分组</span>
+    </div>
+  </div>
+  <div id="l2-library-list" class="tag-library-list"></div>
+  <div class="add-tag-row">
+    <input id="new-l2-input" placeholder="新增二级标签…" maxlength="20">
+    <span>归属一级：</span>
+    <select id="new-l2-parent"></select>
+    <button onclick="addNewL2()">+ 添加</button>
+  </div>
+</div>
+
+<!-- 三级标签库 -->
+<div class="tag-library">
+  <div class="tag-library-head">
+    <div class="tag-library-title">
+      三级 · 具体子项 <span class="tag-library-sub">白底色条（继承一级色）· 按二级分组</span>
+    </div>
+  </div>
+  <div id="l3-library-list" class="tag-library-list"></div>
+  <div class="add-tag-row">
+    <input id="new-l3-input" placeholder="新增三级标签…" maxlength="16">
+    <span>归属二级：</span>
+    <select id="new-l3-parent"></select>
+    <button onclick="addNewL3()">+ 添加</button>
+  </div>
+</div>
+
+<!-- 概览 -->
+<div class="overview">
+  <h3>一级分布<span class="sub">总览</span></h3>
+  <div id="overview-bars"></div>
+</div>
+
+<!-- 筛选 -->
+<div class="filter-section">
+  <div class="filter-section-title">筛选 · 一级</div>
+  <div id="filter-l1" class="filter-row"></div>
+</div>
+<div class="filter-section" id="filter-l2-section" style="display:none">
+  <div class="filter-section-title">筛选 · 二级（限于已选一级下）</div>
+  <div id="filter-l2" class="filter-row"></div>
+</div>
+
+<div class="toolbar">
+  <div id="sel-info" style="font-size:13px;color:#666"></div>
+  <div class="toolbar-right">
+    <button class="btn" id="clear-btn" onclick="clearFilters()" disabled>清空筛选</button>
+  </div>
+</div>
+
+<!-- 卡片 -->
+<div class="cards-area">
+  <div class="cards-head">
+    <h3>评价卡片 <span style="font-size:11px;color:#999;font-weight:normal">点正文编辑文字 · 点 chip 改/删标签 · 点 + 加标签</span></h3>
+    <div class="meta" id="cards-meta"></div>
+  </div>
+  <div id="cards-grid" class="cards-grid"></div>
+</div>
+
+<div id="tag-picker" class="tag-picker" style="display:none"></div>
+
+<script>
+/* ───────── 一级标签：固定 8 类（颜色与图1对照） ───────── */
+const INIT_L1_LIBRARY = [
+  { name: '饮用体验', color: '#FF7043' },  // 橙
+  { name: '口味',     color: '#FFA726' },  // 黄橙（图1中打勾的"口味"是黄色）
+  { name: '安全性',   color: '#EF5350' },  // 红
+  { name: '品质',     color: '#AB47BC' },  // 紫
+  { name: '价格',     color: '#42A5F5' },  // 蓝（图2中"价格"是蓝色）
+  { name: '大小',     color: '#66BB6A' },  // 绿
+  { name: '包装',     color: '#26A69A' },  // 青
+  { name: '其他',     color: '#9E9E9E' }   // 灰
+];
+
+const STORAGE_KEY = 'dashboard-complaints-v1';
+
+/* 初始数据 —— 由 process_complaints.py --patch-html 自动覆盖 */
+const INIT_DATA = [
+  { id:"不好的体验（中产）__Untitled-1", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-1.png", text:"包装太薄 拿不住容易 摔身软一拿就变形 标签黏糊糊看着不卫生", l1:"包装", l2:"包装破损", l3:"" },
+  { id:"不好的体验（中产）__Untitled-10", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-10.png", text:"有些饮品加热之后会有分层的感觉，饮用时冷热口感不一致。", l1:"口味", l2:"饮品本身不好喝", l3:"" },
+  { id:"不好的体验（中产）__Untitled-11", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-11.png", text:"金属瓶体的热饮有的加热时间过长有点烫手", l1:"包装", l2:"包装易漏", l3:"" },
+  { id:"不好的体验（中产）__Untitled-12", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-12.png", text:"会担心，产品是经过于烫，拿的时候不知道温度从哪里到自己。", l1:"安全性", l2:"卫生隐患", l3:"" },
+  { id:"不好的体验（中产）__Untitled-13", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-13.png", text:"一个产品，是否会反复加热，从而影响口感，其次产品第一天没有再次出左一侧加热，造成营养失失。", l1:"品质", l2:"质量不稳定", l3:"" },
+  { id:"不好的体验（中产）__Untitled-2", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-2.png", text:"瓶子太多本来就不好拿 占地方 不好放包里 提着喝手不方便带", l1:"大小", l2:"容量太大", l3:"" },
+  { id:"不好的体验（中产）__Untitled-3", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-3.png", text:"有的塑料瓶加热后，担心饮品有塑料味，怕有化学物质，对人体身体有害", l1:"安全性", l2:"食品安全", l3:"有害物质" },
+  { id:"不好的体验（中产）__Untitled-4", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-4.png", text:"部分热饮由于需要保温，会比冷饮贵，性价比低", l1:"价格", l2:"性价比低", l3:"" },
+  { id:"不好的体验（中产）__Untitled-5", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-5.png", text:"部分热饮瓶会二次回收，卫生不是很放心，同时也不方便携带。", l1:"其他", l2:"卫生隐患", l3:"" },
+  { id:"不好的体验（中产）__Untitled-6", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-6.png", text:"可选择的种类还是较少，南方的热饮柜机偏多，希望可以增加投入", l1:"其他", l2:"选择太少", l3:"" },
+  { id:"不好的体验（中产）__Untitled-7", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-7.png", text:"有一些饮品都是用铝加热的，可能会有安全隐患", l1:"安全性", l2:"卫生隐患", l3:"" },
+  { id:"不好的体验（中产）__Untitled-8", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-8.png", text:"可以增加更多的种类或添加独特的加热版的包装，提高享受品质。", l1:"品质", l2:"质量不稳定", l3:"" },
+  { id:"不好的体验（中产）__Untitled-9", image:"原始数据/不好的体验/不好的体验（中产）/Untitled-9.png", text:"对塑料食品加热, 不是很放心, 感觉塑料加热会产生有害物质。有一些加热塑料水会有塑料味。", l1:"安全性", l2:"食品安全", l3:"" },
+  { id:"不好的体验（中产）__Untitled", image:"原始数据/不好的体验/不好的体验（中产）/Untitled.png", text:"加热后太甜腻，感觉发涩香味重着不舒服，喝着不香", l1:"口味", l2:"饮品本身不好喝", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-1", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-1.png", text:"对比常温和冷藏的饮料，我发现瓶基本热饮一般瓶子都比较小，但是价格普遍都比其他区域的饮料贵，应这是因为保温费用比较高。", l1:"价格", l2:"价格偏高", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-10", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-10.png", text:"口味不够丰富", l1:"口味", l2:"选择太少", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-11", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-11.png", text:"一直担心塑料瓶子持续加热会有危害，让我不健康", l1:"安全性", l2:"食品安全", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-12", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-12.png", text:"购买的品类比较少，只有特定的一些品类才会有，很多饮料都没有", l1:"口味", l2:"选择太少", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-13", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-13.png", text:"购买的地方有很大的随机性，因为有很多便利店没有，必须找特定的便利店。所以说想买的时候不好买", l1:"其他", l2:"购买渠道", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-14", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-14.png", text:"温度高了以后，拿的时候有点烫，而且有时候会有塑料味，会担心健康问题", l1:"安全性", l2:"卫生隐患", l3:"塑料味" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-15", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-15.png", text:"有些瓶装饮料会存在价格偏高的情况，与消费水平不符", l1:"价格", l2:"价格偏高", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-16", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-16.png", text:"有些瓶装饮料口味偏甜，热量较高，不太适合本人", l1:"饮用体验", l2:"温度不持久", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-17", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-17.png", text:"有些瓶装饮料会偏大，不容易携带", l1:"大小", l2:"容量太大", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-18", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-18.png", text:"会担心包装加热会不会产生有害物质，店家有没有反复加热等。", l1:"安全性", l2:"食品安全", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-19", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-19.png", text:"部分饮品加热之后口感怪怪的，没有那么好喝", l1:"饮用体验", l2:"温度不持久", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-2", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-2.png", text:"之前喝到过温热版本的饮料比较正常，但是同一款饮料从温度上出来吗，感觉一直会有一股像茶叶那种滋味", l1:"饮用体验", l2:"温度不持久", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-20", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-20.png", text:"热饮的购买没有那么方便，不是什么便利店都提供热饮，个你想喝热的时候需要花费更多时间寻找。", l1:"其他", l2:"购买不便", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-21", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-21.png", text:"有时候会在大瓶装和常规装中遇到困难大瓶不好携带但是小瓶包装也是又不够喝所以有很多时候就很纠结", l1:"大小", l2:"容量太大", l3:"不够喝" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-22", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-22.png", text:"有时候口味过于多，虽然想买自己熟悉的口味，但是又想尝试自己没喝过的。但是又害怕尝到不好喝的新口味，所以很多时候不知道买哪个味道", l1:"口味", l2:"选择太少", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-23", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-23.png", text:"不知道为什么 每个商超便利店得价格都不一样 感觉很烦 价位什么的就不能有所统一 价格呢 非要一个地方一个价格 否时偶尔还会和员工争执 因为价格差距得太大", l1:"价格", l2:"价格偏高", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-24", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-24.png", text:"暖饮提供的地方少，而且价格会因为产品的口感不同会有所不一样", l1:"价格", l2:"性价比低", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-25", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-25.png", text:"暖饮被加热后是否会释放有害物质在饮料当中，有试过加热后的饮品感觉上常温有一些不一样。", l1:"安全性", l2:"食品安全", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-26", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-26.png", text:"暖饮一般可以选择的款式比较少，能喝×基本都是一些奶茶制品偏多，果茶比较少，有时候冬天想喝一些暖的果茶也找不到。", l1:"其他", l2:"选择太少", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-27", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-27.png", text:"部分热饮太贵了，望而却步", l1:"价格", l2:"价格偏高", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-28", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-28.png", text:"口味相对冷饮还是不够好，可以开发一些更适合大众的热饮", l1:"饮用体验", l2:"温度不持久", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-29", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-29.png", text:"多数瓶装饮料限制了口味的发展。", l1:"包装", l2:"包装限制", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-3", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-3.png", text:"很多的喜欢喝的咖啡热饮都是易拉罐包装的，让我感觉随身携带不方便，打开了就没法反复携带着喝", l1:"包装", l2:"包装难开", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-30", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-30.png", text:"塑料瓶经过加热容易变形，手感差，有些瓶身尺寸不合适。", l1:"包装", l2:"包装易漏", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-31", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-31.png", text:"瓶装热饮口味单一平淡，加热后茶香会减弱，口感偏淡，整体味道缺乏层次感。", l1:"口味", l2:"饮品本身不好喝", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-32", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-32.png", text:"甜度无法自主调整，不能搭配小料，长期饮用容量不足，满足不了多样化的需求。", l1:"饮用体验", l2:"饮品本身不好喝", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-33", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-33.png", text:"买饮料最重要的就是口味，喜欢喝才是最重要的，我比较喜欢甜度高的。", l1:"口味", l2:"饮品本身不好喝", l3:"甜度不够" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-34", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-34.png", text:"有一些塑料包装的担心加热会不会有化学反应，产生危害。", l1:"安全性", l2:"食品安全", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-35", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-35.png", text:"便利店的大品牌饮料比较少，小厂家的品质需要保障，喜欢糖精味弱的热饮。", l1:"品质", l2:"质量不稳定", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-36", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-36.png", text:"产品如果过热，，一直加热塑料瓶子，会怀疑是否含有微塑料", l1:"安全性", l2:"食品安全", l3:"微塑料" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-37", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-37.png", text:"有时产品不能特别热比如榨汁，过热会有酸涩口味", l1:"口味", l2:"饮品本身不好喝", l3:"酸涩" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-38", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-38.png", text:"有的时候会发现饮料类型单一，品种少，有的商店放在暖饮区里的种类不全，导致购买时感觉没什么选的", l1:"饮用体验", l2:"选择太少", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-39", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-39.png", text:"制作的时候可能有隔夜材料部分存在原料不新鲜或者不确定的情况塑料瓶加热后可能会出现有害物质存在健康隐患。", l1:"安全性", l2:"食品安全", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-4", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-4.png", text:"大部分瓶装热饮的口味都比较普通，要么是牛奶、奶茶、咖啡，味道都没有之前一样的地方。", l1:"口味", l2:"饮品本身不好喝", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-40", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-40.png", text:"请问2-3种多桶热饮为了解长保质期会添加过多的糖香精和稳定剂导致饮品味道也没有在做热饮的新鲜度部分还会出现口感发湿香气更浓的问题", l1:"口味", l2:"饮品本身不好喝", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-41", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-41.png", text:"请问2-3瓶装热饮单品价格不便宜量有限长时期购买的成本也要高与自制热饮同时部分产品加热后温度不对导致冷的满足感无法保证暖的需求实用性打折", l1:"价格", l2:"价格偏高", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-42", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-42.png", text:"有时喝很热的热饮，会担心是否反复加热瓶子会不会析出有害物质", l1:"安全性", l2:"食品安全", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-43", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-43.png", text:"有时候拿出来并不是自己理想的温度，只能将就", l1:"饮用体验", l2:"温度不合适", l3:"太烫" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-44", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-44.png", text:"很多包装不具备保温性，很快就会凉", l1:"包装", l2:"包装保温性", l3:"不保温" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-45", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-45.png", text:"热饮温度不稳定，有时喝起来不够暖", l1:"饮用体验", l2:"温度不持久", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-46", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-46.png", text:"大多数瓶装热饮糖度偏高，风味同质化，", l1:"口味", l2:"饮品本身不好喝", l3:"糖度偏高" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-47", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-47.png", text:"缺乏低糖健康的选择，长期喝容易腻。", l1:"口味", l2:"选择太少", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-48", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-48.png", text:"我喝到的热饮味道很单一，比如热露露，就是否仁奶的味道对吧，也没有别的", l1:"口味", l2:"口味单一", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-49", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-49.png", text:"随时喝起来都是热的，价格也不实惠。", l1:"价格", l2:"性价比低", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-5", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-5.png", text:"很多暖饮都不够量大，一般都是三百毫升以内，喝快就喝完了，让我会感觉量不够，喝完不够快。", l1:"大小", l2:"容量太小", l3:"不够喝" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-50", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-50.png", text:"太大了还没喝完已经凉掉了，小了的话就不要定价太贵这样比较好", l1:"大小", l2:"容量太大", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-51", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-51.png", text:"口味特别单一，大部分都是奶味，长期喝的话会腻", l1:"口味", l2:"选择太少", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-52", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-52.png", text:"喝不好的时候拿着漏出来或者放车上总是会撒出来，基本上很少有很好的密封性", l1:"包装", l2:"包装易漏", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-53", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-53.png", text:"大部分瓶装热饮比如露露和花生露，不知道是商家热了多少次的", l1:"安全性", l2:"食品安全", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-54", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-54.png", text:"便利店的暖瓶一般价格都在6-10元，比同款冷饮贵些，性价比不高。", l1:"价格", l2:"性价比低", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-55", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-55.png", text:"瓶装饮料普遍口感偏甜，有时候喝半瓶就腻了。", l1:"口味", l2:"饮品本身不好喝", l3:"偏甜" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-56", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-56.png", text:"刚从暖瓶拿出的瓶子很烫手，如果没有隔热层或者纸套，根本拿不住。", l1:"包装", l2:"包装易漏", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-57", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-57.png", text:"可以在口味上更加强大大众", l1:"口味", l2:"选择太少", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-58", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-58.png", text:"食品安全的问题不容忽视，应多关注生产中的卫生安全，让消费者的放心", l1:"安全性", l2:"食品安全", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-59", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-59.png", text:"市面上的热饮价格普遍偏高，可适当调整价格或活动，让消费者能有更多的选择----", l1:"价格", l2:"价格偏高", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-6", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-6.png", text:"保质期很长，口感会有折扣", l1:"品质", l2:"质量不稳定", l3:"口感下降" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-60", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-60.png", text:"瓶装饮料的单价偏偏偏高，尤其是品牌饮，对比自制冲泡型饮料，长期购买的成本压力不小。 部分产品容量与定价不匹配，有时觉得性价比不是，会上我选择是不买。", l1:"价格", l2:"价格偏高", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-61", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-61.png", text:"市面上瓶装饮料的口味品质严重，大多偏甜或有精制糖，难以找到符合清淡或个性化的选择。部分产品为了保持品质期望了风味，喝起来不够新鲜，和现做热饮的口感差距较大。", l1:"口味", l2:"饮品本身不好喝", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-62", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-62.png", text:"担心瓶装热饮的添加剂，防腐剂含量较高，长期饮用不够健康。部分产品的保温效果差，买到手就凉了，影响饮用体验，也担心包装材料在高温下的安全性。", l1:"品质", l2:"质量不稳定", l3:"保温效果差" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-63", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-63.png", text:"有的时候这些味道真的是一言难尽，火龙果和栗子结合真的好难喝", l1:"口味", l2:"饮品本身不好喝", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-64", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-64.png", text:"那些单独售卖的我觉得很怀疑包装干不干净", l1:"安全性", l2:"卫生隐患", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-65", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-65.png", text:"有的太贵了啊嘛，一杯饮料二十多块三十多", l1:"价格", l2:"价格偏高", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-7", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-7.png", text:"口味会随着温度的变化，所以改变。", l1:"饮用体验", l2:"温度不持久", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-8", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-8.png", text:"口味没有现做奶茶店的有层次感", l1:"口味", l2:"饮品本身不好喝", l3:"" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled-9", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled-9.png", text:"瓶口太小了，一直倒不到嘴", l1:"饮用体验", l2:"不方便", l3:"倒不方便" },
+  { id:"不好的体验（学生+测试+白领1+中产）__Untitled", image:"原始数据/不好的体验/不好的体验（学生+测试+白领1+中产）/Untitled.png", text:"整体口味选择比较少，因为能买到热饮的地方一般都不会提供很多地方的热饮，就算是冬天也只有一个小的热饮箱子", l1:"口味", l2:"选择太少", l3:"" },
+];
+
+/* ───────── 颜色工具：HSL 派生 L2 pastel ───────── */
+function hexToRgb(hex) {
+  const h = (hex || '#000000').replace('#', '');
+  return [
+    parseInt(h.slice(0,2), 16) || 0,
+    parseInt(h.slice(2,4), 16) || 0,
+    parseInt(h.slice(4,6), 16) || 0
+  ];
+}
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(x =>
+    Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')
+  ).join('');
+}
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return [h * 360, s * 100, l * 100];
+}
+function hslToRgb(h, s, l) {
+  h = ((h % 360) + 360) % 360 / 360; s /= 100; l /= 100;
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return [r * 255, g * 255, b * 255];
+}
+function deriveL2Color(l1Hex) {
+  const [r, g, b] = hexToRgb(l1Hex);
+  let [h, s, l] = rgbToHsl(r, g, b);
+  l = 82;                              // 高亮度，柔和 pastel
+  s = Math.max(38, Math.min(s, 60));
+  const [r2, g2, b2] = hslToRgb(h, s, l);
+  return rgbToHex(r2, g2, b2);
+}
+function cssColorToHex(c) {
+  if (!c) return '#999999';
+  if (c.startsWith('#') && c.length === 7) return c;
+  if (c.startsWith('#') && c.length === 4) {
+    return '#' + c.slice(1).split('').map(x => x+x).join('');
+  }
+  const m = c.match(/\d+/g);
+  if (m && m.length >= 3) {
+    return '#' + m.slice(0,3).map(n => Number(n).toString(16).padStart(2,'0')).join('');
+  }
+  return '#999999';
+}
+
+/* ───────── 状态 + 持久化 ───────── */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    data: state.data,
+    l1Library: state.l1Library,
+    l2Library: state.l2Library,
+    l3Library: state.l3Library
+  }));
+}
+
+const persisted = loadState();
+const state = {
+  data: persisted?.data ?? structuredClone(INIT_DATA),
+  l1Library: persisted?.l1Library ?? structuredClone(INIT_L1_LIBRARY),
+  l2Library: persisted?.l2Library ?? [],   // [{name, parent(L1名), color, _customColor?}]
+  l3Library: persisted?.l3Library ?? [],   // [{name, parent(L2名)}]
+  filterL1: null,
+  filterL2: null
+};
+
+/* 数据规整 */
+state.data.forEach(item => {
+  if (!('l1' in item)) item.l1 = '其他';
+  if (!('l2' in item)) item.l2 = '';
+  if (!('l3' in item)) item.l3 = '';
+  if (!('text' in item)) item.text = '';
+});
+
+/* L1 库始终包含全部固定 8 类 */
+function syncL1Library() {
+  const known = new Set(state.l1Library.map(t => t.name));
+  INIT_L1_LIBRARY.forEach(t => {
+    if (!known.has(t.name)) state.l1Library.push({ ...t });
+  });
+}
+syncL1Library();
+
+/* L2 库自动同步 */
+function syncL2Library() {
+  const known = new Set(state.l2Library.map(t => t.name));
+  let added = 0;
+  state.data.forEach(d => {
+    if (d.l2 && !known.has(d.l2)) {
+      const parent = d.l1 || '其他';
+      state.l2Library.push({
+        name: d.l2,
+        parent,
+        color: deriveL2Color(l1Color(parent))
+      });
+      known.add(d.l2);
+      added++;
+    }
+  });
+  if (added > 0) saveState();
+}
+
+/* L3 库自动同步 */
+function syncL3Library() {
+  const known = new Set(state.l3Library.map(t => t.name));
+  let added = 0;
+  state.data.forEach(d => {
+    if (d.l3 && !known.has(d.l3)) {
+      const parent = d.l2 || '';
+      state.l3Library.push({ name: d.l3, parent });
+      known.add(d.l3);
+      added++;
+    }
+  });
+  if (added > 0) saveState();
+}
+syncL2Library();
+syncL3Library();
+
+/* ───────── 查询工具 ───────── */
+function l1Color(name) {
+  const t = state.l1Library.find(t => t.name === name);
+  return t ? t.color : '#9E9E9E';
+}
+function l2Entry(name) { return state.l2Library.find(t => t.name === name); }
+function l2Color(name) { return l2Entry(name)?.color || '#e0e0e0'; }
+function l2Parent(name) { return l2Entry(name)?.parent || '其他'; }
+
+function l3Entry(name) { return state.l3Library.find(t => t.name === name); }
+function l3Parent(name) { return l3Entry(name)?.parent || ''; }
+function l3L1(name) {
+  const l2 = l3Parent(name);
+  return l2 ? l2Parent(l2) : '其他';
+}
+
+function l1Count(name) { return state.data.filter(d => d.l1 === name).length; }
+function l2Count(name) { return state.data.filter(d => d.l2 === name).length; }
+function l3Count(name) { return state.data.filter(d => d.l3 === name).length; }
+
+/* ───────── 标签库渲染 ───────── */
+function renderL1Library() {
+  const wrap = document.getElementById('l1-library-list');
+  wrap.innerHTML = '';
+  state.l1Library.forEach(t => {
+    const el = document.createElement('span');
+    el.className = 'pill-l1';
+    el.style.background = t.color;
+    el.title = '点击改颜色';
+    el.innerHTML = `<span>${escapeHtml(t.name)}</span><span class="count">${l1Count(t.name)}</span>`;
+    el.onclick = () => {
+      pickColor(t, () => {
+        // L1 改色后，对应未自定义的 L2 也跟着派生
+        state.l2Library.forEach(l2 => {
+          if (l2.parent === t.name && !l2._customColor) {
+            l2.color = deriveL2Color(t.color);
+          }
+        });
+        saveState(); render();
+      });
+    };
+    wrap.appendChild(el);
+  });
+}
+
+function renderL2Library() {
+  const wrap = document.getElementById('l2-library-list');
+  wrap.innerHTML = '';
+
+  const grouped = {};
+  state.l2Library.forEach(t => {
+    const p = t.parent || '其他';
+    (grouped[p] = grouped[p] || []).push(t);
+  });
+
+  let any = false;
+  state.l1Library.forEach(l1 => {
+    const list = grouped[l1.name] || [];
+    if (list.length === 0) return;
+    any = true;
+    list.sort((a, b) => l2Count(b.name) - l2Count(a.name));
+
+    const group = document.createElement('div');
+    group.className = 'lib-group';
+    const label = document.createElement('span');
+    label.className = 'lib-group-label';
+    label.style.background = l1.color;
+    label.textContent = l1.name;
+    group.appendChild(label);
+
+    list.forEach(t => {
+      const cnt = l2Count(t.name);
+      const el = document.createElement('span');
+      el.className = 'pill-l2';
+      el.style.background = t.color;
+      el.title = '点击改颜色，× 全局删除';
+      el.innerHTML = `<span>${escapeHtml(t.name)}</span><span class="count">${cnt}</span><span class="x">×</span>`;
+      el.onclick = (e) => {
+        if (e.target.classList.contains('x')) return;
+        pickColor(t, () => { t._customColor = true; saveState(); render(); });
+      };
+      el.querySelector('.x').onclick = (e) => {
+        e.stopPropagation();
+        if (!confirm(`删除二级标签「${t.name}」？这会从所有卡片移除（共 ${cnt} 处）。`)) return;
+        state.l2Library = state.l2Library.filter(x => x.name !== t.name);
+        // 对应 L3 也清除 parent 关系（仍保留，但 parent 变成空）
+        state.l3Library.forEach(l3 => {
+          if (l3.parent === t.name) l3.parent = '';
+        });
+        state.data.forEach(d => { if (d.l2 === t.name) { d.l2 = ''; d.l3 = ''; } });
+        if (state.filterL2 === t.name) state.filterL2 = null;
+        saveState(); render();
+      };
+      group.appendChild(el);
+    });
+    wrap.appendChild(group);
+  });
+
+  if (!any) {
+    wrap.innerHTML = '<span style="color:#bbb;font-size:12px;">还没有二级标签 —— 跑 process_complaints.py 让 GPT 提取，或在下面手动添加</span>';
+  }
+}
+
+function renderL3Library() {
+  const wrap = document.getElementById('l3-library-list');
+  wrap.innerHTML = '';
+
+  // 按 L2 分组
+  const grouped = {};
+  state.l3Library.forEach(t => {
+    const p = t.parent || '_orphan';
+    (grouped[p] = grouped[p] || []).push(t);
+  });
+
+  let any = false;
+  // 按 L2 库顺序展示
+  const l2Order = state.l2Library.map(l2 => l2.name).concat(['_orphan']);
+  l2Order.forEach(l2name => {
+    const list = grouped[l2name] || [];
+    if (list.length === 0) return;
+    any = true;
+    list.sort((a, b) => l3Count(b.name) - l3Count(a.name));
+
+    const group = document.createElement('div');
+    group.className = 'lib-group';
+    const label = document.createElement('span');
+    label.className = 'lib-group-label';
+    if (l2name === '_orphan') {
+      label.style.background = '#bbb';
+      label.textContent = '未分组';
+    } else {
+      const l1n = l2Parent(l2name);
+      label.style.background = l1Color(l1n);
+      label.textContent = `${l1n} / ${l2name}`;
+    }
+    group.appendChild(label);
+
+    list.forEach(t => {
+      const cnt = l3Count(t.name);
+      const l1n = t.parent ? l2Parent(t.parent) : '其他';
+      const el = document.createElement('span');
+      el.className = 'pill-l3';
+      el.style.borderLeftColor = l1Color(l1n);
+      el.title = '× 全局删除';
+      el.innerHTML = `<span>${escapeHtml(t.name)}</span><span class="count">${cnt}</span><span class="x">×</span>`;
+      el.onclick = (e) => { if (!e.target.classList.contains('x')) { /* L3 没有改色 */ } };
+      el.querySelector('.x').onclick = (e) => {
+        e.stopPropagation();
+        if (!confirm(`删除三级标签「${t.name}」？这会从所有卡片移除（共 ${cnt} 处）。`)) return;
+        state.l3Library = state.l3Library.filter(x => x.name !== t.name);
+        state.data.forEach(d => { if (d.l3 === t.name) d.l3 = ''; });
+        saveState(); render();
+      };
+      group.appendChild(el);
+    });
+    wrap.appendChild(group);
+  });
+
+  if (!any) {
+    wrap.innerHTML = '<span style="color:#bbb;font-size:12px;">还没有三级标签 —— 在卡片上点 + 三级，或下面手动添加</span>';
+  }
+}
+
+function refreshNewL2Parent() {
+  const sel = document.getElementById('new-l2-parent');
+  sel.innerHTML = '';
+  state.l1Library.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.name;
+    opt.textContent = t.name;
+    sel.appendChild(opt);
+  });
+}
+function refreshNewL3Parent() {
+  const sel = document.getElementById('new-l3-parent');
+  sel.innerHTML = '';
+  // 按 L1 分组排序
+  state.l1Library.forEach(l1 => {
+    const og = document.createElement('optgroup');
+    og.label = l1.name;
+    state.l2Library.filter(l2 => l2.parent === l1.name).forEach(l2 => {
+      const opt = document.createElement('option');
+      opt.value = l2.name;
+      opt.textContent = l2.name;
+      og.appendChild(opt);
+    });
+    if (og.children.length > 0) sel.appendChild(og);
+  });
+}
+
+function addNewL2() {
+  const input = document.getElementById('new-l2-input');
+  const sel = document.getElementById('new-l2-parent');
+  const name = input.value.trim();
+  if (!name) return;
+  if (state.l2Library.some(t => t.name === name)) { alert('已存在该二级标签'); return; }
+  const parent = sel.value || '其他';
+  state.l2Library.push({ name, parent, color: deriveL2Color(l1Color(parent)) });
+  input.value = '';
+  saveState(); render();
+}
+function addNewL3() {
+  const input = document.getElementById('new-l3-input');
+  const sel = document.getElementById('new-l3-parent');
+  const name = input.value.trim();
+  if (!name) return;
+  if (state.l3Library.some(t => t.name === name)) { alert('已存在该三级标签'); return; }
+  const parent = sel.value || '';
+  state.l3Library.push({ name, parent });
+  input.value = '';
+  saveState(); render();
+}
+
+function pickColor(targetObj, onChange) {
+  const picker = document.createElement('input');
+  picker.type = 'color';
+  picker.value = cssColorToHex(targetObj.color);
+  picker.style.cssText = 'position:fixed;left:-9999px';
+  document.body.appendChild(picker);
+  picker.oninput = () => { targetObj.color = picker.value; onChange(); };
+  picker.onchange = () => picker.remove();
+  picker.click();
+}
+
+/* ───────── 概览图 ───────── */
+function renderOverview() {
+  const wrap = document.getElementById('overview-bars');
+  wrap.innerHTML = '';
+  const cnt = {};
+  state.data.forEach(d => { cnt[d.l1] = (cnt[d.l1] || 0) + 1; });
+  const max = Math.max(1, ...Object.values(cnt));
+  state.l1Library.forEach(t => {
+    if (!cnt[t.name]) return;
+    wrap.appendChild(buildBarRow(t.name, cnt[t.name], max, t.color));
+  });
+}
+function buildBarRow(name, val, max, color) {
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  row.innerHTML = `
+    <div class="bar-label"><span class="dot" style="background:${color}"></span>${escapeHtml(name)}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${val/max*100}%;background:${color}">${val}</div></div>
+  `;
+  return row;
+}
+
+/* ───────── 筛选 ───────── */
+function renderFilters() {
+  // L1
+  const l1Wrap = document.getElementById('filter-l1');
+  l1Wrap.innerHTML = '';
+  l1Wrap.appendChild(makeFilterChip(`全部 ${state.data.length}`, null,
+    state.filterL1 === null,
+    () => { state.filterL1 = null; state.filterL2 = null; render(); }));
+  state.l1Library.forEach(t => {
+    const cnt = l1Count(t.name);
+    if (cnt === 0) return;
+    l1Wrap.appendChild(makeFilterChip(`${t.name} ${cnt}`, t.color,
+      state.filterL1 === t.name,
+      () => {
+        state.filterL1 = (state.filterL1 === t.name) ? null : t.name;
+        state.filterL2 = null;
+        render();
+      }));
+  });
+
+  // L2（仅当选了 L1）
+  const l2Section = document.getElementById('filter-l2-section');
+  if (state.filterL1) {
+    l2Section.style.display = '';
+    const l2Wrap = document.getElementById('filter-l2');
+    l2Wrap.innerHTML = '';
+    const items = state.data.filter(d => d.l1 === state.filterL1);
+    l2Wrap.appendChild(makeFilterChip(`全部 ${items.length}`, null,
+      state.filterL2 === null,
+      () => { state.filterL2 = null; render(); }));
+    const cnts = {};
+    items.forEach(d => { if (d.l2) cnts[d.l2] = (cnts[d.l2] || 0) + 1; });
+    Object.entries(cnts).sort((a,b) => b[1]-a[1]).forEach(([name, cnt]) => {
+      l2Wrap.appendChild(makeFilterChip(`${name} ${cnt}`, l2Color(name),
+        state.filterL2 === name,
+        () => { state.filterL2 = (state.filterL2 === name) ? null : name; render(); }));
+    });
+  } else {
+    l2Section.style.display = 'none';
+  }
+}
+function makeFilterChip(label, color, active, onclick) {
+  const c = document.createElement('span');
+  c.className = 'filter-chip' + (active ? ' active' : '');
+  if (color) {
+    c.innerHTML = `<span class="dot" style="background:${color}"></span>${escapeHtml(label)}`;
+  } else {
+    c.textContent = label;
+  }
+  c.onclick = onclick;
+  return c;
+}
+function clearFilters() {
+  state.filterL1 = null; state.filterL2 = null; render();
+}
+
+/* ───────── 评价卡 ───────── */
+function renderCards() {
+  const grid = document.getElementById('cards-grid');
+  const meta = document.getElementById('cards-meta');
+  const selInfo = document.getElementById('sel-info');
+  const clearBtn = document.getElementById('clear-btn');
+  grid.innerHTML = '';
+
+  let visible = state.data;
+  if (state.filterL1) visible = visible.filter(d => d.l1 === state.filterL1);
+  if (state.filterL2) visible = visible.filter(d => d.l2 === state.filterL2);
+
+  // 全部时按标签数量从多到少分组：先按一级数量，再按二级数量
+  if (!state.filterL1 && !state.filterL2) {
+    const l1Cnt = {}, l2Cnt = {};
+    state.data.forEach(d => {
+      if (d.l1) l1Cnt[d.l1] = (l1Cnt[d.l1] || 0) + 1;
+      if (d.l2) l2Cnt[d.l2] = (l2Cnt[d.l2] || 0) + 1;
+    });
+    visible = visible.slice().sort((a, b) => {
+      const al1 = a.l1 || '', bl1 = b.l1 || '';
+      const ac1 = l1Cnt[al1] || 0, bc1 = l1Cnt[bl1] || 0;
+      if (ac1 !== bc1) return bc1 - ac1;
+      if (al1 !== bl1) return al1 < bl1 ? -1 : 1;
+      const al2 = a.l2 || '', bl2 = b.l2 || '';
+      const ac2 = l2Cnt[al2] || 0, bc2 = l2Cnt[bl2] || 0;
+      if (ac2 !== bc2) return bc2 - ac2;
+      if (al2 !== bl2) return al2 < bl2 ? -1 : 1;
+      return 0;
+    });
+  }
+
+  meta.textContent = `共 ${visible.length} 张 / 总 ${state.data.length}`;
+  if (state.filterL1 || state.filterL2) {
+    const parts = [];
+    if (state.filterL1) parts.push(`一级 = ${state.filterL1}`);
+    if (state.filterL2) parts.push(`二级 = ${state.filterL2}`);
+    selInfo.textContent = '筛选：' + parts.join(' · ');
+    clearBtn.disabled = false;
+  } else {
+    selInfo.textContent = '';
+    clearBtn.disabled = true;
+  }
+
+  if (visible.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;color:#aaa;font-size:13px;text-align:center;padding:30px">— 当前筛选下没有卡片 —</div>';
+    return;
+  }
+  visible.forEach(d => grid.appendChild(buildReviewCard(d)));
+}
+
+function buildReviewCard(item) {
+  const card = document.createElement('div');
+  card.className = 'review-card';
+
+  /* 顶部：L1 标签 */
+  const l1Row = document.createElement('div');
+  l1Row.className = 'card-l1-row';
+  const l1Pill = document.createElement('span');
+  l1Pill.className = 'pill-l1';
+  l1Pill.style.background = l1Color(item.l1);
+  l1Pill.innerHTML = `<span>${escapeHtml(item.l1)}</span>`;
+  l1Pill.title = '点击切换一级标签';
+  l1Pill.onclick = (ev) => openL1Picker(ev, item);
+  l1Row.appendChild(l1Pill);
+  card.appendChild(l1Row);
+
+  /* 文字（点击编辑） */
+  const txt = document.createElement('div');
+  txt.className = 'card-text';
+  txt.textContent = item.text;
+  txt.title = '点击编辑文字';
+  txt.onclick = () => editText(txt, item);
+  card.appendChild(txt);
+
+  /* L2 / L3 行 */
+  const l2l3 = document.createElement('div');
+  l2l3.className = 'l2l3-row';
+
+  if (item.l2) {
+    const l2Pill = document.createElement('span');
+    l2Pill.className = 'pill-l2';
+    l2Pill.style.background = l2Color(item.l2);
+    l2Pill.innerHTML = `<span>${escapeHtml(item.l2)}</span><span class="x">×</span>`;
+    l2Pill.title = '点击改二级标签';
+    l2Pill.onclick = (ev) => {
+      if (ev.target.classList.contains('x')) {
+        item.l2 = ''; item.l3 = ''; saveState(); render(); return;
+      }
+      openL2Picker(ev, item);
+    };
+    l2l3.appendChild(l2Pill);
+  } else {
+    const add = document.createElement('span');
+    add.className = 'chip-add';
+    add.textContent = '+ 二级';
+    add.onclick = (ev) => openL2Picker(ev, item);
+    l2l3.appendChild(add);
+  }
+
+  // L3：仅当存在 L2 才允许
+  if (item.l2) {
+    if (item.l3) {
+      const l3Pill = document.createElement('span');
+      l3Pill.className = 'pill-l3';
+      l3Pill.style.borderLeftColor = l1Color(item.l1);
+      l3Pill.innerHTML = `<span>${escapeHtml(item.l3)}</span><span class="x">×</span>`;
+      l3Pill.title = '点击改三级标签';
+      l3Pill.onclick = (ev) => {
+        if (ev.target.classList.contains('x')) {
+          item.l3 = ''; saveState(); render(); return;
+        }
+        openL3Picker(ev, item);
+      };
+      l2l3.appendChild(l3Pill);
+    } else {
+      const add = document.createElement('span');
+      add.className = 'chip-add l3';
+      add.textContent = '+ 三级';
+      add.onclick = (ev) => openL3Picker(ev, item);
+      l2l3.appendChild(add);
+    }
+  }
+
+  card.appendChild(l2l3);
+  return card;
+}
+
+/* 文字编辑 */
+function editText(el, item) {
+  if (el.dataset.editing) return;
+  el.dataset.editing = '1';
+  const ta = document.createElement('textarea');
+  ta.className = 'editing';
+  ta.value = item.text;
+  el.replaceWith(ta);
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  const finish = () => {
+    item.text = ta.value.trim();
+    saveState(); render();
+  };
+  ta.onblur = finish;
+  ta.onkeydown = (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); render(); }
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); finish(); }
+  };
+}
+
+/* ───────── 标签选择器 ───────── */
+function showPicker(anchor, html, attach) {
+  const picker = document.getElementById('tag-picker');
+  picker.innerHTML = html;
+  picker.style.display = 'block';
+  // 定位
+  const r = anchor.getBoundingClientRect();
+  picker.style.left = (r.left + window.scrollX) + 'px';
+  picker.style.top  = (r.bottom + window.scrollY + 6) + 'px';
+  attach(picker);
+
+  // 点击外部关闭
+  setTimeout(() => {
+    const handler = (e) => {
+      if (!picker.contains(e.target)) {
+        picker.style.display = 'none';
+        document.removeEventListener('click', handler);
+      }
+    };
+    document.addEventListener('click', handler);
+  }, 0);
+}
+
+function openL1Picker(ev, item) {
+  ev.stopPropagation();
+  let html = '<div class="tag-picker-title">切换一级标签</div><div class="pick-list">';
+  state.l1Library.forEach(t => {
+    const dis = (t.name === item.l1) ? ' disabled' : '';
+    html += `<span class="pick${dis}" data-name="${escapeAttr(t.name)}" style="background:${t.color};color:#fff">${escapeHtml(t.name)}</span>`;
+  });
+  html += '</div>';
+  showPicker(ev.currentTarget, html, (picker) => {
+    picker.querySelectorAll('.pick').forEach(p => {
+      p.onclick = () => {
+        if (p.classList.contains('disabled')) return;
+        item.l1 = p.dataset.name;
+        // 改 L1 后，原来的 L2 如果不再属于这个 L1，就清空
+        if (item.l2) {
+          const par = l2Parent(item.l2);
+          if (par !== item.l1) { item.l2 = ''; item.l3 = ''; }
+        }
+        saveState(); render();
+      };
+    });
+  });
+}
+
+function openL2Picker(ev, item) {
+  ev.stopPropagation();
+  // 只允许选当前 L1 下的 L2
+  const candidates = state.l2Library.filter(l2 => l2.parent === item.l1);
+  let html = `<div class="tag-picker-title">二级标签 · ${escapeHtml(item.l1)}</div>`;
+  html += '<div class="pick-list">';
+  if (item.l2) {
+    html += `<span class="pick" data-action="clear" style="background:#eee;color:#666">— 清空 —</span>`;
+  }
+  candidates.forEach(t => {
+    const dis = (t.name === item.l2) ? ' disabled' : '';
+    html += `<span class="pick${dis}" data-name="${escapeAttr(t.name)}" style="background:${t.color};color:#2a2a2a">${escapeHtml(t.name)}</span>`;
+  });
+  if (candidates.length === 0) {
+    html += '<span style="color:#bbb;font-size:11px;padding:4px">该一级下还没有二级标签，新建一个 ↓</span>';
+  }
+  html += '</div>';
+  html += `
+    <div class="new-row">
+      <input id="picker-new-l2" placeholder="新增二级…" maxlength="20">
+      <button id="picker-new-l2-btn">+ 添加并应用</button>
+    </div>
+  `;
+  showPicker(ev.currentTarget, html, (picker) => {
+    picker.querySelectorAll('.pick').forEach(p => {
+      p.onclick = () => {
+        if (p.classList.contains('disabled')) return;
+        if (p.dataset.action === 'clear') { item.l2 = ''; item.l3 = ''; }
+        else { item.l2 = p.dataset.name; item.l3 = ''; }
+        saveState(); render();
+      };
+    });
+    picker.querySelector('#picker-new-l2-btn').onclick = () => {
+      const v = picker.querySelector('#picker-new-l2').value.trim();
+      if (!v) return;
+      if (!state.l2Library.some(t => t.name === v)) {
+        state.l2Library.push({ name: v, parent: item.l1, color: deriveL2Color(l1Color(item.l1)) });
+      }
+      item.l2 = v; item.l3 = '';
+      saveState(); render();
+    };
+  });
+}
+
+function openL3Picker(ev, item) {
+  ev.stopPropagation();
+  // 只允许选当前 L2 下的 L3
+  const candidates = state.l3Library.filter(l3 => l3.parent === item.l2);
+  let html = `<div class="tag-picker-title">三级标签 · ${escapeHtml(item.l2)}</div>`;
+  html += '<div class="pick-list">';
+  if (item.l3) {
+    html += `<span class="pick" data-action="clear" style="background:#eee;color:#666">— 清空 —</span>`;
+  }
+  candidates.forEach(t => {
+    const dis = (t.name === item.l3) ? ' disabled' : '';
+    html += `<span class="pick${dis}" data-name="${escapeAttr(t.name)}" style="background:#fff;color:#444;border-left:3px solid ${l1Color(item.l1)};border-top:1px solid #eee;border-right:1px solid #eee;border-bottom:1px solid #eee;border-radius:4px;font-size:11px">${escapeHtml(t.name)}</span>`;
+  });
+  if (candidates.length === 0) {
+    html += '<span style="color:#bbb;font-size:11px;padding:4px">该二级下还没有三级标签，新建一个 ↓</span>';
+  }
+  html += '</div>';
+  html += `
+    <div class="new-row">
+      <input id="picker-new-l3" placeholder="新增三级…" maxlength="16">
+      <button id="picker-new-l3-btn">+ 添加并应用</button>
+    </div>
+  `;
+  showPicker(ev.currentTarget, html, (picker) => {
+    picker.querySelectorAll('.pick').forEach(p => {
+      p.onclick = () => {
+        if (p.classList.contains('disabled')) return;
+        if (p.dataset.action === 'clear') item.l3 = '';
+        else item.l3 = p.dataset.name;
+        saveState(); render();
+      };
+    });
+    picker.querySelector('#picker-new-l3-btn').onclick = () => {
+      const v = picker.querySelector('#picker-new-l3').value.trim();
+      if (!v) return;
+      if (!state.l3Library.some(t => t.name === v)) {
+        state.l3Library.push({ name: v, parent: item.l2 });
+      }
+      item.l3 = v;
+      saveState(); render();
+    };
+  });
+}
+
+/* ───────── 总入口 ───────── */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+function render() {
+  renderL1Library();
+  renderL2Library();
+  renderL3Library();
+  refreshNewL2Parent();
+  refreshNewL3Parent();
+  renderOverview();
+  renderFilters();
+  renderCards();
+}
+
+function resetAll() {
+  if (!confirm('恢复到初始数据？所有手动修改将丢失。')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+/* ───────── 导出 / 导入 ───────── */
+function exportData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  const payload = {
+    app: 'ginger-dashboard',
+    key: STORAGE_KEY,
+    exportedAt: new Date().toISOString(),
+    data: raw ? JSON.parse(raw) : null
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  a.href = url;
+  a.download = `${STORAGE_KEY}_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const payload = JSON.parse(e.target.result);
+      const incoming = (payload && typeof payload === 'object' && 'data' in payload) ? payload.data : payload;
+      if (!incoming || typeof incoming !== 'object') throw new Error('文件内容无效');
+      if (payload.key && payload.key !== STORAGE_KEY) {
+        if (!confirm(`这份文件来自 "${payload.key}"，与当前页面 "${STORAGE_KEY}" 不一致。仍然导入？`)) return;
+      }
+      if (!confirm('导入后将覆盖当前所有标签和分类数据，是否继续？')) return;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(incoming));
+      location.reload();
+    } catch (err) {
+      alert('导入失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+render();
+</script>
+
+</body>
+</html>
