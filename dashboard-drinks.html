@@ -90,6 +90,37 @@
     border-radius: 3px; border: 1px solid rgba(0,0,0,0.1);
   }
 
+  /* 元素标签 chip：可拖拽合并 */
+  .filter-chip.elem-chip { cursor: grab; user-select: none; }
+  .filter-chip.elem-chip:active { cursor: grabbing; }
+  .filter-chip.elem-chip.dragging { opacity: 0.4; }
+  .filter-chip.elem-chip.drag-over {
+    outline: 2px dashed #f5a623; outline-offset: 1px;
+    background: #fff3cd;
+  }
+  .filter-chip.elem-chip.is-group {
+    background: #e8eaf6; border-color: #9fa8da;
+    font-weight: 600;
+  }
+  .filter-chip.elem-chip.is-group.active {
+    background: #3f51b5; color: #fff; border-color: #3f51b5;
+  }
+  .filter-chip.elem-chip .elem-dissolve {
+    margin-left: 4px; padding: 0 4px; border-radius: 50%;
+    font-size: 9px; opacity: 0.5; cursor: pointer;
+  }
+  .filter-chip.elem-chip .elem-dissolve:hover { opacity: 1; background: rgba(0,0,0,0.1); }
+
+  /* 卡片上的元素标签徽章 */
+  .badge.elem-on-card {
+    background: #f5f5f5; color: #555; border: 1px solid #e0e0e0;
+    font-size: 10px;
+  }
+  .badge.elem-on-card.grouped {
+    background: #e8eaf6; color: #303f9f; border-color: #9fa8da;
+    font-weight: 600;
+  }
+
   .toolbar {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
@@ -242,9 +273,9 @@
 <h1>饮品卡看板</h1>
 <div class="hint">
   每张饮品卡的<b>背景色</b>对应四大类（瓶装/街饮/自制/其他）。脚本通过色彩采样自动分类，
-  并用 VLM 提取场景标签 + 结构化字段。<b>红色角标</b> ⚠ 表示色彩判定与 VLM 分歧；
-  <b>橙色角标</b> ✏ 表示场景标签被人工编辑过。点击卡片上的标签 ✕ 可删除，点击 ＋ 加标签可手动添加。
-  改动会自动保存在浏览器里（localStorage）。
+  并用 VLM 提取场景主题 + 元素标签 + 结构化字段。<b>红色角标</b> ⚠ 表示色彩判定与 VLM 分歧（点击大类 badge 可手动指定）；
+  <b>橙色角标</b> ✏ 表示被人工编辑过。点击主题标签 ✕ 可删除，点击 ＋ 加标签可手动添加；
+  <b>元素标签</b>支持拖到一起合并、双击重命名。所有改动自动保存在浏览器里（localStorage）。
 </div>
 
 <div class="nav-bar">
@@ -673,24 +704,24 @@ const SUBTYPE_EMOJI = {
 
 const SCENE_TAGS = [
   '给予/收获温暖', '低落的时候', '偷懒',
-  '户外活动', '慢悠悠', '旅游', '景点乐园',
-  '大聚会', '密友相聚',
-  '窝家里·一人', '窝家里·家人', '家里聚餐',
+  '户外活动', '慢户外', '旅游', '景点、乐园',
+  '大聚会', '蜜友相聚',
+  '窝家里-一个人', '窝家里-一家人/伴侣', '家里聚餐',
   '养生', '生病', '运动', '早餐',
-  '休闲', '通勤', '工作学习', '节日',
+  '休闲', '通勤', '工作学习', '节日', '庆祝',
   '无法分类',
 ];
 const SCENE_TAG_COLORS = {
   '给予/收获温暖': '#f06292', '低落的时候': '#5c6bc0', '偷懒': '#fdd835',
-  '户外活动': '#2e7d32', '慢悠悠': '#66bb6a',
-  '旅游': '#1e88e5', '景点乐园': '#ec407a',
-  '大聚会': '#fb8c00', '密友相聚': '#f57c00',
-  '窝家里·一人': '#8d6e63', '窝家里·家人': '#6d4c41',
+  '户外活动': '#2e7d32', '慢户外': '#66bb6a',
+  '旅游': '#1e88e5', '景点、乐园': '#ec407a',
+  '大聚会': '#fb8c00', '蜜友相聚': '#f57c00',
+  '窝家里-一个人': '#8d6e63', '窝家里-一家人/伴侣': '#6d4c41',
   '家里聚餐': '#d84315',
   '养生': '#43a047', '生病': '#9e9e9e', '运动': '#00897b',
   '早餐': '#f4a261',
   '休闲': '#ffb300', '通勤': '#546e7a',
-  '工作学习': '#1976d2', '节日': '#e53935',
+  '工作学习': '#1976d2', '节日': '#e53935', '庆祝': '#ad1457',
   '无法分类': '#9e9e9e',
 };
 
@@ -724,6 +755,7 @@ const PURCHASE_PLACES = ['自贩机/智能柜', '超市/便利店', '电商', '�
 const filters = {
   scene_tags: new Set(),
   scene_category: new Set(),
+  elements: new Set(),
   category: new Set(),
   subtype: new Set(),
   drink_reasons: new Set(),
@@ -774,7 +806,7 @@ function clearEditFor(id) {
   saveEdits(edits);
 }
 function resetEdits() {
-  if (!confirm('确认清除所有人工编辑（含场景标签 + 饮品类型）？')) return;
+  if (!confirm('确认清除所有人工编辑（含场景主题 + 饮品类型）？')) return;
   localStorage.removeItem(EDITS_KEY);
   renderAll();
 }
@@ -804,6 +836,138 @@ function clearCategoryEdit(id) {
 function isCategoryEdited(d) {
   const edits = loadEdits();
   return !!(edits[d.id] && edits[d.id].category);
+}
+
+/* ───────── 元素标签 + 用户自定义组 ───────── */
+const ELEM_GROUPS_KEY = 'drinks_element_groups_v1';
+function loadElementGroups() {
+  try { return JSON.parse(localStorage.getItem(ELEM_GROUPS_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveElementGroups(g) {
+  localStorage.setItem(ELEM_GROUPS_KEY, JSON.stringify(g));
+}
+function getElements(d) {
+  return (d.scene && d.scene.elements) || [];
+}
+// elem -> group name 映射
+function getElemToGroup() {
+  const g = loadElementGroups();
+  const map = {};
+  Object.entries(g).forEach(([name, members]) => {
+    members.forEach(m => map[m] = name);
+  });
+  return map;
+}
+// 组名 → 成员；单元素 → [自身]
+function expandElement(item) {
+  const g = loadElementGroups();
+  return g[item] ? g[item] : [item];
+}
+function dissolveElementGroup(name) {
+  const g = loadElementGroups();
+  delete g[name];
+  saveElementGroups(g);
+}
+function renameElementGroup(oldName, newName) {
+  if (!newName || newName === oldName) return;
+  const g = loadElementGroups();
+  if (!g[oldName]) return;
+  if (g[newName]) {
+    g[newName] = Array.from(new Set([...g[newName], ...g[oldName]]));
+  } else {
+    g[newName] = g[oldName];
+  }
+  delete g[oldName];
+  saveElementGroups(g);
+  if (filters.elements.has(oldName)) {
+    filters.elements.delete(oldName);
+    filters.elements.add(newName);
+  }
+}
+// 拖拽合并：src/tgt 都可能是单元素或组名
+function mergeForDrag(src, tgt) {
+  if (!src || !tgt || src === tgt) return;
+  const groups = loadElementGroups();
+  const srcIsGroup = !!groups[src];
+  const tgtIsGroup = !!groups[tgt];
+  if (srcIsGroup && tgtIsGroup) {
+    groups[tgt] = Array.from(new Set([...groups[tgt], ...groups[src]]));
+    delete groups[src];
+    saveElementGroups(groups);
+    if (filters.elements.has(src)) {
+      filters.elements.delete(src);
+      filters.elements.add(tgt);
+    }
+  } else if (srcIsGroup) {
+    if (!groups[src].includes(tgt)) groups[src].push(tgt);
+    saveElementGroups(groups);
+    if (filters.elements.has(tgt)) {
+      filters.elements.delete(tgt);
+      filters.elements.add(src);
+    }
+  } else if (tgtIsGroup) {
+    if (!groups[tgt].includes(src)) groups[tgt].push(src);
+    saveElementGroups(groups);
+    if (filters.elements.has(src)) {
+      filters.elements.delete(src);
+      filters.elements.add(tgt);
+    }
+  } else {
+    const defaultName = `${src}/${tgt}`;
+    const name = prompt(`将「${src}」和「${tgt}」合并为新标签，请输入名称：`, defaultName);
+    if (!name) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (groups[trimmed]) {
+      groups[trimmed] = Array.from(new Set([...groups[trimmed], src, tgt]));
+    } else {
+      groups[trimmed] = [src, tgt];
+    }
+    saveElementGroups(groups);
+    if (filters.elements.has(src)) filters.elements.delete(src);
+    if (filters.elements.has(tgt)) filters.elements.delete(tgt);
+  }
+  renderAll();
+}
+// 拖拽事件 handlers
+function elemDragStart(ev) {
+  ev.dataTransfer.setData('text/plain', ev.currentTarget.dataset.elem);
+  ev.dataTransfer.effectAllowed = 'move';
+  ev.currentTarget.classList.add('dragging');
+}
+function elemDragEnd(ev) {
+  ev.currentTarget.classList.remove('dragging');
+}
+function elemDragOver(ev) {
+  ev.preventDefault();
+  ev.currentTarget.classList.add('drag-over');
+}
+function elemDragLeave(ev) {
+  ev.currentTarget.classList.remove('drag-over');
+}
+function elemDrop(ev) {
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag-over');
+  const src = ev.dataTransfer.getData('text/plain');
+  const tgt = ev.currentTarget.dataset.elem;
+  if (src && tgt && src !== tgt) mergeForDrag(src, tgt);
+}
+function dissolveAndRender(name) {
+  if (!confirm(`解散标签组「${name}」？组内元素会单独显示。`)) return;
+  dissolveElementGroup(name);
+  if (filters.elements.has(name)) filters.elements.delete(name);
+  renderAll();
+}
+function renameElemPrompt(name) {
+  const groups = loadElementGroups();
+  if (!groups[name]) return; // 单元素不能重命名
+  const newName = prompt(`重命名标签组「${name}」：`, name);
+  if (!newName) return;
+  const trimmed = newName.trim();
+  if (!trimmed || trimmed === name) return;
+  renameElementGroup(name, trimmed);
+  renderAll();
 }
 
 function removeSceneTag(id, tag) {
@@ -1016,6 +1180,54 @@ function buildBrandFilter() {
   </div>`;
 }
 
+function buildElementChipRow() {
+  const visible = filterByCellsExcept('elements');
+  const elemToGroup = getElemToGroup();
+  // 按"显示名"统计：组员归到组名下
+  const counts = {};
+  visible.forEach(d => {
+    const elems = getElements(d);
+    const seen = new Set();
+    elems.forEach(e => {
+      const display = elemToGroup[e] || e;
+      if (seen.has(display)) return;
+      seen.add(display);
+      counts[display] = (counts[display] || 0) + 1;
+    });
+  });
+  const groups = loadElementGroups();
+  const groupNames = Object.keys(groups).filter(g => counts[g]);
+  const indivElems = Object.keys(counts)
+    .filter(k => !groups[k])
+    .sort((a, b) => counts[b] - counts[a]);
+  if (groupNames.length === 0 && indivElems.length === 0) return '';
+
+  const renderChip = (name, n, isGroup) => {
+    const active = filters.elements.has(name);
+    const cls = 'filter-chip elem-chip' + (active ? ' active' : '') + (isGroup ? ' is-group' : '');
+    const dataAttr = `data-elem=${escapeAttr(name)}`;
+    const dissolve = isGroup
+      ? `<span class="elem-dissolve" title="解散组" onclick="event.stopPropagation();dissolveAndRender(${escapeAttr(name)})">✕</span>`
+      : '';
+    const prefix = isGroup ? '📦 ' : '';
+    const dblClick = isGroup ? `ondblclick="event.stopPropagation();renameElemPrompt(${escapeAttr(name)})"` : '';
+    return `<span class="${cls}" draggable="true" ${dataAttr}
+        ondragstart="elemDragStart(event)" ondragend="elemDragEnd(event)"
+        ondragover="elemDragOver(event)" ondragleave="elemDragLeave(event)"
+        ondrop="elemDrop(event)" ${dblClick}
+        onclick="toggleFilter('elements', ${escapeAttr(name)})">
+      ${prefix}${escapeHtml(name)}<span class="count">${n}</span>${dissolve}
+    </span>`;
+  };
+  const groupChips = groupNames.map(g => renderChip(g, counts[g], true)).join('');
+  const indivChips = indivElems.map(e => renderChip(e, counts[e], false)).join('');
+  const help = `<span style="font-size:10px;color:#aaa;margin-left:8px;font-weight:400;">拖到另一个标签上 = 合并 · 双击组名重命名 · ✕ 解散</span>`;
+  return `<div class="filter-row">
+    <div class="filter-label">元素标签${help}</div>
+    <div class="filter-chips">${groupChips}${indivChips}</div>
+  </div>`;
+}
+
 function buildConflictFilter() {
   const visible = filterByCellsExcept('conflict_only');
   const n = visible.filter(d => d.category_source === 'color≠vlm').length;
@@ -1044,8 +1256,9 @@ function renderFilters() {
       <span class="sub">活动情境（多选）+ 物理位置</span>
     </div>
     <div class="filter-rows">
-      ${buildChipRow('场景标签', SCENE_TAGS, 'scene_tags', { colorMap: SCENE_TAG_COLORS })}
+      ${buildChipRow('场景主题', SCENE_TAGS, 'scene_tags', { colorMap: SCENE_TAG_COLORS })}
       ${buildChipRow('场景大类', SCENE_CATEGORIES, 'scene_category', { colorMap: SCENE_CATEGORY_COLORS })}
+      ${buildElementChipRow()}
     </div>
   </div>`;
 
@@ -1149,6 +1362,18 @@ function matchesAllExcept(d, skipKey) {
     if (Array.isArray(val)) return val.some(v => filters[k].has(v));
     return filters[k].has(val);
   };
+  // 元素标签匹配：filter 里可能是组名，需要展开为成员后与卡片元素求交
+  const matchElements = () => {
+    if (skipKey === 'elements') return true;
+    if (filters.elements.size === 0) return true;
+    const cardElems = getElements(d);
+    if (cardElems.length === 0) return false;
+    for (const sel of filters.elements) {
+      const expanded = expandElement(sel);
+      if (expanded.some(e => cardElems.includes(e))) return true;
+    }
+    return false;
+  };
   if (!m('city', d.city)) return false;
   if (!m('persona', d.persona)) return false;
   if (!m('group', d.group || '')) return false;
@@ -1158,6 +1383,7 @@ function matchesAllExcept(d, skipKey) {
   if (!m('drink_reasons', allReasons)) return false;
   if (!m('scene_tags', tags)) return false;
   if (!m('scene_category', sceneCat)) return false;
+  if (!matchElements()) return false;
   if (!m('brand', d.brand)) return false;
   if (!m('temperature', d.temperature)) return false;
   if (!m('experience', d.experience)) return false;
@@ -1231,7 +1457,7 @@ function renderCard(d) {
   const srcTag = srcParts.length
     ? `<span class="src-tag">${srcParts.join(' · ')}</span>` : '';
 
-  // 场景标签：可编辑（× 删除 + ＋加标签）
+  // 场景主题：可编辑（× 删除 + ＋加标签）
   const tags = getSceneTags(d);
   const sceneTags = tags.map(t => {
     const cls = 'badge scene-tag' + (t === '无法分类' ? ' unclassified' : '');
@@ -1245,6 +1471,19 @@ function renderCard(d) {
   const sceneCat = d.scene && d.scene.category
     ? `<span class="badge small" style="background:${SCENE_CATEGORY_COLORS[d.scene.category]}33;color:${SCENE_CATEGORY_COLORS[d.scene.category]};border-color:${SCENE_CATEGORY_COLORS[d.scene.category]}55;">${d.scene.category}</span>`
     : '';
+
+  // 元素短语标签：组员显示组名，hover 看原始词
+  const elemMap = getElemToGroup();
+  const elemList = getElements(d);
+  const seenElems = new Set();
+  const elementBadges = elemList.map(e => {
+    const display = elemMap[e] || e;
+    if (seenElems.has(display)) return '';
+    seenElems.add(display);
+    const isGroup = !!elemMap[e];
+    const title = isGroup ? `组「${display}」· 原词: ${e}` : e;
+    return `<span class="badge small elem-on-card${isGroup ? ' grouped' : ''}" title="${escapeHtml(title)}">🔖 ${escapeHtml(display)}</span>`;
+  }).filter(Boolean).join('');
 
   const reasonBadges = [
     ...(d.drink_reasons_fixed || []).map(t =>
@@ -1288,6 +1527,7 @@ function renderCard(d) {
       </div>
       <div class="badges-primary">${primaryBadges}</div>
       <div class="badges-secondary">${sceneTags}${addBtn}${sceneCat}</div>
+      ${elementBadges ? `<div class="badges-secondary">${elementBadges}</div>` : ''}
       ${sceneDesc}
       ${drinkDesc}
       ${reasonBadges ? `<div class="badges-secondary">${reasonBadges}</div>` : ''}
