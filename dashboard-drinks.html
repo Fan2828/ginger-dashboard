@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>饮品卡看板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa; color: #222; padding: 20px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .hint { color: #888; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
+  .hint b { color: #444; }
+
+  .nav-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    border: 1px solid #ddd; background: #fff; color: #444;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f5f5f5; }
+  .nav-link.active { background: #222; color: #fff; border-color: #222; }
+
+  /* ── 筛选器面板 ── */
+  .filter-wrap {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .filter-group {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    overflow: hidden;
+  }
+  .filter-group-head {
+    background: #f7f7f7; padding: 8px 14px;
+    font-size: 12px; font-weight: 700; color: #555;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #eee;
+  }
+  .filter-group-head .icon { font-size: 14px; }
+  .filter-group-head .sub { font-size: 11px; font-weight: 400; color: #999; }
+  .filter-group-head .toggle {
+    margin-left: auto; cursor: pointer; user-select: none;
+    color: #555; background: #fff; border: 1px solid #ddd;
+    padding: 3px 10px; border-radius: 12px; font-size: 11px;
+    font-weight: 500;
+  }
+  .filter-group-head .toggle:hover { background: #f0f0f0; }
+
+  .filter-rows { padding: 4px 14px 8px; }
+  .filter-rows.secondary {
+    background: #fafafa; border-top: 1px dashed #eee;
+  }
+  .filter-rows.collapsed { display: none; }
+
+  .filter-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 5px 0;
+  }
+  .filter-row + .filter-row {
+    border-top: 1px dashed #f0f0f0;
+  }
+  .filter-label {
+    font-size: 11px; font-weight: 700; color: #777;
+    min-width: 78px; padding-top: 4px; flex-shrink: 0;
+  }
+  .filter-chips {
+    display: flex; flex-wrap: wrap; gap: 5px; flex: 1;
+  }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 12px; font-size: 12px;
+    background: #f5f5f5; color: #444; cursor: pointer;
+    border: 1px solid transparent; user-select: none;
+  }
+  .filter-chip:hover { background: #ebebeb; }
+  .filter-chip.active {
+    background: #222; color: #fff; border-color: #222;
+  }
+  .filter-chip.active.colored {
+    background: var(--chip-color, #222); border-color: var(--chip-color, #222);
+  }
+  .filter-chip .count {
+    background: rgba(0,0,0,0.08); padding: 0 6px;
+    border-radius: 8px; font-size: 10px;
+  }
+  .filter-chip.active .count { background: rgba(255,255,255,0.25); }
+  .filter-chip .swatch {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 3px; border: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
+  }
+  .btn {
+    background: #fff; border: 1px solid #ccc; padding: 4px 12px;
+    border-radius: 6px; cursor: pointer; font-size: 12px;
+  }
+  .btn:hover { background: #f5f5f5; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-warn { color: #b87900; border-color: #f5a623; }
+
+  .stats-line { font-size: 13px; color: #555; margin-bottom: 10px; }
+  .stats-line b { color: #222; }
+
+  /* ── 卡片网格 ── */
+  .group-head {
+    font-size: 13px; font-weight: 700; color: #555;
+    margin: 18px 0 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .group-head .group-count { color: #999; font-weight: 400; }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    position: relative;
+  }
+  .card.edited { border-color: #f5a623; }
+  .card .photo {
+    width: 100%; aspect-ratio: 9/26; object-fit: cover;
+    object-position: top center;
+    background: #f5f5f5; display: block; cursor: zoom-in;
+    border-bottom: 1px solid #eee;
+  }
+  .card .body { padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+
+  .badges-primary { display: flex; flex-wrap: wrap; gap: 4px; }
+  .badges-secondary { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 8px; border-radius: 10px; font-size: 11px;
+    font-weight: 600;
+  }
+  .badge.big { padding: 3px 10px; font-size: 12px; font-weight: 700; }
+  .badge.small {
+    padding: 1px 7px; font-size: 10px; font-weight: 500;
+    background: #f5f5f5; color: #666;
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .badge.cat-bottled { background: #d8c0e3; color: #4a2c5e; }
+  .badge.cat-street  { background: #d6efff; color: #1d4f7a; }
+  .badge.cat-home    { background: #98d6d0; color: #1d5752; }
+  .badge.cat-other   { background: #c0ffb6; color: #2a5e1f; }
+  .badge.subtype     { background: #fff3e0; color: #b75800; border: 1px solid #ffd9a8; }
+  .badge.scene-tag {
+    color: #fff; padding-right: 4px;
+  }
+  .badge.scene-tag .x {
+    cursor: pointer; opacity: 0.65; padding: 0 2px;
+    font-size: 13px; line-height: 1;
+  }
+  .badge.scene-tag .x:hover { opacity: 1; }
+  .badge.scene-tag.unclassified { background: #9e9e9e; }
+
+  .add-tag-btn {
+    background: #fff; border: 1px dashed #aaa; color: #666;
+    cursor: pointer; padding: 1px 8px; font-size: 11px;
+    border-radius: 10px; line-height: 1.4;
+  }
+  .add-tag-btn:hover { background: #f5f5f5; border-color: #666; }
+
+  .card .src-tag {
+    display: inline-block;
+    background: #f0f4ff; color: #4a5fb8; font-size: 10px;
+    font-weight: 600; padding: 1px 6px; border-radius: 8px;
+    border: 1px solid #d8e0f5;
+  }
+
+  .card .desc {
+    font-size: 11.5px; color: #555; line-height: 1.5;
+    background: #fafafa; padding: 6px 8px; border-radius: 5px;
+    border-left: 2px solid #ddd;
+  }
+  .card .desc.scene-desc { border-left-color: #b3d9c6; background: #f3faf7; }
+  .card .desc.note-desc  { border-left-color: #ffd9a8; background: #fffaf0; }
+
+  .card .meta {
+    font-size: 10.5px; color: #777; line-height: 1.5;
+    display: grid; grid-template-columns: auto 1fr; gap: 1px 8px;
+  }
+  .card .meta .k { color: #aaa; }
+
+  .card .conflict {
+    position: absolute; top: 6px; right: 6px;
+    background: #ffebee; color: #c62828; font-size: 10px;
+    padding: 2px 6px; border-radius: 8px; font-weight: 600;
+    border: 1px solid #ffcdd2;
+    cursor: help;
+  }
+  .card .edited-mark {
+    position: absolute; top: 6px; left: 6px;
+    background: #fff8e1; color: #b87900; font-size: 10px;
+    padding: 2px 6px; border-radius: 8px; font-weight: 600;
+    border: 1px solid #f5d77e;
+  }
+
+  .empty-state {
+    text-align: center; padding: 40px; color: #aaa; font-size: 14px;
+    background: #fff; border: 1px dashed #ddd; border-radius: 10px;
+  }
+
+  /* 标签选择弹窗 */
+  .tag-picker {
+    position: absolute; background: #fff; border: 1px solid #ddd;
+    border-radius: 10px; padding: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    z-index: 500; min-width: 220px; max-width: 280px;
+  }
+  .tag-picker-title {
+    font-size: 11px; color: #888; font-weight: 700;
+    margin-bottom: 6px; letter-spacing: 0.3px;
+  }
+  .tag-picker-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag-picker-item {
+    cursor: pointer; padding: 3px 9px; border-radius: 10px;
+    font-size: 11px; font-weight: 600; color: #fff;
+  }
+  .tag-picker-item.disabled { opacity: 0.3; cursor: not-allowed; }
+  .tag-picker-close {
+    position: absolute; top: 6px; right: 8px; cursor: pointer;
+    color: #888; font-size: 16px; line-height: 1;
+  }
+
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; cursor: zoom-out;
+  }
+  .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<h1>饮品卡看板</h1>
+<div class="hint">
+  每张饮品卡的<b>背景色</b>对应四大类（瓶装/街饮/自制/其他）。脚本通过色彩采样自动分类，
+  并用 VLM 提取场景标签 + 结构化字段。<b>红色角标</b> ⚠ 表示色彩判定与 VLM 分歧；
+  <b>橙色角标</b> ✏ 表示场景标签被人工编辑过。点击卡片上的标签 ✕ 可删除，点击 ＋ 加标签可手动添加。
+  改动会自动保存在浏览器里（localStorage）。
+</div>
+
+<div class="nav-bar">
+  <a class="nav-link" href="dashboard-v2.html">📍 希望瓶装热饮出现的场景</a>
+  <a class="nav-link" href="dashboard-heating.html">🔥 加热设备选型</a>
+  <a class="nav-link" href="dashboard-devices.html">📷 用户实拍设备</a>
+  <a class="nav-link" href="dashboard-complaints.html">💢 不好的体验</a>
+  <a class="nav-link" href="dashboard-scenes.html">🌆 用户场景卡</a>
+  <a class="nav-link active" href="dashboard-drinks.html">🥤 用户饮品卡</a>
+</div>
+
+<!-- 三大筛选区：场景 / 饮品 / 人群 -->
+<div class="filter-wrap" id="filter-wrap"></div>
+
+<div class="toolbar">
+  <div id="selection-info" style="font-size:13px;color:#666"></div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn" onclick="clearAllFilters()">清空所有筛选</button>
+    <button class="btn btn-warn" onclick="resetEdits()" id="reset-edits-btn" style="display:none;">恢复人工编辑</button>
+  </div>
+</div>
+
+<div class="stats-line" id="stats-line"></div>
+<div id="cards-area"></div>
+
+<div id="tag-picker" class="tag-picker" style="display:none"></div>
+<div id="lightbox" class="lightbox" style="display:none" onclick="this.style.display='none'"><img id="lightbox-img" src=""></div>
+
+<script>
+/* ───────── 数据 ───────── */
+const INIT_DATA = [
+  {
+    "id": "未知-未知-D01",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/其他-1.png",
+    "scene": {
+      "text": "2025年2月5日结婚纪念日。",
+      "category": "其他",
+      "tags": [
+        "无法分类"
+      ]
+    },
+    "drink_desc": "平常喜欢在家自己做咖啡",
+    "category": "其他",
+    "category_color": "其他",
+    "category_color_conf": 1.0,
+    "category_vlm": "自制饮品",
+    "category_source": "color≠vlm",
+    "subtype": "咖啡",
+    "brand": "自制",
+    "temperature": "热",
+    "taste": "美式",
+    "experience": "超棒",
+    "time_slots": [
+      "早晨",
+      "上午",
+      "下午"
+    ],
+    "frequency": "一周2-3次",
+    "company": "家人",
+    "purchase_place": "其他",
+    "note": "在家自制咖啡比较方便",
+    "drink_reasons_fixed": [],
+    "drink_reasons_custom": []
+  },
+  {
+    "id": "未知-未知-D02",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/其他.png",
+    "scene": {
+      "text": "收到最暖心的事情是收到来自朋友送的香水",
+      "category": "其他",
+      "tags": [
+        "无法分类"
+      ]
+    },
+    "drink_desc": "喝了柚子茶甜甜的很解腻，过节日收到了礼物，喝点甜甜的心情好",
+    "category": "其他",
+    "category_color": "其他",
+    "category_color_conf": 1.0,
+    "category_vlm": "街饮",
+    "category_source": "color≠vlm",
+    "subtype": "果汁",
+    "brand": "果子熟了",
+    "temperature": "热",
+    "taste": "柚子茶",
+    "experience": "超棒",
+    "time_slots": [
+      "早晨",
+      "中午",
+      "下午"
+    ],
+    "frequency": "一天1次",
+    "company": "自己",
+    "purchase_place": "超市/便利店",
+    "note": "吃油腻的东西可以喝柚子茶，很美味",
+    "drink_reasons_fixed": [
+      "解腻"
+    ],
+    "drink_reasons_custom": []
+  },
+  {
+    "id": "未知-未知-D03",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/瓶装饮品-1.png",
+    "scene": {
+      "text": "最冷的一天是我们东北下雪，三九天，呼呼冷，冰雪大世界也建成",
+      "category": "户外活动",
+      "tags": [
+        "休闲",
+        "旅游"
+      ]
+    },
+    "drink_desc": "我喜欢喝热的茶饮，喝茶很养生",
+    "category": "瓶装饮品",
+    "category_color": "瓶装饮品",
+    "category_color_conf": 1.0,
+    "category_vlm": "瓶装饮品",
+    "category_source": "color=vlm",
+    "subtype": "无糖茶",
+    "brand": "三得利",
+    "temperature": "热",
+    "taste": "乌龙茶",
+    "experience": "超棒",
+    "time_slots": [
+      "早晨",
+      "上午",
+      "中午",
+      "下午"
+    ],
+    "frequency": "一天多次",
+    "company": "自己",
+    "purchase_place": "超市/便利店",
+    "note": "喜欢喝茶，喝茶很养生",
+    "drink_reasons_fixed": [
+      "养生"
+    ],
+    "drink_reasons_custom": []
+  },
+  {
+    "id": "未知-未知-D04",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/瓶装饮品-2.png",
+    "scene": {
+      "text": "2025年第一次下雪的时候去了一个中央大街",
+      "category": "户外活动",
+      "tags": [
+        "旅游",
+        "休闲",
+        "慢悠悠"
+      ]
+    },
+    "drink_desc": "吃饭的地方结账的吧台有热饮，平常也会喝就买了一瓶。",
+    "category": "瓶装饮品",
+    "category_color": "瓶装饮品",
+    "category_color_conf": 1.0,
+    "category_vlm": "瓶装饮品",
+    "category_source": "color=vlm",
+    "subtype": "牛奶",
+    "brand": "宏宝莱",
+    "temperature": "热",
+    "taste": "花生",
+    "experience": "不错",
+    "time_slots": [
+      "早晨",
+      "中午",
+      "下午"
+    ],
+    "frequency": "一周1次",
+    "company": "自己",
+    "purchase_place": "其他",
+    "note": "东北特产",
+    "drink_reasons_fixed": [],
+    "drink_reasons_custom": []
+  },
+  {
+    "id": "未知-未知-D05",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/瓶装饮品-3.png",
+    "scene": {
+      "text": "那天天气很冷，在火车站附近买了一瓶热饮。",
+      "category": "户外活动",
+      "tags": [
+        "休闲"
+      ]
+    },
+    "drink_desc": "水",
+    "category": "瓶装饮品",
+    "category_color": "瓶装饮品",
+    "category_color_conf": 1.0,
+    "category_vlm": "瓶装饮品",
+    "category_source": "color=vlm",
+    "subtype": "包装水",
+    "brand": "农夫山泉",
+    "temperature": "热",
+    "taste": "水",
+    "experience": "不错",
+    "time_slots": [
+      "早晨",
+      "上午",
+      "中午"
+    ],
+    "frequency": "一周2-3次",
+    "company": "家人",
+    "purchase_place": "超市/便利店",
+    "note": "方便快捷",
+    "drink_reasons_fixed": [],
+    "drink_reasons_custom": []
+  },
+  {
+    "id": "未知-未知-D06",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/瓶装饮品.png",
+    "scene": {
+      "text": "哈尔滨的深夜，很美，伴着雪映出东方小巴黎的美丽",
+      "category": "公共室内",
+      "tags": [
+        "休闲",
+        "旅游"
+      ]
+    },
+    "drink_desc": "因为咖啡加热，会很好喝，口感更细腻",
+    "category": "瓶装饮品",
+    "category_color": "瓶装饮品",
+    "category_color_conf": 1.0,
+    "category_vlm": "瓶装饮品",
+    "category_source": "color=vlm",
+    "subtype": "咖啡",
+    "brand": "雀巢",
+    "temperature": "热",
+    "taste": "拿铁咖啡",
+    "experience": "超棒",
+    "time_slots": [
+      "晚上"
+    ],
+    "frequency": "一天多次",
+    "company": "家人",
+    "purchase_place": "超市/便利店",
+    "note": "跟家人一起喝咖啡，也可以不用去咖啡厅了，也能实现小聚，随时随地的都可以喝",
+    "drink_reasons_fixed": [
+      "提神"
+    ],
+    "drink_reasons_custom": []
+  },
+  {
+    "id": "未知-未知-D07",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/自制饮品-1.png",
+    "scene": {
+      "text": "冬天在家吃火锅",
+      "category": "居住室内",
+      "tags": [
+        "窝家里·家人"
+      ]
+    },
+    "drink_desc": "自制陈皮茶",
+    "category": "自制饮品",
+    "category_color": "自制饮品",
+    "category_color_conf": 1.0,
+    "category_vlm": "自制饮品",
+    "category_source": "color=vlm",
+    "subtype": "无糖茶",
+    "brand": "自制",
+    "temperature": "热",
+    "taste": "茶",
+    "experience": "超棒",
+    "time_slots": [
+      "早晨",
+      "上午",
+      "中午",
+      "下午",
+      "晚上"
+    ],
+    "frequency": "一天多次",
+    "company": "家人",
+    "purchase_place": "其他",
+    "note": "陈皮可以配不同的茶叶喝",
+    "drink_reasons_fixed": [],
+    "drink_reasons_custom": []
+  },
+  {
+    "id": "未知-未知-D08",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/自制饮品.png",
+    "scene": {
+      "text": "是过生日吃蛋糕，很开心，吃甜品可以让我快乐",
+      "category": "其他",
+      "tags": [
+        "密友相聚",
+        "节日"
+      ]
+    },
+    "drink_desc": "晚上过生日的时候来瓶咖啡，很提神",
+    "category": "自制饮品",
+    "category_color": "自制饮品",
+    "category_color_conf": 1.0,
+    "category_vlm": "瓶装饮品",
+    "category_source": "color≠vlm",
+    "subtype": "咖啡",
+    "brand": "贝纳颂",
+    "temperature": "热",
+    "taste": "拿铁咖啡",
+    "experience": "超棒",
+    "time_slots": [
+      "晚上"
+    ],
+    "frequency": "一天1次",
+    "company": "朋友",
+    "purchase_place": "超市/便利店",
+    "note": "喝咖啡，加点蒸奶都可以喝，提神",
+    "drink_reasons_fixed": [
+      "提神"
+    ],
+    "drink_reasons_custom": []
+  },
+  {
+    "id": "未知-未知-D09",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/街饮-1.png",
+    "scene": {
+      "text": "2025年刚入冬去了一起江边",
+      "category": "户外活动",
+      "tags": [
+        "旅游"
+      ]
+    },
+    "drink_desc": "那天库迪好像出新品了，正好买一杯岚岚",
+    "category": "街饮",
+    "category_color": "街饮",
+    "category_color_conf": 1.0,
+    "category_vlm": "街饮",
+    "category_source": "color=vlm",
+    "subtype": "咖啡",
+    "brand": "库迪",
+    "temperature": "热",
+    "taste": "生酮",
+    "experience": "不错",
+    "time_slots": [
+      "上午",
+      "下午"
+    ],
+    "frequency": "一周1次",
+    "company": "家人",
+    "purchase_place": "其他",
+    "note": "咖啡知名品牌",
+    "drink_reasons_fixed": [],
+    "drink_reasons_custom": []
+  },
+  {
+    "id": "未知-未知-D10",
+    "city": "未知",
+    "persona": "未知",
+    "group": "",
+    "card_image": "原始数据/饮品卡测试（哈尔滨左2）/街饮.png",
+    "scene": {
+      "text": "纪念日是结婚纪念日，必须有仪式感",
+      "category": "其他",
+      "tags": [
+        "无法分类"
+      ]
+    },
+    "drink_desc": "喝茶很暖胃，也很养生，而且不长肉",
+    "category": "街饮",
+    "category_color": "街饮",
+    "category_color_conf": 1.0,
+    "category_vlm": "瓶装饮品",
+    "category_source": "color≠vlm",
+    "subtype": "无糖茶",
+    "brand": "三得利",
+    "temperature": "热",
+    "taste": "乌龙茶",
+    "experience": "超棒",
+    "time_slots": [
+      "早晨",
+      "上午",
+      "中午",
+      "下午"
+    ],
+    "frequency": "一天1次",
+    "company": "朋友",
+    "purchase_place": "超市/便利店",
+    "note": "喜欢喝茶，喝茶不长肉",
+    "drink_reasons_fixed": [],
+    "drink_reasons_custom": []
+  }
+];
+
+/* ───────── 配置 ───────── */
+const CITIES = ['上海', '成都', '广州', '哈尔滨'];
+const PERSONAS = ['学生', '年轻白领', '中产', '中产·有娃'];
+
+const CATEGORIES = ['瓶装饮品', '街饮', '自制饮品', '其他'];
+const CATEGORY_COLORS = {
+  '瓶装饮品': '#d8c0e3', '街饮': '#d6efff',
+  '自制饮品': '#98d6d0', '其他': '#c0ffb6',
+};
+const CATEGORY_CLASS = {
+  '瓶装饮品': 'cat-bottled', '街饮': 'cat-street',
+  '自制饮品': 'cat-home', '其他': 'cat-other',
+};
+
+const SUBTYPES = ['牛奶', '咖啡', '奶茶', '有糖茶', '无糖茶',
+                  '包装水', '草本养生', '果汁', '植物蛋白', '可可饮'];
+const SUBTYPE_EMOJI = {
+  '牛奶': '🥛', '咖啡': '☕', '奶茶': '🧋', '有糖茶': '🍵', '无糖茶': '🍵',
+  '包装水': '💧', '草本养生': '🌿', '果汁': '🧃', '植物蛋白': '🥜', '可可饮': '🍫',
+};
+
+const SCENE_TAGS = [
+  '给予/收获温暖', '低落的时候', '偷懒',
+  '户外活动', '慢悠悠', '旅游', '景点乐园',
+  '大聚会', '密友相聚',
+  '窝家里·一人', '窝家里·家人', '家里聚餐',
+  '养生', '生病', '运动', '早餐',
+  '休闲', '通勤', '工作学习', '节日',
+  '无法分类',
+];
+const SCENE_TAG_COLORS = {
+  '给予/收获温暖': '#f06292', '低落的时候': '#5c6bc0', '偷懒': '#fdd835',
+  '户外活动': '#2e7d32', '慢悠悠': '#66bb6a',
+  '旅游': '#1e88e5', '景点乐园': '#ec407a',
+  '大聚会': '#fb8c00', '密友相聚': '#f57c00',
+  '窝家里·一人': '#8d6e63', '窝家里·家人': '#6d4c41',
+  '家里聚餐': '#d84315',
+  '养生': '#43a047', '生病': '#9e9e9e', '运动': '#00897b',
+  '早餐': '#f4a261',
+  '休闲': '#ffb300', '通勤': '#546e7a',
+  '工作学习': '#1976d2', '节日': '#e53935',
+  '无法分类': '#9e9e9e',
+};
+
+/* 「为什么喝」：固定 7 项 + GPT 自由提取，颜色不同 */
+const DRINK_REASONS_FIXED = ['提神', '能量补给', '佐餐', '解腻', '驱寒', '暖手', '养生'];
+const DRINK_REASON_COLORS = {
+  '提神': '#e91e63', '能量补给': '#d84315',
+  '佐餐': '#ff9800', '解腻': '#ffb74d',
+  '驱寒': '#c62828', '暖手': '#ff5722',
+  '养生': '#2e7d32',
+};
+const DRINK_REASON_CUSTOM_COLOR = '#90a4ae'; // 自由标签统一颜色
+
+const SCENE_CATEGORIES = ['居住室内', '工作/学习地点', '公共室内',
+                          '户外活动', '乘坐交通中', '其他'];
+const SCENE_CATEGORY_COLORS = {
+  '居住室内': '#FF7043', '工作/学习地点': '#42A5F5',
+  '公共室内': '#26A69A', '户外活动': '#FFA726',
+  '乘坐交通中': '#AB47BC', '其他': '#BDBDBD',
+};
+
+const TEMPERATURES = ['热', '冰', '常温'];
+const EXPERIENCES = ['超棒', '不错', '一般', '不好', '超差'];
+const EXP_EMOJI = { '超棒': '😍', '不错': '😁', '一般': '😐', '不好': '😢', '超差': '😱' };
+const TIME_SLOTS = ['早晨', '上午', '中午', '下午', '晚上', '深夜'];
+const FREQUENCIES = ['一天多次', '一天1次', '一周2-3次', '一周1次', '一月1次', '其他'];
+const COMPANIES = ['自己', '家人', '同事/同学', '朋友', '伴侣', '其他'];
+const PURCHASE_PLACES = ['自贩机/智能柜', '超市/便利店', '电商', '不是自己购买的', '其他'];
+
+/* ───────── 状态 ───────── */
+const filters = {
+  scene_tags: new Set(),
+  scene_category: new Set(),
+  category: new Set(),
+  subtype: new Set(),
+  drink_reasons: new Set(),
+  brand: new Set(),
+  temperature: new Set(),
+  experience: new Set(),
+  time_slots: new Set(),
+  frequency: new Set(),
+  company: new Set(),
+  purchase_place: new Set(),
+  city: new Set(),
+  persona: new Set(),
+  group: new Set(),
+  conflict_only: false,
+};
+
+let DATA = INIT_DATA.slice();
+let drinkSecondaryOpen = false;
+
+/* ───────── 人工编辑：localStorage ───────── */
+const EDITS_KEY = 'drinks_edits_v1';
+function loadEdits() {
+  try { return JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveEdits(e) {
+  localStorage.setItem(EDITS_KEY, JSON.stringify(e));
+}
+function getSceneTags(d) {
+  const edits = loadEdits();
+  if (edits[d.id] && edits[d.id].scene_tags) return edits[d.id].scene_tags;
+  return (d.scene && d.scene.tags) || [];
+}
+function setSceneTags(id, tags) {
+  const edits = loadEdits();
+  edits[id] = edits[id] || {};
+  edits[id].scene_tags = tags;
+  saveEdits(edits);
+}
+function isEdited(d) {
+  const edits = loadEdits();
+  const e = edits[d.id];
+  return !!(e && (e.scene_tags || e.category));
+}
+function clearEditFor(id) {
+  const edits = loadEdits();
+  delete edits[id];
+  saveEdits(edits);
+}
+function resetEdits() {
+  if (!confirm('确认清除所有人工编辑（含场景标签 + 饮品类型）？')) return;
+  localStorage.removeItem(EDITS_KEY);
+  renderAll();
+}
+
+/* 饮品类型（category）人工覆盖 */
+function getCategory(d) {
+  const edits = loadEdits();
+  if (edits[d.id] && edits[d.id].category) return edits[d.id].category;
+  return d.category;
+}
+function setCategory(id, cat) {
+  const edits = loadEdits();
+  edits[id] = edits[id] || {};
+  edits[id].category = cat;
+  saveEdits(edits);
+  renderAll();
+}
+function clearCategoryEdit(id) {
+  const edits = loadEdits();
+  if (edits[id]) {
+    delete edits[id].category;
+    if (Object.keys(edits[id]).length === 0) delete edits[id];
+    saveEdits(edits);
+  }
+  renderAll();
+}
+function isCategoryEdited(d) {
+  const edits = loadEdits();
+  return !!(edits[d.id] && edits[d.id].category);
+}
+
+function removeSceneTag(id, tag) {
+  const cur = getSceneTags(DATA.find(d => d.id === id));
+  const next = cur.filter(t => t !== tag);
+  setSceneTags(id, next.length ? next : ['无法分类']);
+  renderAll();
+}
+function addSceneTag(id, tag) {
+  const cur = getSceneTags(DATA.find(d => d.id === id));
+  if (cur.includes(tag)) return;
+  // 加新 tag 时去掉「无法分类」
+  const next = cur.filter(t => t !== '无法分类');
+  next.push(tag);
+  setSceneTags(id, next);
+  renderAll();
+}
+
+/* ───────── 标签选择弹窗 ───────── */
+function showTagPicker(id, anchorEl) {
+  const cur = getSceneTags(DATA.find(d => d.id === id));
+  const picker = document.getElementById('tag-picker');
+  const items = SCENE_TAGS.map(t => {
+    const has = cur.includes(t);
+    const cls = 'tag-picker-item' + (has ? ' disabled' : '');
+    const onclick = has ? '' : `onclick="addSceneTag(${JSON.stringify(id)}, ${JSON.stringify(t)});closeTagPicker();"`;
+    return `<span class="${cls}" style="background:${SCENE_TAG_COLORS[t]}" ${onclick}>${t}</span>`;
+  }).join('');
+  picker.innerHTML = `
+    <span class="tag-picker-close" onclick="closeTagPicker()">×</span>
+    <div class="tag-picker-title">选一个标签加入</div>
+    <div class="tag-picker-list">${items}</div>
+  `;
+  const r = anchorEl.getBoundingClientRect();
+  picker.style.display = 'block';
+  picker.style.left = `${window.scrollX + r.left}px`;
+  picker.style.top  = `${window.scrollY + r.bottom + 4}px`;
+}
+function closeTagPicker() {
+  document.getElementById('tag-picker').style.display = 'none';
+}
+
+/* ───────── 饮品类型选择弹窗（用于分歧卡片手动归类）───────── */
+function showCategoryPicker(id, anchorEl) {
+  const d = DATA.find(x => x.id === id);
+  if (!d) return;
+  const current = getCategory(d);
+  const colorCat = d.category_color;
+  const vlmCat   = d.category_vlm;
+  const isConflict = d.category_source === 'color≠vlm';
+  const isOverridden = isCategoryEdited(d);
+
+  const items = CATEGORIES.map(c => {
+    const isCurrent = current === c;
+    const tags = [];
+    if (c === colorCat) tags.push('🎨色彩');
+    if (c === vlmCat)   tags.push('🤖VLM');
+    const tagStr = tags.length
+      ? ` <small style="opacity:0.7;font-size:9px;">${tags.join(' ')}</small>` : '';
+    const cls = 'tag-picker-item' + (isCurrent ? ' current' : '');
+    const style = `background:${CATEGORY_COLORS[c]};${isCurrent ? 'outline:2px solid #f5a623;' : ''}`;
+    return `<span class="${cls}" style="${style}"
+        onclick="setCategory(${escapeAttr(id)}, ${escapeAttr(c)});closeTagPicker();">
+      ${c}${tagStr}
+    </span>`;
+  }).join('');
+
+  const conflictHint = isConflict
+    ? `<div style="font-size:11px;color:#888;margin-bottom:6px;">⚠ 色彩判定 <b>${colorCat}</b> ≠ VLM 判定 <b>${vlmCat}</b></div>`
+    : '';
+  const resetBtn = isOverridden
+    ? `<div style="margin-top:8px;"><button onclick="clearCategoryEdit(${escapeAttr(id)});closeTagPicker();" style="font-size:11px;padding:3px 10px;background:#fff;border:1px solid #ccc;border-radius:4px;cursor:pointer;">↺ 恢复 AI 默认</button></div>`
+    : '';
+
+  const picker = document.getElementById('tag-picker');
+  picker.innerHTML = `
+    <span class="tag-picker-close" onclick="closeTagPicker()">×</span>
+    <div class="tag-picker-title">选择饮品类型</div>
+    ${conflictHint}
+    <div class="tag-picker-list">${items}</div>
+    ${resetBtn}
+  `;
+  const r = anchorEl.getBoundingClientRect();
+  picker.style.display = 'block';
+  picker.style.left = `${window.scrollX + r.left}px`;
+  picker.style.top  = `${window.scrollY + r.bottom + 4}px`;
+}
+
+document.addEventListener('click', e => {
+  const picker = document.getElementById('tag-picker');
+  if (picker.style.display === 'block'
+      && !picker.contains(e.target)
+      && !e.target.classList.contains('add-tag-btn')
+      && !e.target.classList.contains('cat-pickable')
+      && !e.target.closest('.cat-pickable')) {
+    closeTagPicker();
+  }
+});
+
+/* ───────── 通用筛选器构造 ───────── */
+function escapeAttr(s) { return JSON.stringify(String(s)).replace(/"/g, '&quot;'); }
+
+function buildChipRow(label, options, key, opts = {}) {
+  const visible = filterByCellsExcept(key);
+  const counts = {};
+  visible.forEach(d => {
+    let v;
+    if (key === 'scene_tags') v = getSceneTags(d);
+    else if (key === 'scene_category') v = (d.scene && d.scene.category) || '';
+    else if (key === 'category') v = getCategory(d);
+    else v = d[key];
+    if (Array.isArray(v)) v.forEach(e => counts[e] = (counts[e] || 0) + 1);
+    else if (v) counts[v] = (counts[v] || 0) + 1;
+  });
+  const present = Array.from(new Set([
+    ...options.filter(o => counts[o]),
+    ...Object.keys(counts).filter(o => !options.includes(o)),
+  ]));
+  if (present.length === 0) return '';
+
+  const chips = present.map(o => {
+    const active = filters[key].has(o);
+    const colorMap = opts.colorMap;
+    let style = '';
+    let cls = 'filter-chip' + (active ? ' active' : '');
+    if (colorMap && colorMap[o]) {
+      style = ` style="--chip-color:${colorMap[o]};"`;
+      if (active) cls += ' colored';
+    }
+    let swatch = '';
+    if (colorMap && colorMap[o]) {
+      swatch = `<span class="swatch" style="background:${colorMap[o]}"></span>`;
+    }
+    let icon = '';
+    if (opts.emojiMap && opts.emojiMap[o]) icon = `${opts.emojiMap[o]} `;
+    const count = counts[o] || 0;
+    return `<span class="${cls}"${style} onclick="toggleFilter('${key}', ${escapeAttr(o)})">
+      ${swatch}${icon}${o}<span class="count">${count}</span>
+    </span>`;
+  }).join('');
+
+  return `<div class="filter-row">
+    <div class="filter-label">${label}</div>
+    <div class="filter-chips">${chips}</div>
+  </div>`;
+}
+
+function buildDrinkReasonsFilter() {
+  const visible = filterByCellsExcept('drink_reasons');
+  const fixedCnt = {};
+  const customCnt = {};
+  visible.forEach(d => {
+    (d.drink_reasons_fixed || []).forEach(t => fixedCnt[t] = (fixedCnt[t] || 0) + 1);
+    (d.drink_reasons_custom || []).forEach(t => customCnt[t] = (customCnt[t] || 0) + 1);
+  });
+  const customTop = Object.entries(customCnt).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  const totalChips = Object.keys(fixedCnt).length + customTop.length;
+  if (totalChips === 0) return '';
+
+  const fixedChips = DRINK_REASONS_FIXED.filter(t => fixedCnt[t]).map(t => {
+    const active = filters.drink_reasons.has(t);
+    const color = DRINK_REASON_COLORS[t];
+    return `<span class="filter-chip${active ? ' active colored' : ''}"
+      style="--chip-color:${color};"
+      onclick="toggleFilter('drink_reasons', ${escapeAttr(t)})">
+      <span class="swatch" style="background:${color}"></span>${t}<span class="count">${fixedCnt[t]}</span>
+    </span>`;
+  }).join('');
+
+  const customChips = customTop.map(([t, n]) => {
+    const active = filters.drink_reasons.has(t);
+    return `<span class="filter-chip${active ? ' active' : ''}"
+      style="border:1px dashed #aaa;${active ? `background:${DRINK_REASON_CUSTOM_COLOR};color:#fff;border-style:solid;border-color:${DRINK_REASON_CUSTOM_COLOR};` : 'background:#fafafa;color:#555;'}"
+      onclick="toggleFilter('drink_reasons', ${escapeAttr(t)})"
+      title="GPT 自由提取标签">
+      ✦ ${t}<span class="count">${n}</span>
+    </span>`;
+  }).join('');
+
+  const tail = Object.keys(customCnt).length > customTop.length
+    ? `<span style="font-size:10px;color:#999;align-self:center;">+ ${Object.keys(customCnt).length - customTop.length} 个长尾</span>`
+    : '';
+
+  return `<div class="filter-row">
+    <div class="filter-label">为什么喝</div>
+    <div class="filter-chips">${fixedChips}${customChips}${tail}</div>
+  </div>`;
+}
+
+function buildBrandFilter() {
+  const visible = filterByCellsExcept('brand');
+  const counts = {};
+  visible.forEach(d => { if (d.brand) counts[d.brand] = (counts[d.brand] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  if (sorted.length === 0) return '';
+  const totalBrands = Object.keys(counts).length;
+  const tail = totalBrands > 10
+    ? `<span style="font-size:10px;color:#999;align-self:center;">+ ${totalBrands - 10} 个长尾未显示</span>`
+    : '';
+  const chips = sorted.map(([brand, n]) => {
+    const active = filters.brand.has(brand);
+    return `<span class="filter-chip${active ? ' active' : ''}"
+      onclick="toggleFilter('brand', ${escapeAttr(brand)})">
+      ${brand}<span class="count">${n}</span>
+    </span>`;
+  }).join('');
+  return `<div class="filter-row">
+    <div class="filter-label">品牌 (top10)</div>
+    <div class="filter-chips">${chips}${tail}</div>
+  </div>`;
+}
+
+function buildConflictFilter() {
+  const visible = filterByCellsExcept('conflict_only');
+  const n = visible.filter(d => d.category_source === 'color≠vlm').length;
+  if (n === 0) return '';
+  const active = filters.conflict_only;
+  return `<div class="filter-row">
+    <div class="filter-label">复核</div>
+    <div class="filter-chips">
+      <span class="filter-chip${active ? ' active' : ''}"
+        style="background:${active ? '#c62828' : '#ffebee'};color:${active ? '#fff' : '#c62828'};border-color:#ffcdd2;"
+        onclick="toggleConflictFilter()">
+        ⚠ 仅看色彩与 VLM 不一致<span class="count">${n}</span>
+      </span>
+    </div>
+  </div>`;
+}
+
+function renderFilters() {
+  const wrap = document.getElementById('filter-wrap');
+
+  // ─── 场景区 ───
+  const sceneSection = `<div class="filter-group">
+    <div class="filter-group-head">
+      <span class="icon">📍</span>
+      <span>场景</span>
+      <span class="sub">活动情境（多选）+ 物理位置</span>
+    </div>
+    <div class="filter-rows">
+      ${buildChipRow('场景标签', SCENE_TAGS, 'scene_tags', { colorMap: SCENE_TAG_COLORS })}
+      ${buildChipRow('场景大类', SCENE_CATEGORIES, 'scene_category', { colorMap: SCENE_CATEGORY_COLORS })}
+    </div>
+  </div>`;
+
+  // ─── 饮品区 ───
+  const drinkSecRows = [
+    buildBrandFilter(),
+    buildChipRow('温度',  TEMPERATURES,    'temperature'),
+    buildChipRow('体验',  EXPERIENCES,     'experience', { emojiMap: EXP_EMOJI }),
+    buildChipRow('时段',  TIME_SLOTS,      'time_slots'),
+    buildChipRow('频率',  FREQUENCIES,     'frequency'),
+    buildChipRow('同伴',  COMPANIES,       'company'),
+    buildChipRow('购买',  PURCHASE_PLACES, 'purchase_place'),
+    buildConflictFilter(),
+  ].filter(Boolean).join('');
+  const hasDrinkSec = filters.brand.size || filters.temperature.size
+    || filters.experience.size || filters.time_slots.size
+    || filters.frequency.size || filters.company.size
+    || filters.purchase_place.size || filters.conflict_only;
+  if (hasDrinkSec) drinkSecondaryOpen = true;
+  const secCls = drinkSecondaryOpen ? '' : ' collapsed';
+  const secLabel = drinkSecondaryOpen ? '收起 ▴' : '展开 ▾';
+
+  const drinkSection = `<div class="filter-group">
+    <div class="filter-group-head">
+      <span class="icon">🥤</span>
+      <span>饮品</span>
+      <span class="sub">类型 / 品类 主轴 · 次要标签可折叠</span>
+      <span class="toggle" onclick="toggleDrinkSecondary()">${secLabel}</span>
+    </div>
+    <div class="filter-rows">
+      ${buildChipRow('饮品类型', CATEGORIES, 'category', { colorMap: CATEGORY_COLORS })}
+      ${buildChipRow('品类',     SUBTYPES,   'subtype', { emojiMap: SUBTYPE_EMOJI })}
+      ${buildDrinkReasonsFilter()}
+    </div>
+    <div class="filter-rows secondary${secCls}">
+      ${drinkSecRows || '<div style="padding:8px 0;color:#aaa;font-size:11px;">当前数据中没有可筛选的次要标签</div>'}
+    </div>
+  </div>`;
+
+  // ─── 人群区 ───
+  const hasGroups = DATA.some(d => d.group);
+  const groupRow = hasGroups
+    ? buildChipRow('组别', [], 'group')
+    : '';
+  const personaSection = `<div class="filter-group">
+    <div class="filter-group-head">
+      <span class="icon">👤</span>
+      <span>人群</span>
+      <span class="sub">城市 · 人群${hasGroups ? ' · 组别' : ''}</span>
+    </div>
+    <div class="filter-rows">
+      ${buildChipRow('城市', CITIES, 'city')}
+      ${buildChipRow('人群', PERSONAS, 'persona')}
+      ${groupRow}
+    </div>
+  </div>`;
+
+  wrap.innerHTML = sceneSection + drinkSection + personaSection;
+
+  // 编辑按钮显示控制
+  const hasEdits = Object.keys(loadEdits()).length > 0;
+  document.getElementById('reset-edits-btn').style.display = hasEdits ? '' : 'none';
+}
+
+function toggleDrinkSecondary() {
+  drinkSecondaryOpen = !drinkSecondaryOpen;
+  renderAll();
+}
+
+function toggleFilter(key, value) {
+  if (filters[key].has(value)) filters[key].delete(value);
+  else filters[key].add(value);
+  renderAll();
+}
+function toggleConflictFilter() {
+  filters.conflict_only = !filters.conflict_only;
+  renderAll();
+}
+
+function clearAllFilters() {
+  Object.keys(filters).forEach(k => {
+    if (filters[k] instanceof Set) filters[k].clear();
+  });
+  filters.conflict_only = false;
+  renderAll();
+}
+
+/* ───────── 过滤逻辑 ───────── */
+function filterByCellsExcept(skipKey) {
+  return DATA.filter(d => matchesAllExcept(d, skipKey));
+}
+function applyAllFilters() {
+  return DATA.filter(d => matchesAllExcept(d, null));
+}
+function matchesAllExcept(d, skipKey) {
+  const tags = getSceneTags(d);
+  const sceneCat = (d.scene && d.scene.category) || '';
+  const m = (k, val) => {
+    if (skipKey === k) return true;
+    if (filters[k].size === 0) return true;
+    if (Array.isArray(val)) return val.some(v => filters[k].has(v));
+    return filters[k].has(val);
+  };
+  if (!m('city', d.city)) return false;
+  if (!m('persona', d.persona)) return false;
+  if (!m('group', d.group || '')) return false;
+  if (!m('category', getCategory(d))) return false;
+  if (!m('subtype', d.subtype)) return false;
+  const allReasons = [...(d.drink_reasons_fixed || []), ...(d.drink_reasons_custom || [])];
+  if (!m('drink_reasons', allReasons)) return false;
+  if (!m('scene_tags', tags)) return false;
+  if (!m('scene_category', sceneCat)) return false;
+  if (!m('brand', d.brand)) return false;
+  if (!m('temperature', d.temperature)) return false;
+  if (!m('experience', d.experience)) return false;
+  if (!m('time_slots', d.time_slots || [])) return false;
+  if (!m('frequency', d.frequency)) return false;
+  if (!m('company', d.company)) return false;
+  if (!m('purchase_place', d.purchase_place)) return false;
+  if (skipKey !== 'conflict_only' && filters.conflict_only
+      && d.category_source !== 'color≠vlm') return false;
+  return true;
+}
+
+/* ───────── 卡片渲染 ───────── */
+function renderCards() {
+  const filtered = applyAllFilters();
+  const stats = document.getElementById('stats-line');
+  stats.innerHTML = `共 <b>${filtered.length}</b> / ${DATA.length} 张饮品卡`;
+
+  const area = document.getElementById('cards-area');
+  if (filtered.length === 0) {
+    area.innerHTML = '<div class="empty-state">没有符合条件的饮品卡</div>';
+    return;
+  }
+
+  const grouped = {};
+  CATEGORIES.forEach(c => grouped[c] = []);
+  filtered.forEach(d => {
+    const c = getCategory(d);
+    if (!grouped[c]) grouped[c] = [];
+    grouped[c].push(d);
+  });
+
+  let html = '';
+  CATEGORIES.forEach(cat => {
+    const items = grouped[cat];
+    if (!items || items.length === 0) return;
+    html += `<div class="group-head">
+      <span class="badge big ${CATEGORY_CLASS[cat]}">${cat}</span>
+      <span class="group-count">${items.length} 张</span>
+    </div>`;
+    html += '<div class="cards-grid">';
+    items.forEach(d => html += renderCard(d));
+    html += '</div>';
+  });
+  area.innerHTML = html;
+}
+
+function renderCard(d) {
+  const cat = getCategory(d);
+  const catEdited = isCategoryEdited(d);
+  const conflict = d.category_source === 'color≠vlm' && !catEdited
+    ? `<div class="conflict" title="色彩判定=${d.category_color}，VLM判定=${d.category_vlm}">⚠ 分歧</div>`
+    : '';
+  const editedMark = isEdited(d) ? `<div class="edited-mark" title="人工编辑过">✏ 已编辑</div>` : '';
+
+  const catBadgeTitle = (d.category_source === 'color≠vlm' || catEdited)
+    ? `点击修改 · 色彩=${d.category_color || '?'} VLM=${d.category_vlm || '?'}${catEdited ? ' · 已人工指定' : ''}`
+    : '点击修改饮品类型';
+  const catBadge = `<span class="badge big ${CATEGORY_CLASS[cat]} cat-pickable"
+      title="${catBadgeTitle}"
+      style="cursor:pointer;${catEdited ? 'box-shadow:0 0 0 2px #f5a623;' : ''}"
+      onclick="event.stopPropagation();showCategoryPicker(${JSON.stringify(d.id)}, this)">${cat}${catEdited ? ' ✏' : ''}</span>`;
+
+  const primaryBadges = [
+    catBadge,
+    d.subtype ? `<span class="badge big subtype">${SUBTYPE_EMOJI[d.subtype] || ''} ${d.subtype}</span>` : '',
+  ].filter(Boolean).join('');
+
+  const srcParts = [d.city, d.persona].filter(s => s && s !== '未知');
+  if (d.group) srcParts.push(d.group);
+  const srcTag = srcParts.length
+    ? `<span class="src-tag">${srcParts.join(' · ')}</span>` : '';
+
+  // 场景标签：可编辑（× 删除 + ＋加标签）
+  const tags = getSceneTags(d);
+  const sceneTags = tags.map(t => {
+    const cls = 'badge scene-tag' + (t === '无法分类' ? ' unclassified' : '');
+    const color = SCENE_TAG_COLORS[t] || '#888';
+    return `<span class="${cls}" style="background:${color}">
+      ${t}<span class="x" onclick="event.stopPropagation();removeSceneTag(${JSON.stringify(d.id)}, ${JSON.stringify(t)})">×</span>
+    </span>`;
+  }).join('');
+  const addBtn = `<span class="add-tag-btn" onclick="event.stopPropagation();showTagPicker(${JSON.stringify(d.id)}, this)">＋ 加标签</span>`;
+
+  const sceneCat = d.scene && d.scene.category
+    ? `<span class="badge small" style="background:${SCENE_CATEGORY_COLORS[d.scene.category]}33;color:${SCENE_CATEGORY_COLORS[d.scene.category]};border-color:${SCENE_CATEGORY_COLORS[d.scene.category]}55;">${d.scene.category}</span>`
+    : '';
+
+  const reasonBadges = [
+    ...(d.drink_reasons_fixed || []).map(t =>
+      `<span class="badge" style="background:${DRINK_REASON_COLORS[t] || '#888'};color:#fff;">💡 ${t}</span>`
+    ),
+    ...(d.drink_reasons_custom || []).map(t =>
+      `<span class="badge" style="background:#fafafa;color:#555;border:1px dashed ${DRINK_REASON_CUSTOM_COLOR};">✦ ${escapeHtml(t)}</span>`
+    ),
+  ].join('');
+
+  const secondary = [
+    d.brand       ? `<span class="badge small">🏷 ${escapeHtml(d.brand)}</span>` : '',
+    d.temperature ? `<span class="badge small">🌡 ${d.temperature}</span>` : '',
+    d.experience  ? `<span class="badge small">${EXP_EMOJI[d.experience] || ''} ${d.experience}</span>` : '',
+  ].filter(Boolean).join('');
+
+  const meta = [
+    d.taste ? ['口味', escapeHtml(d.taste)] : null,
+    d.time_slots && d.time_slots.length ? ['时段', d.time_slots.join(' · ')] : null,
+    d.frequency ? ['频率', d.frequency] : null,
+    d.company ? ['同伴', d.company] : null,
+    d.purchase_place ? ['购买', d.purchase_place] : null,
+  ].filter(Boolean).map(([k, v]) => `<span class="k">${k}</span><span>${v}</span>`).join('');
+
+  const sceneDesc = d.scene && d.scene.text
+    ? `<div class="desc scene-desc">📍 ${escapeHtml(d.scene.text)}</div>` : '';
+  const drinkDesc = d.drink_desc
+    ? `<div class="desc">🥤 ${escapeHtml(d.drink_desc)}</div>` : '';
+  const note = d.note
+    ? `<div class="desc note-desc">💬 ${escapeHtml(d.note)}</div>` : '';
+
+  return `<div class="card${isEdited(d) ? ' edited' : ''}">
+    ${conflict}${editedMark}
+    <img class="photo" src="${encodeURI(d.card_image)}" loading="lazy"
+         onclick="openLightbox('${encodeURI(d.card_image)}')"
+         onerror="this.style.background='#fee';this.alt='图片加载失败';">
+    <div class="body">
+      <div style="display:flex;justify-content:space-between;gap:6px;align-items:center;flex-wrap:wrap;">
+        ${srcTag}
+        <span style="font-size:10px;color:#bbb;">${d.id}</span>
+      </div>
+      <div class="badges-primary">${primaryBadges}</div>
+      <div class="badges-secondary">${sceneTags}${addBtn}${sceneCat}</div>
+      ${sceneDesc}
+      ${drinkDesc}
+      ${reasonBadges ? `<div class="badges-secondary">${reasonBadges}</div>` : ''}
+      <div class="badges-secondary">${secondary}</div>
+      <div class="meta">${meta}</div>
+      ${note}
+    </div>
+  </div>`;
+}
+
+/* ───────── 工具 ───────── */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').style.display = 'flex';
+}
+
+function updateSelectionInfo() {
+  const info = document.getElementById('selection-info');
+  const parts = [];
+  Object.keys(filters).forEach(k => {
+    if (filters[k] instanceof Set && filters[k].size) parts.push(`${k}:${filters[k].size}`);
+  });
+  if (filters.conflict_only) parts.push('仅分歧');
+  info.textContent = parts.length ? `已选：${parts.join(' · ')}` : '未筛选 · 显示全部卡片';
+}
+
+function renderAll() {
+  renderFilters();
+  renderCards();
+  updateSelectionInfo();
+}
+
+renderAll();
+</script>
+</body>
+</html>
