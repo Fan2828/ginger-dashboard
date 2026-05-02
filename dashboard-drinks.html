@@ -128,6 +128,11 @@
   .filter-chip .chip-color:hover { opacity: 1; transform: scale(1.15); }
   .filter-chip.elem-chip.active .chip-color { border-color: rgba(255,255,255,0.6); }
 
+  /* 元素标签展开行：label/toggle/help 单独一行，chips 占满整行宽 */
+  .filter-row.elem-row-open { flex-direction: column; align-items: stretch; gap: 4px; }
+  .elem-row-head { min-width: 0 !important; padding-top: 0 !important; }
+  .elem-row-chips { width: 100%; }
+
   /* 元素标签：紧凑（隐藏按钮不占位） */
   .filter-chip.elem-chip {
     padding: 2px 8px; font-size: 11px; gap: 3px;
@@ -24277,9 +24282,9 @@ function buildElementChipRow() {
     </span>`;
   }).join('');
 
-  return `<div class="filter-row">
-    <div class="filter-label">元素标签${toggle}${help}</div>
-    <div class="filter-chips">${chips}</div>
+  return `<div class="filter-row elem-row-open">
+    <div class="filter-label elem-row-head">元素标签${toggle}${help}</div>
+    <div class="filter-chips elem-row-chips">${chips}</div>
   </div>`;
 }
 
