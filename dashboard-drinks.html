@@ -24253,12 +24253,24 @@ function buildElementChipRow() {
   const total = names.length;
   if (total === 0) return '';
 
-  if (filters.elements.size > 0) elementsRowOpen = true;
   const toggle = `<span class="row-toggle" onclick="toggleElementsRow()">${elementsRowOpen ? '收起 ▴' : `▾ 展开元素标签 (${total})`}</span>`;
 
   if (!elementsRowOpen) {
+    // 收起时仍展示已选中的元素 chip，方便看到 / 取消
+    const activeNames = names.filter(n => filters.elements.has(n));
+    const activeChips = activeNames.map(name => {
+      const color = effectiveElementColor(name);
+      const cls = 'filter-chip elem-chip active' + (color ? ' has-color' : '');
+      const style = color
+        ? `background:${color};color:#fff;border:1px solid ${color};`
+        : '';
+      return `<span class="${cls}" style="${style}" onclick="toggleFilter('elements', ${escapeAttr(name)})">
+        ${escapeHtml(name)}<span class="count">${counts[name]}</span>
+      </span>`;
+    }).join('');
     return `<div class="filter-row">
       <div class="filter-label">元素标签${toggle}</div>
+      ${activeChips ? `<div class="filter-chips">${activeChips}</div>` : ''}
     </div>`;
   }
 
