@@ -127,6 +127,19 @@
   .filter-chip:hover .chip-color { opacity: 0.85; }
   .filter-chip .chip-color:hover { opacity: 1; transform: scale(1.15); }
   .filter-chip.elem-chip.active .chip-color { border-color: rgba(255,255,255,0.6); }
+
+  /* 元素标签：紧凑（隐藏按钮不占位） */
+  .filter-chip.elem-chip {
+    padding: 2px 8px; font-size: 11px; gap: 3px;
+  }
+  .filter-chip.elem-chip .count {
+    padding: 0 5px; font-size: 9px;
+  }
+  .filter-chip.elem-chip .chip-color,
+  .filter-chip.elem-chip .chip-edit { display: none; }
+  .filter-chip.elem-chip:hover .chip-color,
+  .filter-chip.elem-chip:hover .chip-edit { display: inline-block; opacity: 1; }
+  .filter-chip.elem-chip.has-color .chip-color { display: inline-block; opacity: 1; }
   .filter-chip.add-chip {
     background: #fff; color: #5b86c2; border: 1px dashed #aaa;
     cursor: pointer;
