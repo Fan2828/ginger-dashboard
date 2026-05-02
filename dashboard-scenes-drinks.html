@@ -1,0 +1,4952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>场景-饮品 配对看板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa; color: #222; padding: 20px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .hint { color: #888; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
+  .hint b { color: #444; }
+
+  .nav-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    border: 1px solid #ddd; background: #fff; color: #444;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f5f5f5; }
+  .nav-link.active { background: #222; color: #fff; border-color: #222; }
+
+  /* 类别筛选 chip 行 */
+  .cat-bar {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 14px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .cat-bar-label { font-size: 12px; color: #666; margin-right: 4px; }
+  .cat-chip {
+    padding: 6px 14px; border-radius: 14px; font-size: 13px;
+    cursor: pointer; border: 1px solid #ddd; background: #fff;
+    user-select: none; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .cat-chip:hover { background: #f5f5f5; }
+  .cat-chip.active {
+    background: #222; color: #fff; border-color: #222;
+  }
+  .cat-chip .cnt {
+    background: rgba(0,0,0,0.08); padding: 0 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+  }
+  .cat-chip.active .cnt { background: rgba(255,255,255,0.25); }
+
+  .filter-bar {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    padding: 8px 14px; margin-bottom: 14px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    font-size: 12px; color: #666;
+  }
+  .filter-bar select {
+    padding: 4px 10px; border: 1px solid #ccc; border-radius: 6px;
+    font-size: 12px;
+  }
+
+  /* 卡片网格 */
+  .grid {
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+  .card {
+    background: #fff; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); position: relative;
+    display: flex; flex-direction: column;
+  }
+  .card-cat-tag {
+    position: absolute; top: 10px; left: 10px;
+    font-size: 10px; padding: 3px 8px; border-radius: 10px;
+    color: #fff; font-weight: 700; z-index: 2;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .card-cat-tag.cat-1a { background: #f57c00; }      /* 自包含饮品卡 */
+  .card-cat-tag.cat-1b { background: #2e7d32; }      /* 配对成功 */
+  .card-cat-tag.cat-2  { background: #5c6bc0; }      /* 提到饮料 */
+  .card-cat-tag.cat-3  { background: #9e9e9e; }      /* 无饮料 */
+
+  .scene-photo {
+    width: 100%; aspect-ratio: 4/3; object-fit: cover;
+    background: #f0f0f0; cursor: pointer;
+  }
+  .card-body { padding: 12px 14px 14px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .scene-text {
+    font-size: 13px; color: #333; line-height: 1.5;
+  }
+  .scene-meta {
+    display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+    font-size: 11px;
+  }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10.5px; font-weight: 600; line-height: 1.5;
+  }
+  .badge.scene-cat {
+    background: #fff3e0; color: #e65100; border: 1px solid #ffcc80;
+  }
+  .badge.theme-l1 {
+    background: #e8eaf6; color: #303f9f; border: 1px solid #9fa8da;
+  }
+  .badge.theme-l2 {
+    background: #f5f5f5; color: #555; border: 1px solid #e0e0e0;
+  }
+  .badge.kw {
+    background: #fce4ec; color: #ad1457; border: 1px solid #f8bbd0;
+  }
+  .badge.src {
+    background: #f5f5f5; color: #777; border: 1px solid #ddd; font-weight: 500;
+  }
+
+  /* drink 区 */
+  .drink-block {
+    margin-top: 6px; padding: 10px 12px; border-radius: 8px;
+    background: #fafafa; border: 1px solid #eee;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .drink-block.is-1a { background: #fff7e8; border-color: #ffe0a8; }
+  .drink-block.is-1b { background: #f1f8e9; border-color: #cde5b6; }
+  .drink-thumb {
+    width: 70px; aspect-ratio: 1/1; object-fit: cover;
+    border-radius: 6px; background: #f0f0f0; flex-shrink: 0;
+    cursor: pointer;
+  }
+  .drink-meta { font-size: 11.5px; color: #555; line-height: 1.5; flex: 1; min-width: 0; }
+  .drink-meta b { color: #333; }
+  .drink-desc {
+    font-size: 11.5px; color: #666; margin-top: 4px;
+    line-height: 1.4; font-style: italic;
+  }
+
+  /* 没饮料 / 提到饮料的提示 */
+  .nobr {
+    margin-top: 6px; padding: 8px 12px; border-radius: 8px;
+    background: #f9f9f9; border: 1px dashed #ddd;
+    font-size: 11.5px; color: #888; text-align: center;
+  }
+  .kw-list {
+    margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px;
+    justify-content: center;
+  }
+
+  .empty {
+    text-align: center; color: #999; padding: 60px 20px;
+    grid-column: 1 / -1;
+  }
+
+  /* lightbox */
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; cursor: zoom-out;
+  }
+  .lightbox img { max-width: 92vw; max-height: 92vh; object-fit: contain; }
+</style>
+</head>
+
+<body>
+<h1>场景-饮品 配对看板</h1>
+<div class="hint">
+  以<b>场景</b>为视角整合数据：每张卡是一个场景，按 <b>是否有对应饮品卡</b> 分四类。
+  <b>1a</b> 自包含饮品卡（饮品卡内已写完整场景）·
+  <b>1b</b> 场景卡 + image_only 饮品卡配对成功 ·
+  <b>2</b> 场景文字提到饮料但无饮品卡 ·
+  <b>3</b> 场景未提及饮料。
+  数据从 <code>scripts/match_scene_drink.py</code> 自动 patch 进来。
+</div>
+
+<div class="nav-bar">
+  <a class="nav-link" href="dashboard-v2.html">📍 希望瓶装热饮出现的场景</a>
+  <a class="nav-link" href="dashboard-heating.html">🔥 加热设备选型</a>
+  <a class="nav-link" href="dashboard-devices.html">📷 用户实拍设备</a>
+  <a class="nav-link" href="dashboard-complaints.html">💢 不好的体验</a>
+  <a class="nav-link" href="dashboard-scenes.html">🌆 用户场景卡</a>
+  <a class="nav-link" href="dashboard-drinks.html">🥤 用户饮品卡</a>
+  <a class="nav-link active" href="dashboard-scenes-drinks.html">🔗 场景-饮品配对</a>
+</div>
+
+<div class="cat-bar" id="cat-bar"></div>
+
+<div class="filter-bar">
+  <span class="filter-bar-label">筛选：</span>
+  <select id="filter-city"><option value="">所有城市</option></select>
+  <select id="filter-persona"><option value="">所有人群</option></select>
+  <span style="margin-left:auto;color:#999" id="result-count"></span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div id="lightbox" class="lightbox" style="display:none" onclick="this.style.display='none'">
+  <img id="lightbox-img" src="">
+</div>
+
+<script>
+/* ───────── 数据 ───────── */
+const INIT_DATA = [
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "冬天周末休息的时候，在家里感觉很冷，想喝一些暖和的东西，又刚好到饭点，于是煮了汤来喝",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "窝家里-一家人/伴侣",
+      "养生"
+    ],
+    "scene_elements": [
+      "煮汤",
+      "冬天",
+      "在家"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D01",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/其他-1.png",
+      "scene": {
+        "text": "冬天周末休息的时候，在家里感觉很冷，想喝一些暖和的东西，又刚好到饭点，于是煮了汤来喝",
+        "category": "居住室内",
+        "tags": [
+          "窝家里-一家人/伴侣",
+          "养生"
+        ],
+        "elements": [
+          "煮汤",
+          "冬天",
+          "在家"
+        ]
+      },
+      "drink_desc": "猪肉汤味",
+      "category": "其他",
+      "category_color": "其他",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color≠vlm",
+      "subtype": "草本养生",
+      "brand": "自制",
+      "temperature": "热",
+      "taste": "猪肉汤味",
+      "experience": "超棒",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一月1次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "喝起来是真的鲜，喝一口感觉身体就暖和了，里面的肉吃起来也很好香",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D01",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "日常白开水何时何地都可以饮用",
+    "scene_category": "其他",
+    "scene_tags": [
+      "无法分类"
+    ],
+    "scene_elements": [
+      "白开水"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D02",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/其他.png",
+      "scene": {
+        "text": "日常白开水何时何地都可以饮用",
+        "category": "其他",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [
+          "白开水"
+        ]
+      },
+      "drink_desc": "能解渴，给人体补充水分",
+      "category": "其他",
+      "category_color": "其他",
+      "category_color_conf": 1.0,
+      "category_vlm": "其他",
+      "category_source": "color=vlm",
+      "subtype": "无糖茶",
+      "brand": "自来水",
+      "temperature": "热",
+      "taste": "无味",
+      "experience": "超棒",
+      "time_slots": [
+        "早晨",
+        "上午",
+        "中午",
+        "下午",
+        "晚上",
+        "深夜"
+      ],
+      "frequency": "一天多次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "万物的神，生命物质的基础",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D02",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "冬天待在家里的时候会自己一锅煮，因为吃多了口味会有点重，配上一杯热饮就刚好，安安静静在家里，温暖又惬意",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "窝家里-一家人/伴侣",
+      "养生"
+    ],
+    "scene_elements": [
+      "冬天",
+      "热饮",
+      "家里"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D03",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-1.png",
+      "scene": {
+        "text": "冬天待在家里的时候会自己一锅煮，因为吃多了口味会有点重，配上一杯热饮就刚好，安安静静在家里，温暖又惬意",
+        "category": "居住室内",
+        "tags": [
+          "窝家里-一家人/伴侣",
+          "养生"
+        ],
+        "elements": [
+          "冬天",
+          "热饮",
+          "家里"
+        ]
+      },
+      "drink_desc": "农夫山泉打奶茶低糖，配料是真牛奶和原叶茶，没有乱七八糟的添加剂。",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "农夫山泉",
+      "temperature": "热",
+      "taste": "奶茶",
+      "experience": "超棒",
+      "time_slots": [
+        "早晨",
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "冬日空气干燥，长时间走路，看书或者逛街的时候喝的时常觉得很容易发干，我很爱喝，解渴又养人。",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D03",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "那天好像是冬至，和爱人一起去吃了一顿烤羊排，浑身暖和",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "蜜友相聚",
+      "户外活动"
+    ],
+    "scene_elements": [
+      "烤羊排",
+      "冬至",
+      "爱人"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D04",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-10.png",
+      "scene": {
+        "text": "那天好像是冬至，和爱人一起去吃了一顿烤羊排，浑身暖和",
+        "category": "户外活动",
+        "tags": [
+          "蜜友相聚",
+          "户外活动"
+        ],
+        "elements": [
+          "烤羊排",
+          "冬至",
+          "爱人"
+        ]
+      },
+      "drink_desc": "当时吃的有点腻了，所以去便利店买了一瓶这个柚香乌龙茶解腻",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "无糖茶",
+      "brand": "元气森林",
+      "temperature": "热",
+      "taste": "清淡水果茶味",
+      "experience": "不错",
+      "time_slots": [
+        "中午"
+      ],
+      "frequency": "一月1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "我发现茶类的饮品加热后味道更浓厚了，挺好喝的。",
+      "drink_reasons_fixed": [
+        "解腻"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D04",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "我的爱人过生日，给他选了一个小蛋糕，我们度过了一个快乐的生日",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "庆祝"
+    ],
+    "scene_elements": [
+      "生日",
+      "蛋糕",
+      "快乐"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D05",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-11.png",
+      "scene": {
+        "text": "我的爱人过生日，给他选了一个小蛋糕，我们度过了一个快乐的生日",
+        "category": "居住室内",
+        "tags": [
+          "庆祝"
+        ],
+        "elements": [
+          "生日",
+          "蛋糕",
+          "快乐"
+        ]
+      },
+      "drink_desc": "当时过生日时吃的凉菜，吃完后有点口干舌燥了，所以想喝点暖的，甜甜的",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "草本养生",
+      "brand": "元气自水",
+      "temperature": "热",
+      "taste": "豆香微甜",
+      "experience": "不错",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一月1次",
+      "company": "伴侣",
+      "purchase_place": "超市/便利店",
+      "note": "这个饮品也适合加热",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D05",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "冬天上下班勤路上，我都会在地铁口附近的超市买瓶的惠米红豆水。可以替代热牛奶和豆浆，喝起来觉得可以提高代谢，清淡顺口。",
+    "scene_category": "乘坐交通中",
+    "scene_tags": [
+      "通勤"
+    ],
+    "scene_elements": [
+      "地铁",
+      "冬天",
+      "红豆水"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D06",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-2.png",
+      "scene": {
+        "text": "冬天上下班勤路上，我都会在地铁口附近的超市买瓶的惠米红豆水。可以替代热牛奶和豆浆，喝起来觉得可以提高代谢，清淡顺口。",
+        "category": "乘坐交通中",
+        "tags": [
+          "通勤"
+        ],
+        "elements": [
+          "地铁",
+          "冬天",
+          "红豆水"
+        ]
+      },
+      "drink_desc": "惠米红豆水可以缓解浮肿燥热，温和养生，适合日常工作前来一瓶，调养我即将受尘埃的身体",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "草本养生",
+      "brand": "元气森林",
+      "temperature": "热",
+      "taste": "c红豆",
+      "experience": "超棒",
+      "time_slots": [
+        "早晨",
+        "上午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "投入工作前，推荐大家喝上一杯温热的红豆惠米水能抵平浮躁。既能补水消肿，舒缓身体即将进入一天的工作",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D06",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "圣诞节那天，我和朋友一起去了万象城。橱窗里挂满彩灯，到处都是温暖的节日气氛。我们一边逛街、吃甜品、喝热饮，开心地度过了温馨的一天。",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "蜜友相聚",
+      "节日"
+    ],
+    "scene_elements": [
+      "圣诞节",
+      "朋友",
+      "温馨"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D07",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-3.png",
+      "scene": {
+        "text": "圣诞节那天，我和朋友一起去了万象城。橱窗里挂满彩灯，到处都是温暖的节日气氛。我们一边逛街、吃甜品、喝热饮，开心地度过了温馨的一天。",
+        "category": "公共室内",
+        "tags": [
+          "蜜友相聚",
+          "节日"
+        ],
+        "elements": [
+          "圣诞节",
+          "朋友",
+          "温馨"
+        ]
+      },
+      "drink_desc": "淡雅的玫瑰乌龙，口感温润又解腻。还是零糖的，冬天温热着喝，清甜舒缓，喝起...",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "",
+      "brand": "三得利",
+      "temperature": "热",
+      "taste": "玫瑰乌龙",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "朋友",
+      "purchase_place": "超市/便利店",
+      "note": "配料表也很干净，只有水、茶叶、玫瑰浓缩液和少量维生素C，碳酸氢钠，喝着放心。",
+      "drink_reasons_fixed": [
+        "解腻"
+      ],
+      "drink_reasons_custom": [
+        "好喝",
+        "方便"
+      ]
+    },
+    "drink_id": "中产无娃-成都-D07",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "我在工学院参加了插花课程，之后发现大家的插花作品被陈列在展览里。看着一件件精致好看的花艺作品，我认真拍照记录，这美好的学习回忆，一直记忆犹新。",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "插花课程",
+      "展览",
+      "花艺"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D08",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-4.png",
+      "scene": {
+        "text": "我在工学院参加了插花课程，之后发现大家的插花作品被陈列在展览里。看着一件件精致好看的花艺作品，我认真拍照记录，这美好的学习回忆，一直记忆犹新。",
+        "category": "公共室内",
+        "tags": [
+          "蜜友相聚"
+        ],
+        "elements": [
+          "插花课程",
+          "展览",
+          "花艺"
+        ]
+      },
+      "drink_desc": "百合麦冬",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "无糖茶",
+      "brand": "农夫山泉",
+      "temperature": "热",
+      "taste": "百合麦冬",
+      "experience": "不错",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一周2-3次",
+      "company": "朋友",
+      "purchase_place": "超市/便利店",
+      "note": "配料表简单简单的，零糖的，喝完整个人都放松了，把考虑、烦恼的疲惫缓解不少，意外的好喝，就一直记住这个味道了。希望多出一些草本饮品，真的很养生。",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D08",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "冬天的基本上每天早上都会喝一杯热牛奶来唤醒新的一天的来临",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "窝家里-一家人/伴侣"
+    ],
+    "scene_elements": [
+      "热牛奶",
+      "冬天",
+      "早晨"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D09",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-5.png",
+      "scene": {
+        "text": "冬天的基本上每天早上都会喝一杯热牛奶来唤醒新的一天的来临",
+        "category": "居住室内",
+        "tags": [
+          "窝家里-一家人/伴侣"
+        ],
+        "elements": [
+          "热牛奶",
+          "冬天",
+          "早晨"
+        ]
+      },
+      "drink_desc": "每天早上用开水泡热牛奶，补足每天的蛋白含量，开启活力的一天",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "新希望",
+      "temperature": "热",
+      "taste": "奶味",
+      "experience": "不错",
+      "time_slots": [
+        "早晨"
+      ],
+      "frequency": "一周2-3次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "即使配送的鲜奶比茶菌奶更甜，营养价值更高",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D09",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "当时还在成都SKP工地上班，冬天的晚上就突然下起了雪，成都很少下雪，还记得那天特别的冷。",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "户外活动"
+    ],
+    "scene_elements": [
+      "冬天",
+      "下雪",
+      "工地"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D10",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-6.png",
+      "scene": {
+        "text": "当时还在成都SKP工地上班，冬天的晚上就突然下起了雪，成都很少下雪，还记得那天特别的冷。",
+        "category": "户外活动",
+        "tags": [
+          "户外活动"
+        ],
+        "elements": [
+          "冬天",
+          "下雪",
+          "工地"
+        ]
+      },
+      "drink_desc": "当时走在街边时风很大，想喝一点温暖的东西来暖和身体，感觉甜甜热热的奶茶最适合了",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "统一",
+      "temperature": "热",
+      "taste": "原味奶茶",
+      "experience": "不错",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一天1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "味道品尝起来很好，甜味适中，很能暖和身体，激发身体的活力",
+      "drink_reasons_fixed": [
+        "驱寒"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D10",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "和朋友一起参加欢乐音乐节举行的万圣节狂欢日，里面的鬼屋特别吓人，里面的NPC特别敬业。",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "旅游",
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "万圣节",
+      "音乐节",
+      "鬼屋"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D11",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-7.png",
+      "scene": {
+        "text": "和朋友一起参加欢乐音乐节举行的万圣节狂欢日，里面的鬼屋特别吓人，里面的NPC特别敬业。",
+        "category": "户外活动",
+        "tags": [
+          "旅游",
+          "蜜友相聚"
+        ],
+        "elements": [
+          "万圣节",
+          "音乐节",
+          "鬼屋"
+        ]
+      },
+      "drink_desc": "当时户外天气冷，有点困，我在便利店选择一个暖和又提神的饮品",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "咖啡",
+      "brand": "雀巢",
+      "temperature": "热",
+      "taste": "咖啡味",
+      "experience": "不错",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一月1次",
+      "company": "朋友",
+      "purchase_place": "超市/便利店",
+      "note": "拿铁咖啡的味道很丝滑，喝起来很舒服，提神效果也非常不错--",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D11",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "与家人一起去农家乐吃紫火鸡，紫火鸡的味道很好，分量也很多，当天我打麻将也赢了钱",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "农家乐",
+      "紫火鸡",
+      "麻将"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D12",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-8.png",
+      "scene": {
+        "text": "与家人一起去农家乐吃紫火鸡，紫火鸡的味道很好，分量也很多，当天我打麻将也赢了钱",
+        "category": "公共室内",
+        "tags": [
+          "蜜友相聚"
+        ],
+        "elements": [
+          "农家乐",
+          "紫火鸡",
+          "麻将"
+        ]
+      },
+      "drink_desc": "当时饭店里可以热豆奶，热豆奶可以在外面就餐时，解渴解辣",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color≠vlm",
+      "subtype": "植物蛋白",
+      "brand": "唯怡",
+      "temperature": "热",
+      "taste": "豆奶味",
+      "experience": "超棒",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一月1次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "热豆奶喝起来有很强的豆子味，奶味对豆子更加强烈，实属解辣神器",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D12",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "平时用餐的时候",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "无法分类"
+    ],
+    "scene_elements": [
+      "用餐",
+      "居住室内"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D13",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品-9.png",
+      "scene": {
+        "text": "平时用餐的时候",
+        "category": "居住室内",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [
+          "用餐",
+          "居住室内"
+        ]
+      },
+      "drink_desc": "平时上班吃午饭的时候，如果吃的比较油腻，就喜欢喝一瓶东方树叶的红茶解腻",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "无糖茶",
+      "brand": "东方树叶",
+      "temperature": "热",
+      "taste": "茶味",
+      "experience": "超棒",
+      "time_slots": [
+        "中午"
+      ],
+      "frequency": "一月1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "没有缺点",
+      "drink_reasons_fixed": [
+        "解腻"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D13",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "看永乐大典展览，静静看着留下的古籍残卷，纸张古朴，字迹工整，搭配手中的草本热饮，觉得自己也在和古人对话",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "休闲",
+      "工作学习"
+    ],
+    "scene_elements": [
+      "展览",
+      "古籍",
+      "草本热饮"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D14",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/瓶装饮品.png",
+      "scene": {
+        "text": "看永乐大典展览，静静看着留下的古籍残卷，纸张古朴，字迹工整，搭配手中的草本热饮，觉得自己也在和古人对话",
+        "category": "公共室内",
+        "tags": [
+          "休闲",
+          "工作学习"
+        ],
+        "elements": [
+          "展览",
+          "古籍",
+          "草本热饮"
+        ]
+      },
+      "drink_desc": "秋冬我经常嗓子不舒服。梨汤润喉，热饮喝着暖胃又润喉，清淡舒缓，喝完嗓子不会再咳嗽去",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "草本养生",
+      "brand": "淳享",
+      "temperature": "热",
+      "taste": "梨子",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "朋友",
+      "purchase_place": "超市/便利店",
+      "note": "冬日空气干燥，长时间走路，看书或者逛街的时候嗓子很容易发干发痒，我很爱喝，梨汤清甜润喉，解渴又养人。",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D14",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "给两位同一天生日的朋友庆祝生日。我们一起吃了2个蛋糕，说说笑笑，延续大家6年的友谊，大...",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "生日",
+      "蛋糕",
+      "朋友"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D15",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/自制饮品-1.png",
+      "scene": {
+        "text": "给两位同一天生日的朋友庆祝生日。我们一起吃了2个蛋糕，说说笑笑，延续大家6年的友谊，大...",
+        "category": "居住室内",
+        "tags": [
+          "蜜友相聚"
+        ],
+        "elements": [
+          "生日",
+          "蛋糕",
+          "朋友"
+        ]
+      },
+      "drink_desc": "和好朋友一起过生日那天，我们几个手残跟着视频菜手做了姜汁撞奶，简单用心的热饮，在那个冬日温热香甜，很有仪式感。围坐在一起聊天说笑，捧着也很暖...",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 0.09,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "自制，买的生...",
+      "temperature": "热",
+      "taste": "姜糖",
+      "experience": "超棒",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一周1次",
+      "company": "朋友",
+      "purchase_place": "其他",
+      "note": "欢迎激情分享",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D15",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "2026元旦时，我们朋友聚在一起。大家撑着热乎乎的旺仔牛奶，说说笑笑。在温暖的气氛里，一起迎接新的一年的到来。",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "蜜友相聚",
+      "庆祝"
+    ],
+    "scene_elements": [
+      "聚会",
+      "新年",
+      "牛奶"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D16",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/自制饮品-2.png",
+      "scene": {
+        "text": "2026元旦时，我们朋友聚在一起。大家撑着热乎乎的旺仔牛奶，说说笑笑。在温暖的气氛里，一起迎接新的一年的到来。",
+        "category": "居住室内",
+        "tags": [
+          "蜜友相聚",
+          "庆祝"
+        ],
+        "elements": [
+          "聚会",
+          "新年",
+          "牛奶"
+        ]
+      },
+      "drink_desc": "跨年的时候，和朋友一起喝旺仔牛奶，本来红红火火的特别有气氛。看着就喜欢，希望大家新年旺旺，寓意也很好。",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 0.17,
+      "category_vlm": "街饮",
+      "category_source": "color≠vlm",
+      "subtype": "牛奶",
+      "brand": "旺仔",
+      "temperature": "热",
+      "taste": "甜的",
+      "experience": "不错",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一周2-3次",
+      "company": "朋友",
+      "purchase_place": "超市/便利店",
+      "note": "跨年喝旺仔，寓意新的一年事事旺旺，好运连连。入口香甜顺滑，奶味浓郁，甜甜腻腻的生活都冲淡了。尤其热的喝是真的甜到心里，希望大家都能抛开所有烦恼，日子红火顺遂，万事兴旺。",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D16",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "冬天我穿子不好服时，我父母就会给我煮梨汤来润喉喝",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "养生",
+      "窝家里-一家人/伴侣"
+    ],
+    "scene_elements": [
+      "冬天",
+      "梨汤",
+      "润喉"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D17",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/自制饮品-3.png",
+      "scene": {
+        "text": "冬天我穿子不好服时，我父母就会给我煮梨汤来润喉喝",
+        "category": "居住室内",
+        "tags": [
+          "养生",
+          "窝家里-一家人/伴侣"
+        ],
+        "elements": [
+          "冬天",
+          "梨汤",
+          "润喉"
+        ]
+      },
+      "drink_desc": "梨汤既能清爽又能止咳，还能解除一身的寒气",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "草本养生",
+      "brand": "自制",
+      "temperature": "热",
+      "taste": "梨味",
+      "experience": "不错",
+      "time_slots": [
+        "早晨"
+      ],
+      "frequency": "一月1次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "父母的关爱融入饮品中，滋润孩子的身体和心灵",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D17",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "每天下午工作疲劳时，来一杯热气腾腾的茶",
+    "scene_category": "工作/学习地点",
+    "scene_tags": [
+      "休闲"
+    ],
+    "scene_elements": [
+      "工作",
+      "茶"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D18",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/自制饮品-4.png",
+      "scene": {
+        "text": "每天下午工作疲劳时，来一杯热气腾腾的茶",
+        "category": "工作/学习地点",
+        "tags": [
+          "休闲"
+        ],
+        "elements": [
+          "工作",
+          "茶"
+        ]
+      },
+      "drink_desc": "茶能提神，又能提供人体所需的茶多酚",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "无糖茶",
+      "brand": "自泡",
+      "temperature": "热",
+      "taste": "红茶",
+      "experience": "超棒",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "同事/同学",
+      "purchase_place": "电商",
+      "note": "下午空闲时，能给同事和我解除工作上的压力",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D18",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "当时周末天气很冷，朋友和我都想出去玩，",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "朋友",
+      "聊天",
+      "公共场所"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D19",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/自制饮品-5.png",
+      "scene": {
+        "text": "当时周末天气很冷，朋友和我都想出去玩，",
+        "category": "公共室内",
+        "tags": [
+          "蜜友相聚"
+        ],
+        "elements": [
+          "朋友",
+          "聊天",
+          "公共场所"
+        ]
+      },
+      "drink_desc": "当时周末天气很冷，朋友和我都想出去玩，于是大家选择到三圣乡里面点一个围炉煮茶来聊天天",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "无糖茶",
+      "brand": "自泡",
+      "temperature": "热",
+      "taste": "红茶味",
+      "experience": "超棒",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "其他",
+      "company": "朋友",
+      "purchase_place": "其他",
+      "note": "当时和朋友聊得特别开心，坐在草坪上也特别懒惰，感觉特别放松",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": [
+        "放松",
+        "社交"
+      ]
+    },
+    "drink_id": "中产无娃-成都-D19",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "一般冬天的周末，我回去超市买买新鲜草莓和牛奶，自己制作草莓奶昔，然后给花添水，欣赏自己的花",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "窝家里-一个人",
+      "养生"
+    ],
+    "scene_elements": [
+      "草莓",
+      "奶昔",
+      "花"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D20",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/自制饮品.png",
+      "scene": {
+        "text": "一般冬天的周末，我回去超市买买新鲜草莓和牛奶，自己制作草莓奶昔，然后给花添水，欣赏自己的花",
+        "category": "居住室内",
+        "tags": [
+          "窝家里-一个人",
+          "养生"
+        ],
+        "elements": [
+          "草莓",
+          "奶昔",
+          "花"
+        ]
+      },
+      "drink_desc": "自己打了热的牛奶草莓奶昔，草莓是超市买的，牛奶是菊乐的小瓶奶",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "菊乐",
+      "temperature": "热",
+      "taste": "草莓",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "加入新鲜草莓能增加多种维生素",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D20",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "去年的冬天，我终于结束了准备许久的重要笔试。走出考场后，我来到龙湖天街，看着天上锦鲤缓缓游动，紧绷的心瞬间放松下来，非常轻松与喜欢。",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "龙湖天街",
+      "放松",
+      "冬天"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D21",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/街饮-1.png",
+      "scene": {
+        "text": "去年的冬天，我终于结束了准备许久的重要笔试。走出考场后，我来到龙湖天街，看着天上锦鲤缓缓游动，紧绷的心瞬间放松下来，非常轻松与喜欢。",
+        "category": "公共室内",
+        "tags": [
+          "蜜友相聚"
+        ],
+        "elements": [
+          "龙湖天街",
+          "放松",
+          "冬天"
+        ]
+      },
+      "drink_desc": "书亦烧仙草1升装的超大桶让人满意，当时考完试天黑了，我也不想吃饭，就买的超有料的，抱着大桶吃（配个子），松地感觉幸福感拉满",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "书亦烧仙草",
+      "temperature": "热",
+      "taste": "奶茶",
+      "experience": "超棒",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一天1次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "基本半杯都是料，仙草冻滑滑的，配上Q弹珍珠、绵绵冰、椰果，感觉能吃到豆花的感觉，喝起来超有力量。茶底香浓，多喝也不错。可以当晚饭了",
+      "drink_reasons_fixed": [
+        "能量补给"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D21",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "冬天开车的时候，需要一杯热咖啡来提升",
+    "scene_category": "乘坐交通中",
+    "scene_tags": [
+      "无法分类"
+    ],
+    "scene_elements": [
+      "开车",
+      "冬天",
+      "热咖啡"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D22",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/街饮-2.png",
+      "scene": {
+        "text": "冬天开车的时候，需要一杯热咖啡来提升",
+        "category": "乘坐交通中",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [
+          "开车",
+          "冬天",
+          "热咖啡"
+        ]
+      },
+      "drink_desc": "咖啡既能提神，也满足我不爱吃早饭的能量需求",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "咖啡",
+      "brand": "瑞幸",
+      "temperature": "热",
+      "taste": "咖啡味",
+      "experience": "不错",
+      "time_slots": [
+        "早晨"
+      ],
+      "frequency": "一周1次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "咖啡豆的提神效果让我在开车途中，注意力更加集中",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D22",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "与朋友去上海迪士尼游玩，感觉园区里面人特别多，这施好玩，烟花特别好看。",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "旅游",
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "迪士尼",
+      "游玩",
+      "朋友"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D23",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/街饮-3.png",
+      "scene": {
+        "text": "与朋友去上海迪士尼游玩，感觉园区里面人特别多，这施好玩，烟花特别好看。",
+        "category": "户外活动",
+        "tags": [
+          "旅游",
+          "蜜友相聚"
+        ],
+        "elements": [
+          "迪士尼",
+          "游玩",
+          "朋友"
+        ]
+      },
+      "drink_desc": "当时在园区玩得又湿又累，想喝一杯热火又有能量的东西来消除饥饿",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "古茗",
+      "temperature": "热",
+      "taste": "珍珠奶茶",
+      "experience": "超棒",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "朋友",
+      "purchase_place": "其他",
+      "note": "奶茶的珍珠喝起来特别香，上面的雪顶也很香浓，大杯奶茶让我很满足",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D23",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "在上班的时候",
+    "scene_category": "工作/学习地点",
+    "scene_tags": [
+      "工作学习"
+    ],
+    "scene_elements": [
+      "上班",
+      "学习"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D24",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/街饮-4.png",
+      "scene": {
+        "text": "在上班的时候",
+        "category": "工作/学习地点",
+        "tags": [
+          "工作学习"
+        ],
+        "elements": [
+          "上班",
+          "学习"
+        ]
+      },
+      "drink_desc": "平时上班容易犯困。喝杯热黄油拿铁会好很多",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "咖啡",
+      "brand": "瑞幸",
+      "temperature": "热",
+      "taste": "黄油拿铁",
+      "experience": "不错",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "同事/同学",
+      "purchase_place": "其他",
+      "note": "好的，温暖又提神",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D24",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "在开车的时候",
+    "scene_category": "乘坐交通中",
+    "scene_tags": [
+      "通勤"
+    ],
+    "scene_elements": [
+      "开车",
+      "交通"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D25",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/街饮-5.png",
+      "scene": {
+        "text": "在开车的时候",
+        "category": "乘坐交通中",
+        "tags": [
+          "通勤"
+        ],
+        "elements": [
+          "开车",
+          "交通"
+        ]
+      },
+      "drink_desc": "有时候出去玩开车路上也会犯困，来杯热黄油美式提神",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "咖啡",
+      "brand": "瑞幸",
+      "temperature": "热",
+      "taste": "黄油美式",
+      "experience": "一般",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一月1次",
+      "company": "朋友",
+      "purchase_place": "其他",
+      "note": "虽然比起提神，但是有点苦",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D25",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "在聚餐吃饭的时候",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "聚餐",
+      "吃饭"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D26",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/街饮-6.png",
+      "scene": {
+        "text": "在聚餐吃饭的时候",
+        "category": "公共室内",
+        "tags": [
+          "蜜友相聚"
+        ],
+        "elements": [
+          "聚餐",
+          "吃饭"
+        ]
+      },
+      "drink_desc": "有时候在外面吃的很辣了，就喜欢点一杯喜欢茶的黑珍珠真牛奶解辣",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "喜茶",
+      "temperature": "热",
+      "taste": "甜的",
+      "experience": "超棒",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一月1次",
+      "company": "朋友",
+      "purchase_place": "其他",
+      "note": "没有缺点",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D26",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "打游戏的时候",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "休闲"
+    ],
+    "scene_elements": [
+      "打游戏",
+      "居住室内"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D27",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/街饮-7.png",
+      "scene": {
+        "text": "打游戏的时候",
+        "category": "居住室内",
+        "tags": [
+          "休闲"
+        ],
+        "elements": [
+          "打游戏",
+          "居住室内"
+        ]
+      },
+      "drink_desc": "冬天打游戏本来手就冷，身上也冷，这个时候喜欢点杯霸王茶姬的伯牙绝弦",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "霸王茶姬",
+      "temperature": "热",
+      "taste": "清甜花香",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "喝了容易精神睡不着",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D27",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "在广州游玩时看到街边随处可见沙糖桩树，问了老板这边是他们这边过年的习俗",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "户外活动"
+    ],
+    "scene_elements": [
+      "广州",
+      "游玩",
+      "沙糖桩树"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D28",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/街饮-8.png",
+      "scene": {
+        "text": "在广州游玩时看到街边随处可见沙糖桩树，问了老板这边是他们这边过年的习俗",
+        "category": "户外活动",
+        "tags": [
+          "户外活动"
+        ],
+        "elements": [
+          "广州",
+          "游玩",
+          "沙糖桩树"
+        ]
+      },
+      "drink_desc": "当时在广州街头散步，那天有点风，然后刚好路过一个茉莉奶白奶茶店，就买了一杯热饮",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "茉莉奶白",
+      "temperature": "热",
+      "taste": "奶香茶味",
+      "experience": "超棒",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一月1次",
+      "company": "伴侣",
+      "purchase_place": "其他",
+      "note": "这个奶茶我点的不额外加糖，但是有些淡了，也几乎没有茶香，一般般吧。",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D28",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "冬天吃火锅容易爆热肚子，我会来一瓶热茶加牛奶来解腻，算是自制养莉奶绿，解腻又降火。",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "窝家里-一家人/伴侣"
+    ],
+    "scene_elements": [
+      "火锅",
+      "热茶",
+      "牛奶"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产无娃-成都-D29",
+      "city": "成都",
+      "persona": "中产无娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产无娃-成都/饮品/街饮.png",
+      "scene": {
+        "text": "冬天吃火锅容易爆热肚子，我会来一瓶热茶加牛奶来解腻，算是自制养莉奶绿，解腻又降火。",
+        "category": "公共室内",
+        "tags": [
+          "窝家里-一家人/伴侣"
+        ],
+        "elements": [
+          "火锅",
+          "热茶",
+          "牛奶"
+        ]
+      },
+      "drink_desc": "在便利店直接买热的东方树叶茉莉花茶，喝掉一半再倒入热牛奶。完美高配版茉莉奶绿～",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "东方树叶、今典",
+      "temperature": "热",
+      "taste": "奶茶",
+      "experience": "超棒",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一周2-3次",
+      "company": "家人",
+      "purchase_place": "超市/便利店",
+      "note": "东方树叶茉莉花茶是0糖的，茉莉香味很自然，适合配糖的，再加上新鲜热牛奶，口感混合香气清爽，很适合解腻，比外面更好的茶饮健康多，受爱的高配版茉莉奶绿。",
+      "drink_reasons_fixed": [
+        "解腻"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产无娃-成都-D29",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "去爬了一次野山",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "户外活动"
+    ],
+    "scene_elements": [
+      "爬山",
+      "野山"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D01",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/其他-1.png",
+      "scene": {
+        "text": "去爬了一次野山",
+        "category": "户外活动",
+        "tags": [
+          "户外活动"
+        ],
+        "elements": [
+          "爬山",
+          "野山"
+        ]
+      },
+      "drink_desc": "喝点甜的更容易补充能量",
+      "category": "其他",
+      "category_color": "其他",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color≠vlm",
+      "subtype": "奶茶",
+      "brand": "统一",
+      "temperature": "热",
+      "taste": "甜的",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "朋友",
+      "purchase_place": "自贩机/智能柜",
+      "note": "需要爬山的时候补充一点能量",
+      "drink_reasons_fixed": [
+        "能量补给"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D01",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "有时候闲逛",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "休闲",
+      "户外活动"
+    ],
+    "scene_elements": [
+      "闲逛"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D02",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/其他-2.png",
+      "scene": {
+        "text": "有时候闲逛",
+        "category": "户外活动",
+        "tags": [
+          "休闲",
+          "户外活动"
+        ],
+        "elements": [
+          "闲逛"
+        ]
+      },
+      "drink_desc": "闭翘偌尔喝点咖啡",
+      "category": "其他",
+      "category_color": "其他",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color≠vlm",
+      "subtype": "咖啡",
+      "brand": "库迪",
+      "temperature": "热",
+      "taste": "茉莉",
+      "experience": "不错",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一天1次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "咖啡不会太浓郁，喝了也不影响睡觉",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": [
+        "解渴",
+        "好喝"
+      ]
+    },
+    "drink_id": "中产有娃-成都-D02",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "2月的复古街中",
+    "scene_category": "其他",
+    "scene_tags": [
+      "无法分类"
+    ],
+    "scene_elements": [
+      "复古街",
+      "春节",
+      "人群"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D03",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/其他-3.png",
+      "scene": {
+        "text": "2月的复古街中",
+        "category": "其他",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [
+          "复古街",
+          "春节",
+          "人群"
+        ]
+      },
+      "drink_desc": "逛街随便喝一些奶茶",
+      "category": "其他",
+      "category_color": "其他",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color≠vlm",
+      "subtype": "奶茶",
+      "brand": "兵立王",
+      "temperature": "热",
+      "taste": "薄荷",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "奶味比较浓郁，薄荷味道比较好，很喜欢",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D03",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "周末户外钓鱼",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "户外活动"
+    ],
+    "scene_elements": [
+      "钓鱼",
+      "周末"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D04",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/其他.png",
+      "scene": {
+        "text": "周末户外钓鱼",
+        "category": "户外活动",
+        "tags": [
+          "户外活动"
+        ],
+        "elements": [
+          "钓鱼",
+          "周末"
+        ]
+      },
+      "drink_desc": "喝起了什么？很解渴",
+      "category": "其他",
+      "category_color": "其他",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color≠vlm",
+      "subtype": "植物蛋白",
+      "brand": "盒马",
+      "temperature": "热",
+      "taste": "甜",
+      "experience": "不错",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "超市/便利店",
+      "note": "喝起不是很甜，但是真的很暖心",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D04",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "日常聚餐和家人",
+    "scene_category": "其他",
+    "scene_tags": [
+      "家里聚餐"
+    ],
+    "scene_elements": [
+      "聚餐",
+      "家人"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D05",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-1.png",
+      "scene": {
+        "text": "日常聚餐和家人",
+        "category": "其他",
+        "tags": [
+          "家里聚餐"
+        ],
+        "elements": [
+          "聚餐",
+          "家人"
+        ]
+      },
+      "drink_desc": "柚子茶比较解腻，冬天也比较暖胃",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "有糖茶",
+      "brand": "康师傅",
+      "temperature": "热",
+      "taste": "柚子",
+      "experience": "不错",
+      "time_slots": [
+        "中午",
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "和家人一起分享甜蜜时刻",
+      "drink_reasons_fixed": [
+        "解腻"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D05",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "极具降温，非常的冷",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "无法分类"
+    ],
+    "scene_elements": [],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D06",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-10.png",
+      "scene": {
+        "text": "极具降温，非常的冷",
+        "category": "公共室内",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": []
+      },
+      "drink_desc": "下午的冬天喝一点下午茶感觉挺棒的",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "无糖茶",
+      "brand": "农夫山泉",
+      "temperature": "热",
+      "taste": "茶味",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "同事/同学",
+      "purchase_place": "超市/便利店",
+      "note": "就喜欢在冬天的下午喝点下午茶，既不会长胖也不会分脏",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D06",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "外出去旅游闲逛",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "旅游"
+    ],
+    "scene_elements": [
+      "旅游",
+      "闲逛"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D07",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-11.png",
+      "scene": {
+        "text": "外出去旅游闲逛",
+        "category": "户外活动",
+        "tags": [
+          "旅游"
+        ],
+        "elements": [
+          "旅游",
+          "闲逛"
+        ]
+      },
+      "drink_desc": "外出闲逛没事的时候，喝点东方树叶热饮",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "有糖茶",
+      "brand": "东方树叶",
+      "temperature": "热",
+      "taste": "茉莉花茶",
+      "experience": "不错",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "同事/同学",
+      "purchase_place": "超市/便利店",
+      "note": "平时日常闲喝点茶叶补充一点能量",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D07",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "在朋友聚会中",
+    "scene_category": "其他",
+    "scene_tags": [
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "聚会",
+      "朋友"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D09",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-13.png",
+      "scene": {
+        "text": "在朋友聚会中",
+        "category": "其他",
+        "tags": [
+          "蜜友相聚"
+        ],
+        "elements": [
+          "聚会",
+          "朋友"
+        ]
+      },
+      "drink_desc": "唯怡豆奶热饮，因为烧烤比较辣，可以缓解辣味油腻等",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "唯怡",
+      "temperature": "热",
+      "taste": "豆奶原味",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "不是自己购买的",
+      "note": "我觉得这款豆奶味道很好，很适合烧烤火锅等解腻的暖饮",
+      "drink_reasons_fixed": [
+        "解腻"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D09",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "工作有时候上班太累或者偶尔闲暇时刻喝喝沙奶茶热饮",
+    "scene_category": "工作/学习地点",
+    "scene_tags": [
+      "窝家里-一个人",
+      "休闲"
+    ],
+    "scene_elements": [
+      "工作",
+      "沙奶茶",
+      "热饮"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D10",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-14.png",
+      "scene": {
+        "text": "工作有时候上班太累或者偶尔闲暇时刻喝喝沙奶茶热饮",
+        "category": "工作/学习地点",
+        "tags": [
+          "窝家里-一个人",
+          "休闲"
+        ],
+        "elements": [
+          "工作",
+          "沙奶茶",
+          "热饮"
+        ]
+      },
+      "drink_desc": "工作有时候上班太累或者偶尔闲暇时刻喝喝沙奶茶热饮",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "统一",
+      "temperature": "热",
+      "taste": "原味",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一天1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "冬日太冷，适合一点暖饮，而且味道比较好喜欢",
+      "drink_reasons_fixed": [
+        "驱寒"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D10",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "早饭会喝热牛奶",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "早餐"
+    ],
+    "scene_elements": [
+      "早饭",
+      "牛奶"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D11",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-15.png",
+      "scene": {
+        "text": "早饭会喝热牛奶",
+        "category": "居住室内",
+        "tags": [
+          "早餐"
+        ],
+        "elements": [
+          "早饭",
+          "牛奶"
+        ]
+      },
+      "drink_desc": "补充钙和蛋白质",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "认养一头牛",
+      "temperature": "热",
+      "taste": "原味牛奶",
+      "experience": "不错",
+      "time_slots": [
+        "早晨"
+      ],
+      "frequency": "一天1次",
+      "company": "家人",
+      "purchase_place": "电商",
+      "note": "早餐牛奶一定加热喝，不要太烫，40°左右最好",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D11",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "买的液体饮品过不去安检所以在机内重新购买",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "休闲"
+    ],
+    "scene_elements": [
+      "机场",
+      "饮品"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D12",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-16.png",
+      "scene": {
+        "text": "买的液体饮品过不去安检所以在机内重新购买",
+        "category": "公共室内",
+        "tags": [
+          "休闲"
+        ],
+        "elements": [
+          "机场",
+          "饮品"
+        ]
+      },
+      "drink_desc": "在机场候机时买的热牛奶，喝凉的会肚子不舒服",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "新希望",
+      "temperature": "热",
+      "taste": "草莓香芋",
+      "experience": "不错",
+      "time_slots": [
+        "中午"
+      ],
+      "frequency": "一月1次",
+      "company": "家人",
+      "purchase_place": "超市/便利店",
+      "note": "牛奶类的真的不太适合加热温度太高，便利店的热饮一直放在暖柜里可以保温，但是觉得温度过高了些客厅我觉得...",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D12",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "冬天跟家里人一起出去玩的时，买了热的矿泉水，天冷出去玩喝热水",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "户外活动"
+    ],
+    "scene_elements": [
+      "冬天",
+      "家人",
+      "热水"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D13",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-17.png",
+      "scene": {
+        "text": "冬天跟家里人一起出去玩的时，买了热的矿泉水，天冷出去玩喝热水",
+        "category": "户外活动",
+        "tags": [
+          "户外活动"
+        ],
+        "elements": [
+          "冬天",
+          "家人",
+          "热水"
+        ]
+      },
+      "drink_desc": "喝热的矿泉水",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "包装水",
+      "brand": "农夫山泉",
+      "temperature": "热",
+      "taste": "白味",
+      "experience": "超棒",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "超市/便利店",
+      "note": "冬天在外面可以喝到热水，还不用一路拎带贵的太方便了",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D13",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "吃的干锅比较辣，喝豆奶可以解辣，而且冬天的时候店铺老板会有加热的豆奶选择",
+    "scene_category": "公共室内",
+    "scene_tags": [
+      "养生"
+    ],
+    "scene_elements": [
+      "干锅",
+      "豆奶",
+      "冬天"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D14",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-18.png",
+      "scene": {
+        "text": "吃的干锅比较辣，喝豆奶可以解辣，而且冬天的时候店铺老板会有加热的豆奶选择",
+        "category": "公共室内",
+        "tags": [
+          "养生"
+        ],
+        "elements": [
+          "干锅",
+          "豆奶",
+          "冬天"
+        ]
+      },
+      "drink_desc": "花生豆奶",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color≠vlm",
+      "subtype": "植物蛋白",
+      "brand": "唯怡",
+      "temperature": "热",
+      "taste": "花生豆奶",
+      "experience": "不错",
+      "time_slots": [
+        "中午"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "冬天吃必辣或者者辣的时候喝热豆奶格外舒服，又暖和又解辣",
+      "drink_reasons_fixed": [
+        "解腻",
+        "驱寒"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D14",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "下午陪孩子出门去户外捡红豆的路上，",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "户外活动"
+    ],
+    "scene_elements": [
+      "捡红豆",
+      "陪孩子"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D15",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-19.png",
+      "scene": {
+        "text": "下午陪孩子出门去户外捡红豆的路上，",
+        "category": "户外活动",
+        "tags": [
+          "户外活动"
+        ],
+        "elements": [
+          "捡红豆",
+          "陪孩子"
+        ]
+      },
+      "drink_desc": "下午陪孩子出门去户外捡红豆的路上，到全家便利店买了一瓶热咖啡。",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "咖啡",
+      "brand": "雀巢",
+      "temperature": "热",
+      "taste": "拿铁",
+      "experience": "一般",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "家人",
+      "purchase_place": "超市/便利店",
+      "note": "瓶装的咖啡加热后味道有点变，虽然冬天喝热咖啡挺适合的，但是瓶装咖啡其实是不适合加热温度太高",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D15",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "平时聚餐解馋",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "聚餐",
+      "解馋"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D16",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-2.png",
+      "scene": {
+        "text": "平时聚餐解馋",
+        "category": "户外活动",
+        "tags": [
+          "蜜友相聚"
+        ],
+        "elements": [
+          "聚餐",
+          "解馋"
+        ]
+      },
+      "drink_desc": "瓶装更方便，热饮冬日更友好",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "统一",
+      "temperature": "热",
+      "taste": "原味",
+      "experience": "不错",
+      "time_slots": [
+        "上午",
+        "中午"
+      ],
+      "frequency": "一周1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "平时日常饮用很方便",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D16",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "家人过生日准备的午饭，小朋友包含我们轻年的大人喝的加热后旺仔牛奶，既可以当饮料，",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "家里聚餐"
+    ],
+    "scene_elements": [
+      "生日",
+      "午饭",
+      "家人"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D17",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-20.png",
+      "scene": {
+        "text": "家人过生日准备的午饭，小朋友包含我们轻年的大人喝的加热后旺仔牛奶，既可以当饮料，",
+        "category": "居住室内",
+        "tags": [
+          "家里聚餐"
+        ],
+        "elements": [
+          "生日",
+          "午饭",
+          "家人"
+        ]
+      },
+      "drink_desc": "牛奶原味",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "旺仔",
+      "temperature": "热",
+      "taste": "牛奶原味",
+      "experience": "不错",
+      "time_slots": [
+        "中午"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "超市/便利店",
+      "note": "盒装饮料非常方便，在家可以加热带出门，或者直接在家喝都很方便，不担心冬天喝凉饮料了",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D17",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "营养快线冬日热饮，感觉很暖胃",
+    "scene_category": "其他",
+    "scene_tags": [
+      "养生"
+    ],
+    "scene_elements": [
+      "热饮",
+      "暖胃"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D20",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-5.png",
+      "scene": {
+        "text": "营养快线冬日热饮，感觉很暖胃",
+        "category": "其他",
+        "tags": [
+          "养生"
+        ],
+        "elements": [
+          "热饮",
+          "暖胃"
+        ]
+      },
+      "drink_desc": "营养快线冬日热饮，感觉很暖胃",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "妍哈哈",
+      "temperature": "热",
+      "taste": "原味",
+      "experience": "不错",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "早上补充能量热饮更温暖",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D20",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "冬季喝一杯养生茶感觉全身都很舒服",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "窝家里-一个人",
+      "养生"
+    ],
+    "scene_elements": [
+      "养生茶",
+      "冬季",
+      "舒服"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D23",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-8.png",
+      "scene": {
+        "text": "冬季喝一杯养生茶感觉全身都很舒服",
+        "category": "居住室内",
+        "tags": [
+          "窝家里-一个人",
+          "养生"
+        ],
+        "elements": [
+          "养生茶",
+          "冬季",
+          "舒服"
+        ]
+      },
+      "drink_desc": "自己泡的养生茶，感觉很舒服",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color≠vlm",
+      "subtype": "草本养生",
+      "brand": "",
+      "temperature": "热",
+      "taste": "甜的",
+      "experience": "不错",
+      "time_slots": [
+        "早晨",
+        "上午",
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "感觉喝起来特别养生温暖",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D23",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "下雪啦，而上是那种毛茸茸的大雪呀那种",
+    "scene_category": "",
+    "scene_tags": [
+      "无法分类"
+    ],
+    "scene_elements": [
+      "雪",
+      "冬天"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D24",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-9.png",
+      "scene": {
+        "text": "下雪啦，而上是那种毛茸茸的大雪呀那种",
+        "category": "",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [
+          "雪",
+          "冬天"
+        ]
+      },
+      "drink_desc": "想喝一点甜的饮品来补充能量",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "草本养生",
+      "brand": "润享",
+      "temperature": "热",
+      "taste": "甜的",
+      "experience": "不错",
+      "time_slots": [
+        "上午"
+      ],
+      "frequency": "一周1次",
+      "company": "朋友",
+      "purchase_place": "超市/便利店",
+      "note": "我觉得口感比较顺滑，没有太大的甜腻的感觉",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D24",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "日常与家人朋友外出",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "蜜友相聚"
+    ],
+    "scene_elements": [
+      "外出",
+      "家人",
+      "朋友"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D25",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品.png",
+      "scene": {
+        "text": "日常与家人朋友外出",
+        "category": "户外活动",
+        "tags": [
+          "蜜友相聚"
+        ],
+        "elements": [
+          "外出",
+          "家人",
+          "朋友"
+        ]
+      },
+      "drink_desc": "东方树叶带方便",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 0.1,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color≠vlm",
+      "subtype": "无糖茶",
+      "brand": "农夫山泉",
+      "temperature": "热",
+      "taste": "原味",
+      "experience": "不错",
+      "time_slots": [
+        "中午",
+        "晚上"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "超市/便利店",
+      "note": "感觉日常饮用非常棒",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D25",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "看到环卫工人很多早上都在工作，感觉很受触动",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "户外活动"
+    ],
+    "scene_elements": [
+      "环卫工人",
+      "早上",
+      "受触动"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D26",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/自制饮品-1.png",
+      "scene": {
+        "text": "看到环卫工人很多早上都在工作，感觉很受触动",
+        "category": "户外活动",
+        "tags": [
+          "户外活动"
+        ],
+        "elements": [
+          "环卫工人",
+          "早上",
+          "受触动"
+        ]
+      },
+      "drink_desc": "早上就觉得应该喝和白开水",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "包装水",
+      "brand": "",
+      "temperature": "热",
+      "taste": "白开水",
+      "experience": "超棒",
+      "time_slots": [
+        "早晨",
+        "上午"
+      ],
+      "frequency": "一天多次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "冬天早上一大杯白开水真的是非常的健康",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D26",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "在家有时候无聊发呆",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "窝家里-一个人"
+    ],
+    "scene_elements": [
+      "无聊",
+      "发呆"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D27",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/自制饮品-2.png",
+      "scene": {
+        "text": "在家有时候无聊发呆",
+        "category": "居住室内",
+        "tags": [
+          "窝家里-一个人"
+        ],
+        "elements": [
+          "无聊",
+          "发呆"
+        ]
+      },
+      "drink_desc": "在家无聊随便喝点",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "树夏",
+      "temperature": "热",
+      "taste": "芋头",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一天1次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "很好喝，料很足，很满足",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D27",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "在集中的",
+    "scene_category": "",
+    "scene_tags": [
+      "无法分类"
+    ],
+    "scene_elements": [
+      "聚会",
+      "放松"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D28",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/自制饮品-3.png",
+      "scene": {
+        "text": "在集中的",
+        "category": "",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [
+          "聚会",
+          "放松"
+        ]
+      },
+      "drink_desc": "热饮拿在手上暖暖的很贴心",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "霸王茶姬",
+      "temperature": "热",
+      "taste": "茉莉花茶",
+      "experience": "不错",
+      "time_slots": [
+        "上午"
+      ],
+      "frequency": "一天1次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "奶茶的味道很浓郁，层次感很强",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D28",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "在家一个人追剧",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "窝家里-一个人"
+    ],
+    "scene_elements": [
+      "追剧",
+      "在家"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D29",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/自制饮品-4.png",
+      "scene": {
+        "text": "在家一个人追剧",
+        "category": "居住室内",
+        "tags": [
+          "窝家里-一个人"
+        ],
+        "elements": [
+          "追剧",
+          "在家"
+        ]
+      },
+      "drink_desc": "冬天喝咖啡会先把牛奶和椰奶加热然后再调配，如果点外卖不如先做咖啡好喝享受制作过程",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "咖啡",
+      "brand": "自制",
+      "temperature": "热",
+      "taste": "生椰口味",
+      "experience": "超棒",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一天1次",
+      "company": "自己",
+      "purchase_place": "电商",
+      "note": "自制的热咖啡可以控制温度，做好能直接喝",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D29",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "双击输入",
+    "scene_category": "居住室内",
+    "scene_tags": [
+      "早餐"
+    ],
+    "scene_elements": [
+      "早餐",
+      "热水冲泡",
+      "营养"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D30",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/自制饮品-5.png",
+      "scene": {
+        "text": "双击输入",
+        "category": "居住室内",
+        "tags": [
+          "早餐"
+        ],
+        "elements": [
+          "早餐",
+          "热水冲泡",
+          "营养"
+        ]
+      },
+      "drink_desc": "早餐除了牛奶还会喝一杯热水冲泡的补气血的黄芪党参榨子粉",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "草本养生",
+      "brand": "南国",
+      "temperature": "热",
+      "taste": "榨子味",
+      "experience": "超棒",
+      "time_slots": [
+        "早晨",
+        "上午"
+      ],
+      "frequency": "一天多次",
+      "company": "自己",
+      "purchase_place": "电商",
+      "note": "这个粉必须用80°以上的热水才能冲开",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D30",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "周末在家里休闲的时候",
+    "scene_category": "",
+    "scene_tags": [
+      "窝家里-一个人"
+    ],
+    "scene_elements": [
+      "休闲",
+      "周末"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D31",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/自制饮品.png",
+      "scene": {
+        "text": "周末在家里休闲的时候",
+        "category": "",
+        "tags": [
+          "窝家里-一个人"
+        ],
+        "elements": [
+          "休闲",
+          "周末"
+        ]
+      },
+      "drink_desc": "喝一杯减脂茶感觉全身轻松",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "自制饮品",
+      "category_source": "color=vlm",
+      "subtype": "草本养生",
+      "brand": "",
+      "temperature": "热",
+      "taste": "酸甜",
+      "experience": "不错",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "自己",
+      "purchase_place": "电商",
+      "note": "周末会觉得特别的惬意",
+      "drink_reasons_fixed": [
+        "养生"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D31",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "假儿上班休闲状态不好的时候",
+    "scene_category": "工作/学习地点",
+    "scene_tags": [
+      "无法分类"
+    ],
+    "scene_elements": [
+      "上班",
+      "休闲",
+      "状态不好"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D32",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/街饮-1.png",
+      "scene": {
+        "text": "假儿上班休闲状态不好的时候",
+        "category": "工作/学习地点",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [
+          "上班",
+          "休闲",
+          "状态不好"
+        ]
+      },
+      "drink_desc": "上班有时候状态不好卸下自己的疲惫感",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "草本养生",
+      "brand": "东方山野茶",
+      "temperature": "热",
+      "taste": "木香",
+      "experience": "不错",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "卸下自己疲惫感",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D32",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "在工作开会的时候",
+    "scene_category": "工作/学习地点",
+    "scene_tags": [
+      "工作学习"
+    ],
+    "scene_elements": [
+      "会议",
+      "工作"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D33",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/街饮-2.png",
+      "scene": {
+        "text": "在工作开会的时候",
+        "category": "工作/学习地点",
+        "tags": [
+          "工作学习"
+        ],
+        "elements": [
+          "会议",
+          "工作"
+        ]
+      },
+      "drink_desc": "星巴克瓶装的感觉很方便，喝不完可以盖盖子",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color≠vlm",
+      "subtype": "咖啡",
+      "brand": "星巴克",
+      "temperature": "热",
+      "taste": "咖啡",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "同事/同学",
+      "purchase_place": "自贩机/智能柜",
+      "note": "咖啡下午上班不累，超提神",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D33",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "找到了一家非常好喝的咖啡",
+    "scene_category": "工作/学习地点",
+    "scene_tags": [
+      "休闲"
+    ],
+    "scene_elements": [
+      "咖啡",
+      "学习",
+      "好喝"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D34",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/街饮-3.png",
+      "scene": {
+        "text": "找到了一家非常好喝的咖啡",
+        "category": "工作/学习地点",
+        "tags": [
+          "休闲"
+        ],
+        "elements": [
+          "咖啡",
+          "学习",
+          "好喝"
+        ]
+      },
+      "drink_desc": "h佼尔喝一下咖啡感觉挺健康的",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "咖啡",
+      "brand": "OWL",
+      "temperature": "热",
+      "taste": "咖啡味",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周2-3次",
+      "company": "朋友",
+      "purchase_place": "其他",
+      "note": "下午就应该喝点咖啡提神",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D34",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "上班有时候状态不是很好喝点咖啡补充状态",
+    "scene_category": "工作/学习地点",
+    "scene_tags": [
+      "工作学习"
+    ],
+    "scene_elements": [
+      "上班",
+      "咖啡",
+      "状态"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D35",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/街饮-4.png",
+      "scene": {
+        "text": "上班有时候状态不是很好喝点咖啡补充状态",
+        "category": "工作/学习地点",
+        "tags": [
+          "工作学习"
+        ],
+        "elements": [
+          "上班",
+          "咖啡",
+          "状态"
+        ]
+      },
+      "drink_desc": "上班有时候状态不是很好喝点咖啡补充状态",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "咖啡",
+      "brand": "瑞幸",
+      "temperature": "热",
+      "taste": "茉莉",
+      "experience": "不错",
+      "time_slots": [
+        "上午"
+      ],
+      "frequency": "一天1次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "有时候状态不好，可以很好的恢复状态，而且服务很好",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D35",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "散步的时候，冬日拿在手上暖暖的，不冷手",
+    "scene_category": "其他",
+    "scene_tags": [
+      "休闲"
+    ],
+    "scene_elements": [
+      "散步",
+      "冬日",
+      "暖手"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D36",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/街饮-5.png",
+      "scene": {
+        "text": "散步的时候，冬日拿在手上暖暖的，不冷手",
+        "category": "其他",
+        "tags": [
+          "休闲"
+        ],
+        "elements": [
+          "散步",
+          "冬日",
+          "暖手"
+        ]
+      },
+      "drink_desc": "喝的是蜜雪冰城的奶茶",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "蜜雪冰城",
+      "temperature": "热",
+      "taste": "原味",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "同事/同学",
+      "purchase_place": "其他",
+      "note": "",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D36",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "去海边看海鸥的时候买了热饮",
+    "scene_category": "户外活动",
+    "scene_tags": [
+      "蜜友相聚",
+      "休闲"
+    ],
+    "scene_elements": [
+      "海边",
+      "海鸥",
+      "热饮"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D38",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/街饮-7.png",
+      "scene": {
+        "text": "去海边看海鸥的时候买了热饮",
+        "category": "户外活动",
+        "tags": [
+          "蜜友相聚",
+          "休闲"
+        ],
+        "elements": [
+          "海边",
+          "海鸥",
+          "热饮"
+        ]
+      },
+      "drink_desc": "去海边看海鸥的时候买了热饮奶茶",
+      "category": "自制饮品",
+      "category_color": "自制饮品",
+      "category_color_conf": 0.12,
+      "category_vlm": "街饮",
+      "category_source": "color≠vlm",
+      "subtype": "奶茶",
+      "brand": "茶百道",
+      "temperature": "热",
+      "taste": "茉莉奶绿",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "冬天喝热饮的时候不要太烫，尤其是含鲜奶的饮品，否则口味可能会有所变化。茉莉奶绿喝的时候一定不要全糖，半糖就...",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D38",
+    "drink_keywords": null
+  },
+  {
+    "category": "1a",
+    "source": "drink_card_self_contained",
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "上班偶尔休闲时刻",
+    "scene_category": "工作/学习地点",
+    "scene_tags": [
+      "休闲"
+    ],
+    "scene_elements": [
+      "上班",
+      "休闲"
+    ],
+    "scene_image": null,
+    "scene_id": null,
+    "drink": {
+      "id": "中产有娃-成都-D39",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/街饮.png",
+      "scene": {
+        "text": "上班偶尔休闲时刻",
+        "category": "工作/学习地点",
+        "tags": [
+          "休闲"
+        ],
+        "elements": [
+          "上班",
+          "休闲"
+        ]
+      },
+      "drink_desc": "冬天热饮奶茶拿在手上很温暖",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "瑞幸",
+      "temperature": "热",
+      "taste": "桃胶",
+      "experience": "超棒",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "自己",
+      "purchase_place": "其他",
+      "note": "平时上班偶尔喝点奶茶补充自己慢慢的z能量状态",
+      "drink_reasons_fixed": [
+        "提神"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D39",
+    "drink_keywords": null
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "给两位朋友的朋友庆祝生日。我们一起吃了2个蛋糕，说说笑笑，延续大家6年的友谊，大...",
+    "scene_category": "居住室内",
+    "scene_theme_l1": "密友相聚",
+    "scene_theme_l2": [
+      "庆祝生日",
+      "吃蛋糕"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-1.png",
+    "scene_id": "成都-中产无娃-01",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "那天好像是冬天，和爱人一起去吃了一顿烤羊排，浑身暖和",
+    "scene_category": "其他",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "烤羊排"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-10.png",
+    "scene_id": "成都-中产无娃-02",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "小区里面的流浪猫在冬天更难获得食物了，本就获取不到食物的它们也根本排泄不出什么，我觉得他...",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "流浪猫",
+      "冬天"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-11.png",
+    "scene_id": "成都-中产无娃-03",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "出去露营时看到两只天鹅在谈恋爱，感觉很可爱",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "露营",
+      "看天鹅"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-12.png",
+    "scene_id": "成都-中产无娃-04",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "在广州游玩时看到街边随处可见的糖桔树，问了老板说这是他们这边过年前的习俗",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "游玩",
+      "习俗"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-13.png",
+    "scene_id": "成都-中产无娃-05",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "我的爱人过生日，给他选了一个蛋糕，我们度过了一个快乐的生日",
+    "scene_category": "居住室内",
+    "scene_theme_l1": "密友相聚",
+    "scene_theme_l2": [
+      "生日",
+      "蛋糕"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-14.png",
+    "scene_id": "成都-中产无娃-06",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "2026元旦时，我们朋友聚在一起。大家撑着平平的旺仔牛奶，说说笑笑。在温暖的气氛里，—",
+    "scene_category": "居住室内",
+    "scene_theme_l1": "密友相聚",
+    "scene_theme_l2": [
+      "聚会",
+      "喝牛奶"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-2.png",
+    "scene_id": "成都-中产无娃-07",
+    "category": "2",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": [
+      "旺仔牛奶",
+      "牛奶"
+    ]
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "去年冬天，我终于结束了准备许久的重要笔试。走出考场后，我来到龙湖天街锦绣公园，看看天上锦鲤缓缓游动，繁绣的空间放松下来，享松与欢喜。",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "放松享受",
+    "scene_theme_l2": [
+      "放松",
+      "欣赏"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-3.png",
+    "scene_id": "成都-中产无娃-08",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "我在工匠学院参加了插花课程，之后发现大家的插花作品被陈列在展览里。看着一件件精致的花艺作品，我认识到照相留念，这段美好的学习回忆，一直记忆犹新。",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "其他",
+    "scene_theme_l2": [
+      "插花课程",
+      "展览"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-4.png",
+    "scene_id": "成都-中产无娃-09",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "当时还在成都SKP工地上上班，冬天的晚上就突然下起了雪，成都很少下雪，还记得那天特别的冷。",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "下雪",
+      "冬天"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-5.png",
+    "scene_id": "成都-中产无娃-10",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "与朋友去上海迪士尼游玩，感觉园区里面人特别多，设施好玩，烟花特别好看。",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "游玩",
+      "迪士尼",
+      "烟花"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-6.png",
+    "scene_id": "成都-中产无娃-11",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "和朋友一起参加欢乐谷举行的万圣节活动，里面的鬼屋特别可怕，里面的NPC特别敬业。",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "节日",
+    "scene_theme_l2": [
+      "万圣节",
+      "鬼屋"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-7.png",
+    "scene_id": "成都-中产无娃-12",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "当时周末天气很冷，朋友和我都想出去玩，...",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "其他",
+    "scene_theme_l2": [
+      "朋友聚会"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-8.png",
+    "scene_id": "成都-中产无娃-13",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "与家人一起去农家乐吃紫火鸡，紫火鸡的味道很好，分量也很多，当天我打扮将也赚了钱",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "大聚会",
+    "scene_theme_l2": [
+      "家庭聚餐",
+      "农家乐"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled-9.png",
+    "scene_id": "成都-中产无娃-14",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产无娃",
+    "city": "成都",
+    "scene_text": "圣诞节那天，我和好朋友一起去了一家有圣诞灯、到处都是暖暖的节日气氛的地方。我们一起逛街、吃热饮、喝热心度过了温馨的一天。",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "节日",
+    "scene_theme_l2": [
+      "圣诞",
+      "逛街",
+      "喝热饮"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产无娃-成都/场景/Untitled.png",
+    "scene_id": "成都-中产无娃-15",
+    "category": "2",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": [
+      "热饮"
+    ]
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "a在办公室一起努力奋斗的样子，一起聊天捞鱼的快乐时光",
+    "scene_category": "工作/学习地点",
+    "scene_theme_l1": "其他",
+    "scene_theme_l2": [
+      "办公室",
+      "聊天"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-1.png",
+    "scene_id": "成都-中产有娃-01",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "冬天跟家里人一起出去玩，购买了热的矿泉水，天气出去玩喝热水",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "出去玩",
+      "购买矿泉水"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-10.png",
+    "scene_id": "成都-中产有娃-02",
+    "category": "2",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": [
+      "矿泉水",
+      "热饮"
+    ]
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "吃的干锅比较辣，喝豆奶可以解辣，而且冬...",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "密友相聚",
+    "scene_theme_l2": [
+      "火锅",
+      "喝豆奶"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-11.png",
+    "scene_id": "成都-中产有娃-03",
+    "category": "1b",
+    "source": "scene_card_with_linked_drink",
+    "drink": {
+      "id": "中产有娃-成都-D37",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/街饮-6.png",
+      "scene": {
+        "text": "吃的干锅比较辣，喝豆奶可以解辣，而且冬...",
+        "category": "公共室内",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [],
+        "linked_scene_id": "成都-中产有娃-03",
+        "linked_scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-11.png"
+      },
+      "drink_desc": "藏茶的味道很香很浓郁",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "锦城吃茶",
+      "temperature": "热",
+      "taste": "鲜奶c茶",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "热饮会降低甜味，增加茶的香气",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D37",
+    "drink_keywords": null
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "下午孩子出门去捡红豆的路上，到全...",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "捡红豆"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-12.png",
+    "scene_id": "成都-中产有娃-04",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "家人过生日准备的午饭，小朋友包含我们...",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "大聚会",
+    "scene_theme_l2": [
+      "生日聚会",
+      "家庭聚餐"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-13.png",
+    "scene_id": "成都-中产有娃-05",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "去海边看海鸥的时候买了热饮奶茶",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "看海鸥",
+      "海边"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-14.png",
+    "scene_id": "成都-中产有娃-06",
+    "category": "2",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": [
+      "热饮",
+      "奶茶"
+    ]
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "过年的时候一家人一起去旅行",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "旅行"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-15.png",
+    "scene_id": "成都-中产有娃-07",
+    "category": "1b",
+    "source": "scene_card_with_linked_drink",
+    "drink": {
+      "id": "中产有娃-成都-D18",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-3.png",
+      "scene": {
+        "text": "过年的时候一家人一起去旅行",
+        "category": "户外活动",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [],
+        "linked_scene_id": "成都-中产有娃-07",
+        "linked_scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-15.png"
+      },
+      "drink_desc": "淡淡的米酒香味，微甜的口感特别舒适",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "植物蛋白",
+      "brand": "米婆婆",
+      "temperature": "热",
+      "taste": "原味",
+      "experience": "超棒",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一月1次",
+      "company": "家人",
+      "purchase_place": "超市/便利店",
+      "note": "冬天喝一点米酒会使人感觉得暖和",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D18",
+    "drink_keywords": null
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "参加小朋友在学校的公益活动",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "其他",
+    "scene_theme_l2": [
+      "公益活动"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-16.png",
+    "scene_id": "成都-中产有娃-08",
+    "category": "1b",
+    "source": "scene_card_with_linked_drink",
+    "drink": {
+      "id": "中产有娃-成都-D19",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-4.png",
+      "scene": {
+        "text": "参加小朋友在学校的公益活动",
+        "category": "公共室内",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [],
+        "linked_scene_id": "成都-中产有娃-08",
+        "linked_scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-16.png"
+      },
+      "drink_desc": "特别的甜快补充多巴胺",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "牛奶",
+      "brand": "统一",
+      "temperature": "热",
+      "taste": "原味",
+      "experience": "不错",
+      "time_slots": [
+        "晚上"
+      ],
+      "frequency": "一月1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D19",
+    "drink_keywords": null
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "和老公一起买新房子，改善居住环境",
+    "scene_category": "居住室内",
+    "scene_theme_l1": "窝在家里",
+    "scene_theme_l2": [
+      "买房",
+      "改善环境"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-17.png",
+    "scene_id": "成都-中产有娃-09",
+    "category": "1b",
+    "source": "scene_card_with_linked_drink",
+    "drink": {
+      "id": "中产有娃-成都-D22",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-7.png",
+      "scene": {
+        "text": "和老公一起买新房子，改善居住环境",
+        "category": "居住室内",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [],
+        "linked_scene_id": "成都-中产有娃-09",
+        "linked_scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-17.png"
+      },
+      "drink_desc": "特别适合平时聚餐解腻饮用",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "街饮",
+      "category_source": "color≠vlm",
+      "subtype": "牛奶",
+      "brand": "唯怡",
+      "temperature": "热",
+      "taste": "原味",
+      "experience": "不错",
+      "time_slots": [
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "家人",
+      "purchase_place": "其他",
+      "note": "平时聚餐饮用特别解腻",
+      "drink_reasons_fixed": [],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D22",
+    "drink_keywords": null
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "和同学一起观看朋友的演出",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "密友相聚",
+    "scene_theme_l2": [
+      "观看演出",
+      "同学聚会"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-18.png",
+    "scene_id": "成都-中产有娃-10",
+    "category": "1b",
+    "source": "scene_card_with_linked_drink",
+    "drink": {
+      "id": "中产有娃-成都-D21",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-6.png",
+      "scene": {
+        "text": "和同学一起观看朋友的演出",
+        "category": "公共室内",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [],
+        "linked_scene_id": "成都-中产有娃-10",
+        "linked_scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-18.png"
+      },
+      "drink_desc": "冬天温暖人心",
+      "category": "街饮",
+      "category_color": "街饮",
+      "category_color_conf": 0.78,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color≠vlm",
+      "subtype": "奶茶",
+      "brand": "娃哈哈",
+      "temperature": "热",
+      "taste": "原味",
+      "experience": "不错",
+      "time_slots": [
+        "上午",
+        "下午"
+      ],
+      "frequency": "一周1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "随时喝时热饮更暖胃",
+      "drink_reasons_fixed": [
+        "驱寒"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D21",
+    "drink_keywords": null
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "在社区学习烘焙技能",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "其他",
+    "scene_theme_l2": [
+      "烘焙",
+      "学习"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-19.png",
+    "scene_id": "成都-中产有娃-11",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "一次外出闲逛，随手一拍",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "闲逛"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-2.png",
+    "scene_id": "成都-中产有娃-12",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "一次外出散步，随手拍下别人的快乐时光",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "散步",
+      "拍照"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-3.png",
+    "scene_id": "成都-中产有娃-13",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "和朋友一起闹逛，感觉时光慢慢的很幸福",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "密友相聚",
+    "scene_theme_l2": [
+      "逛街",
+      "朋友"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-4.png",
+    "scene_id": "成都-中产有娃-14",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "下雪啦，而且是鹅毛大雪的那种",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "雪景"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-5.png",
+    "scene_id": "成都-中产有娃-15",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "看到环卫工人很多早上都在工作，感觉很受触动",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "环卫工作"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-6.png",
+    "scene_id": "成都-中产有娃-16",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "极具降温，非常的冷",
+    "scene_category": "公共室内",
+    "scene_theme_l1": "其他",
+    "scene_theme_l2": [],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-7.png",
+    "scene_id": "成都-中产有娃-17",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "找到了一个非常好喝的咖啡",
+    "scene_category": "工作/学习地点",
+    "scene_theme_l1": "窝在家里",
+    "scene_theme_l2": [
+      "喝咖啡"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-8.png",
+    "scene_id": "成都-中产有娃-18",
+    "category": "2",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": [
+      "咖啡"
+    ]
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "去爬了一次野山",
+    "scene_category": "户外活动",
+    "scene_theme_l1": "户外",
+    "scene_theme_l2": [
+      "爬山"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-9.png",
+    "scene_id": "成都-中产有娃-19",
+    "category": "1b",
+    "source": "scene_card_with_linked_drink",
+    "drink": {
+      "id": "中产有娃-成都-D08",
+      "city": "成都",
+      "persona": "中产有娃",
+      "group": "",
+      "card_image": "原始数据/场景-饮品/中产有娃-成都/饮品/瓶装饮品-12.png",
+      "scene": {
+        "text": "去爬了一次野山",
+        "category": "户外活动",
+        "tags": [
+          "无法分类"
+        ],
+        "elements": [],
+        "linked_scene_id": "成都-中产有娃-19",
+        "linked_scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled-9.png"
+      },
+      "drink_desc": "爬山的时候有时候比较累喝点奶茶补充一些能量",
+      "category": "瓶装饮品",
+      "category_color": "瓶装饮品",
+      "category_color_conf": 1.0,
+      "category_vlm": "瓶装饮品",
+      "category_source": "color=vlm",
+      "subtype": "奶茶",
+      "brand": "康师傅",
+      "temperature": "热",
+      "taste": "炼乳味",
+      "experience": "不错",
+      "time_slots": [
+        "上午"
+      ],
+      "frequency": "一天1次",
+      "company": "自己",
+      "purchase_place": "超市/便利店",
+      "note": "冬日太冷，适合一点暖饮，爬山更有干劲，干劲十足",
+      "drink_reasons_fixed": [
+        "能量补给"
+      ],
+      "drink_reasons_custom": []
+    },
+    "drink_id": "中产有娃-成都-D08",
+    "drink_keywords": null
+  },
+  {
+    "persona": "中产有娃",
+    "city": "成都",
+    "scene_text": "何同事朋友一起聚会，一起 happy，特别的开心",
+    "scene_category": "其他",
+    "scene_theme_l1": "密友相聚",
+    "scene_theme_l2": [
+      "聚会",
+      "开心"
+    ],
+    "scene_image": "原始数据/场景-饮品/中产有娃-成都/场景/Untitled.png",
+    "scene_id": "成都-中产有娃-20",
+    "category": "3",
+    "source": "scene_card_only",
+    "drink": null,
+    "drink_id": null,
+    "drink_keywords": []
+  }
+];
+
+const CAT_LABELS = {
+  '1a': { name: '1a · 自包含饮品卡', short: '自包含饮品卡' },
+  '1b': { name: '1b · 配对成功',     short: '场景+饮品配对' },
+  '2':  { name: '2 · 提到饮料',      short: '提到饮料无卡' },
+  '3':  { name: '3 · 无饮料',         short: '场景无饮料' },
+};
+
+let DATA = INIT_DATA.slice();
+const filters = {
+  cat: new Set(),       // 类别多选；空 = 全部
+  city: '',
+  persona: '',
+};
+
+/* ───────── 工具 ───────── */
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').style.display = 'flex';
+}
+
+/* ───────── 顶部类别 chip ───────── */
+function renderCatBar() {
+  const cnt = { '1a': 0, '1b': 0, '2': 0, '3': 0 };
+  for (const r of DATA) cnt[r.category] = (cnt[r.category] || 0) + 1;
+  const bar = document.getElementById('cat-bar');
+  bar.innerHTML = '<span class="cat-bar-label">类别：</span>'
+    + ['1a', '1b', '2', '3'].map(c => {
+        const isActive = filters.cat.has(c);
+        return `<span class="cat-chip${isActive ? ' active' : ''}"
+                       onclick="toggleCat('${c}')">
+                  ${CAT_LABELS[c].name}
+                  <span class="cnt">${cnt[c] || 0}</span>
+                </span>`;
+      }).join('')
+    + `<span class="cat-chip${filters.cat.size === 0 ? ' active' : ''}"
+            onclick="clearCat()" style="margin-left:8px;">
+         全部 <span class="cnt">${DATA.length}</span>
+       </span>`;
+}
+function toggleCat(c) {
+  if (filters.cat.has(c)) filters.cat.delete(c);
+  else filters.cat.add(c);
+  renderAll();
+}
+function clearCat() {
+  filters.cat.clear();
+  renderAll();
+}
+
+/* ───────── 城市/人群下拉 ───────── */
+function renderFilterDropdowns() {
+  const cities = new Set(), personas = new Set();
+  for (const r of DATA) {
+    if (r.city) cities.add(r.city);
+    if (r.persona) personas.add(r.persona);
+  }
+  const cityEl = document.getElementById('filter-city');
+  cityEl.innerHTML = '<option value="">所有城市</option>'
+    + [...cities].sort().map(c =>
+        `<option value="${c}"${c === filters.city ? ' selected' : ''}>${c}</option>`).join('');
+  cityEl.onchange = e => { filters.city = e.target.value; renderAll(); };
+
+  const pEl = document.getElementById('filter-persona');
+  pEl.innerHTML = '<option value="">所有人群</option>'
+    + [...personas].sort().map(p =>
+        `<option value="${p}"${p === filters.persona ? ' selected' : ''}>${p}</option>`).join('');
+  pEl.onchange = e => { filters.persona = e.target.value; renderAll(); };
+}
+
+/* ───────── 卡片渲染 ───────── */
+function passFilters(r) {
+  if (filters.cat.size > 0 && !filters.cat.has(r.category)) return false;
+  if (filters.city && r.city !== filters.city) return false;
+  if (filters.persona && r.persona !== filters.persona) return false;
+  return true;
+}
+
+function renderCard(r) {
+  // 场景图：1b/2/3 用场景卡的 image；1a 用饮品卡的 card_image（饮品卡里有内嵌场景）
+  const sceneImg = r.scene_image || (r.drink && r.drink.card_image) || '';
+  const catBadge = `<span class="card-cat-tag cat-${r.category.replace('.', '')}">${CAT_LABELS[r.category].short}</span>`;
+
+  // 场景文字
+  const sceneText = r.scene_text
+    ? `<div class="scene-text">📍 ${escapeHtml(r.scene_text)}</div>`
+    : '';
+
+  // 场景元数据
+  const meta = [];
+  if (r.scene_category) meta.push(`<span class="badge scene-cat">${escapeHtml(r.scene_category)}</span>`);
+  if (r.scene_theme_l1) meta.push(`<span class="badge theme-l1">${escapeHtml(r.scene_theme_l1)}</span>`);
+  if (Array.isArray(r.scene_theme_l2)) {
+    for (const l2 of r.scene_theme_l2) meta.push(`<span class="badge theme-l2">${escapeHtml(l2)}</span>`);
+  }
+  if (Array.isArray(r.scene_tags)) {
+    for (const t of r.scene_tags) {
+      if (t && t !== '无法分类') meta.push(`<span class="badge theme-l1">${escapeHtml(t)}</span>`);
+    }
+  }
+  const srcTag = [r.persona, r.city].filter(Boolean).join(' · ');
+  if (srcTag) meta.push(`<span class="badge src">${escapeHtml(srcTag)}</span>`);
+
+  // 饮品区
+  let drinkBlock = '';
+  if (r.category === '1a' || r.category === '1b') {
+    const d = r.drink || {};
+    const drinkBits = [
+      d.brand && `<b>${escapeHtml(d.brand)}</b>`,
+      d.subtype,
+      d.temperature && `🌡 ${d.temperature}`,
+      d.experience,
+    ].filter(Boolean).join(' · ');
+    drinkBlock = `
+      <div class="drink-block is-${r.category}">
+        ${d.card_image ? `<img class="drink-thumb" src="${encodeURI(d.card_image)}"
+                                onclick="openLightbox('${encodeURI(d.card_image)}')"
+                                onerror="this.style.background='#fee'">` : ''}
+        <div style="flex:1;min-width:0;">
+          <div class="drink-meta">🥤 ${drinkBits || '(饮品信息缺失)'}</div>
+          ${d.drink_desc ? `<div class="drink-desc">"${escapeHtml(d.drink_desc)}"</div>` : ''}
+          ${d.id ? `<div style="font-size:10px;color:#aaa;margin-top:4px;">饮品卡 ID: ${escapeHtml(d.id)}</div>` : ''}
+        </div>
+      </div>`;
+  } else if (r.category === '2') {
+    const kws = (r.drink_keywords || []).map(k =>
+      `<span class="badge kw">🥤 ${escapeHtml(k)}</span>`).join('');
+    drinkBlock = `
+      <div class="nobr" style="background:#f3f6ff;border-color:#c5cae9;color:#5c6bc0;">
+        提到饮料但无对应饮品卡
+        ${kws ? `<div class="kw-list">${kws}</div>` : ''}
+      </div>`;
+  } else if (r.category === '3') {
+    drinkBlock = `<div class="nobr">未提及饮料</div>`;
+  }
+
+  return `
+    <div class="card">
+      ${catBadge}
+      ${sceneImg ? `<img class="scene-photo" src="${encodeURI(sceneImg)}"
+                          onclick="openLightbox('${encodeURI(sceneImg)}')"
+                          onerror="this.style.background='#fee';this.alt='图片加载失败'">`
+                 : '<div class="scene-photo"></div>'}
+      <div class="card-body">
+        ${sceneText}
+        ${meta.length ? `<div class="scene-meta">${meta.join('')}</div>` : ''}
+        ${drinkBlock}
+      </div>
+    </div>`;
+}
+
+function renderGrid() {
+  const filtered = DATA.filter(passFilters);
+  const grid = document.getElementById('grid');
+  document.getElementById('result-count').textContent = `${filtered.length} / ${DATA.length} 张`;
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty">没有符合条件的卡片。试试取消一些筛选？</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(renderCard).join('');
+}
+
+function renderAll() {
+  renderCatBar();
+  renderFilterDropdowns();
+  renderGrid();
+}
+
+renderAll();
+</script>
+</body>
+</html>
