@@ -308,6 +308,13 @@
   .btn.btn-active {
     background: #f5a623; color: #fff; border-color: #f5a623;
   }
+  .filter-chip.fav-chip {
+    border: 1px solid #f5a623; color: #b87900; background: #fff8e1;
+  }
+  .filter-chip.fav-chip:hover { background: #fff3e0; }
+  .filter-chip.fav-chip.active {
+    background: #f5a623; color: #fff; border-color: #f5a623;
+  }
 
   .empty-state {
     text-align: center; padding: 40px; color: #aaa; font-size: 14px;
@@ -24416,13 +24423,27 @@ function renderFilters() {
   const groupRow = hasGroups
     ? buildChipRow('组别', [], 'group')
     : '';
+  // 收藏 chip 行
+  const favCount = loadFavorites().size;
+  const favActive = filters.favorites_only;
+  const favRow = `<div class="filter-row">
+    <div class="filter-label">我的</div>
+    <div class="filter-chips">
+      <span class="filter-chip fav-chip${favActive ? ' active' : ''}${favCount === 0 ? ' zero-count' : ''}"
+        onclick="toggleFavoritesOnly()">
+        ${favActive ? '★' : '☆'} 收藏<span class="count">${favCount}</span>
+      </span>
+    </div>
+  </div>`;
+
   const personaSection = `<div class="filter-group">
     <div class="filter-group-head">
       <span class="icon">👤</span>
       <span>人群</span>
-      <span class="sub">城市 · 人群${hasGroups ? ' · 组别' : ''}</span>
+      <span class="sub">收藏 · 城市 · 人群${hasGroups ? ' · 组别' : ''}</span>
     </div>
     <div class="filter-rows">
+      ${favRow}
       ${buildChipRow('城市', CITIES, 'city')}
       ${buildChipRow('人群', PERSONAS, 'persona')}
       ${groupRow}
