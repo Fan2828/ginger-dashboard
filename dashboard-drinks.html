@@ -66,6 +66,24 @@
   .filter-row + .filter-row {
     border-top: 1px dashed #f0f0f0;
   }
+  .filter-subhead {
+    font-size: 11px; font-weight: 700; color: #555;
+    padding: 6px 0 2px;
+    letter-spacing: 0.5px;
+  }
+  .filter-subhead + .filter-row { border-top: none; }
+  /* 场景主题：单 filter-row，里面再纵向分小组 */
+  .filter-chips.scene-grouped { flex-direction: column; gap: 6px; align-items: stretch; }
+  .scene-subgroup {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start;
+  }
+  .scene-subgroup-title {
+    font-size: 11px; color: #999; font-weight: 600;
+    min-width: 56px; padding-top: 5px; flex-shrink: 0;
+  }
+  .scene-subgroup-chips {
+    display: flex; flex-wrap: wrap; gap: 5px; flex: 1;
+  }
   .filter-label {
     font-size: 11px; font-weight: 700; color: #777;
     min-width: 78px; padding-top: 4px; flex-shrink: 0;
@@ -23448,26 +23466,37 @@ const SUBTYPE_EMOJI = {
 };
 
 const SCENE_TAGS = [
-  '给予/收获温暖', '低落的时候', '偷懒',
-  '户外活动', '慢户外', '旅游', '景点、乐园',
-  '大聚会', '密友相聚',
-  '窝家里-一个人', '窝家里-一家人/伴侣', '家里聚餐',
+  '户外活动', '旅游', '景点、乐园',
+  '大聚会',
+  '窝家里-一个人', '窝家里-一家人/伴侣',
   '养生', '生病', '运动', '早餐',
   '休闲', '通勤', '工作学习', '节日', '庆祝',
   '无法分类',
 ];
+const NARRATIVE_TAGS = ['给予/收获温暖', '低落的时候'];
+// 不再出现在「场景主题」chip 行的标签（数据里如果还有，也只在卡片上显示，不进入筛选条）
+const HIDDEN_SCENE_TAGS = ['偷懒', '慢户外', '密友相聚', '家人聚会'];
+// 场景主题分组：每组渲染为一个 chip 行；其余暂未归类的进 "其他"
+const SCENE_TAG_GROUPS = [
+  { title: '宅家',       tags: ['窝家里-一个人', '窝家里-一家人/伴侣'] },
+  { title: '外出',       tags: ['户外活动', '旅游', '主题乐园', '休闲（逛街、看电影）'] },
+  { title: '聚餐',       tags: ['家里聚餐', '外面聚餐', '大聚会'] },
+  { title: '日常事务',   tags: ['工作学习', '通勤', '早餐', '养生', '运动', '生病'] },
+  { title: '回应大主题', tags: ['节日'] },
+  { title: '其他',       tags: ['暂未分类'] },
+];
 const SCENE_TAG_COLORS = {
   '给予/收获温暖': '#f06292', '低落的时候': '#5c6bc0', '偷懒': '#fdd835',
   '户外活动': '#2e7d32', '慢户外': '#66bb6a',
-  '旅游': '#1e88e5', '景点、乐园': '#ec407a',
+  '旅游': '#1e88e5', '景点、乐园': '#ec407a', '主题乐园': '#ec407a',
   '大聚会': '#fb8c00', '密友相聚': '#f57c00',
   '窝家里-一个人': '#8d6e63', '窝家里-一家人/伴侣': '#6d4c41',
-  '家里聚餐': '#d84315',
+  '家里聚餐': '#d84315', '外面聚餐': '#ff7043',
   '养生': '#43a047', '生病': '#9e9e9e', '运动': '#00897b',
   '早餐': '#f4a261',
-  '休闲': '#ffb300', '通勤': '#546e7a',
+  '休闲': '#ffb300', '休闲（逛街、看电影）': '#ffb300', '通勤': '#546e7a',
   '工作学习': '#1976d2', '节日': '#e53935', '庆祝': '#ad1457',
-  '无法分类': '#9e9e9e',
+  '无法分类': '#9e9e9e', '暂未分类': '#9e9e9e',
 };
 
 /* 「为什么喝」：固定 7 项 + GPT 自由提取，颜色不同 */
@@ -23644,6 +23673,7 @@ function toggleFavoritesOnly() {
 const TAG_STORAGE_KEYS = [
   'drinks_edits_v1',
   'drinks_scene_tag_defs_v1',
+  'drinks_narrative_added_v1',
   'drinks_reason_defs_v1',
   'drinks_element_tag_defs_v1',
   'drinks_element_groups_v1', // 旧版数据兼容（已弃用）
@@ -23834,10 +23864,37 @@ function defaultColorFor(name) {
   return `hsl(${hue}, 55%, 50%)`;
 }
 
+/* 叙事主题：与场景主题共用 scene_tags 字段（rename 走 SCENE_TAG_DEFS_KEY），
+   只是另外维护一个白名单：哪些标签被视作"叙事"而非"场景"。 */
+const NARRATIVE_DEFS_KEY = 'drinks_narrative_added_v1';
+function loadNarrativeAdded() {
+  try { return JSON.parse(localStorage.getItem(NARRATIVE_DEFS_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveNarrativeAdded(arr) {
+  pushUndoSnapshot();
+  localStorage.setItem(NARRATIVE_DEFS_KEY, JSON.stringify(arr));
+}
+function addNarrativeTag(name) {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) return;
+  const cur = loadNarrativeAdded();
+  if (!cur.includes(trimmed)) saveNarrativeAdded([...cur, trimmed]);
+}
+
+function effectiveNarrativeTags() {
+  const added = loadNarrativeAdded();
+  const all = [...NARRATIVE_TAGS, ...added].map(t => resolveTag(SCENE_TAG_DEFS_KEY, t));
+  return [...new Set(all)];
+}
 function effectiveSceneTags() {
   const defs = loadTagDefs(SCENE_TAG_DEFS_KEY);
   const all = [...SCENE_TAGS, ...defs.added].map(t => resolveTag(SCENE_TAG_DEFS_KEY, t));
-  return [...new Set(all)];
+  const excluded = new Set([
+    ...effectiveNarrativeTags(),
+    ...HIDDEN_SCENE_TAGS.map(t => resolveTag(SCENE_TAG_DEFS_KEY, t)),
+  ]);
+  return [...new Set(all)].filter(t => !excluded.has(t));
 }
 function effectiveSceneTagColor(name) {
   const defs = loadTagDefs(SCENE_TAG_DEFS_KEY);
@@ -23922,6 +23979,12 @@ function newSceneTagPrompt() {
   const v = prompt('新场景主题名：');
   if (!v || !v.trim()) return;
   addCustomTagDef(SCENE_TAG_DEFS_KEY, v.trim());
+  renderAll();
+}
+function newNarrativeTagPrompt() {
+  const v = prompt('新叙事主题名：');
+  if (!v || !v.trim()) return;
+  addNarrativeTag(v.trim());
   renderAll();
 }
 function editReasonPrompt(name) {
@@ -24015,24 +24078,38 @@ function addSceneTag(id, tag) {
 function showTagPicker(id, anchorEl) {
   const cur = getSceneTags(DATA.find(d => d.id === id));
   const picker = document.getElementById('tag-picker');
-  const items = effectiveSceneTags().map(t => {
+  const renderItem = (t) => {
     const has = cur.includes(t);
     const cls = 'tag-picker-item' + (has ? ' disabled' : '');
     const color = effectiveSceneTagColor(t);
     const onclick = has ? '' : `onclick="addSceneTag(${escapeAttr(id)}, ${escapeAttr(t)});closeTagPicker();"`;
     return `<span class="${cls}" style="background:${color}" ${onclick}>${escapeHtml(t)}</span>`;
-  }).join('');
-  const newItem = `<span class="tag-picker-item" style="background:#888;border:1px dashed #fff;"
-      onclick="newSceneTagForCard(${escapeAttr(id)});">＋ 新建</span>`;
+  };
+  const sceneItems = effectiveSceneTags().map(renderItem).join('');
+  const narrativeItems = effectiveNarrativeTags().map(renderItem).join('');
+  const newSceneItem = `<span class="tag-picker-item" style="background:#888;border:1px dashed #fff;"
+      onclick="newSceneTagForCard(${escapeAttr(id)});">＋ 场景</span>`;
+  const newNarrativeItem = `<span class="tag-picker-item" style="background:#888;border:1px dashed #fff;"
+      onclick="newNarrativeTagForCard(${escapeAttr(id)});">＋ 叙事</span>`;
   picker.innerHTML = `
     <span class="tag-picker-close" onclick="closeTagPicker()">×</span>
-    <div class="tag-picker-title">选一个标签加入</div>
-    <div class="tag-picker-list">${items}${newItem}</div>
+    <div class="tag-picker-title">场景主题</div>
+    <div class="tag-picker-list">${sceneItems}${newSceneItem}</div>
+    <div class="tag-picker-title" style="margin-top:6px;">叙事主题</div>
+    <div class="tag-picker-list">${narrativeItems}${newNarrativeItem}</div>
   `;
   const r = anchorEl.getBoundingClientRect();
   picker.style.display = 'block';
   picker.style.left = `${window.scrollX + r.left}px`;
   picker.style.top  = `${window.scrollY + r.bottom + 4}px`;
+}
+function newNarrativeTagForCard(id) {
+  const v = prompt('新叙事主题名：');
+  if (!v || !v.trim()) { closeTagPicker(); return; }
+  const trimmed = v.trim();
+  addNarrativeTag(trimmed);
+  addSceneTag(id, trimmed);
+  closeTagPicker();
 }
 function newSceneTagForCard(id) {
   const v = prompt('新场景主题名：');
@@ -24151,15 +24228,23 @@ function buildChipRow(label, options, key, opts = {}) {
     if (Array.isArray(v)) v.forEach(e => counts[e] = (counts[e] || 0) + 1);
     else if (v) counts[v] = (counts[v] || 0) + 1;
   });
-  const present = opts.editable
-    ? Array.from(new Set([
-        ...options,
-        ...Object.keys(counts).filter(o => !options.includes(o)),
-      ]))
-    : Array.from(new Set([
-        ...options.filter(o => counts[o]),
-        ...Object.keys(counts).filter(o => !options.includes(o)),
-      ]));
+  const hideSet = new Set(opts.hide || []);
+  let present;
+  if (opts.strict) {
+    // 严格模式：只展示 options 里列出的标签，不从卡片数据里自动捞
+    present = options.slice();
+  } else if (opts.editable) {
+    present = Array.from(new Set([
+      ...options,
+      ...Object.keys(counts).filter(o => !options.includes(o)),
+    ]));
+  } else {
+    present = Array.from(new Set([
+      ...options.filter(o => counts[o]),
+      ...Object.keys(counts).filter(o => !options.includes(o)),
+    ]));
+  }
+  if (hideSet.size) present = present.filter(o => !hideSet.has(o));
   if (present.length === 0 && !opts.editable) return '';
 
   const chips = present.map(o => {
@@ -24190,6 +24275,8 @@ function buildChipRow(label, options, key, opts = {}) {
   const addChip = opts.addFn
     ? `<span class="filter-chip add-chip" onclick="${opts.addFn}()">＋ 新建</span>`
     : '';
+
+  if (opts.bareChips) return chips + addChip;
 
   return `<div class="filter-row">
     <div class="filter-label">${label}</div>
@@ -24366,18 +24453,51 @@ function renderFilters() {
   const wrap = document.getElementById('filter-wrap');
 
   // ─── 场景区 ───
-  const sceneTagList = effectiveSceneTags();
-  const sceneTagColorMap = {};
-  sceneTagList.forEach(t => { sceneTagColorMap[t] = effectiveSceneTagColor(t); });
+  const sceneColorFor = (t) => effectiveSceneTagColor(t);
+  // 场景主题：单行，里面再分小组（小组标题 + chips 同一层级）
+  const groupedSet = new Set(SCENE_TAG_GROUPS.flatMap(g => g.tags));
+  const ungrouped = effectiveSceneTags().filter(t => !groupedSet.has(t));
+  const groupBlocksHtml = SCENE_TAG_GROUPS.map((g, idx) => {
+    const colorMap = {};
+    g.tags.forEach(t => { colorMap[t] = sceneColorFor(t); });
+    const isLast = idx === SCENE_TAG_GROUPS.length - 1;
+    const chipsHtml = buildChipRow('', g.tags, 'scene_tags', {
+      colorMap, strict: true,
+      editFn: 'editSceneTagPrompt',
+      addFn: isLast && ungrouped.length === 0 ? 'newSceneTagPrompt' : undefined,
+      bareChips: true,
+    });
+    return `<div class="scene-subgroup">
+      <span class="scene-subgroup-title">${g.title}</span>
+      <div class="scene-subgroup-chips">${chipsHtml}</div>
+    </div>`;
+  }).join('');
+  const ungroupedBlock = ungrouped.length
+    ? `<div class="scene-subgroup">
+        <span class="scene-subgroup-title" style="color:#c62828;">未分组</span>
+        <div class="scene-subgroup-chips">${buildChipRow('', ungrouped, 'scene_tags', {
+          colorMap: Object.fromEntries(ungrouped.map(t => [t, sceneColorFor(t)])),
+          strict: true, editFn: 'editSceneTagPrompt', addFn: 'newSceneTagPrompt', bareChips: true,
+        })}</div>
+      </div>`
+    : '';
+  const sceneThemeRow = `<div class="filter-row">
+    <div class="filter-label">场景主题</div>
+    <div class="filter-chips scene-grouped">${groupBlocksHtml}${ungroupedBlock}</div>
+  </div>`;
+
+  const narrativeTagList = effectiveNarrativeTags();
+  const narrativeColorMap = {};
+  narrativeTagList.forEach(t => { narrativeColorMap[t] = sceneColorFor(t); });
   const sceneSection = `<div class="filter-group">
     <div class="filter-group-head">
       <span class="icon">📍</span>
       <span>场景</span>
-      <span class="sub">活动情境（多选）+ 物理位置</span>
     </div>
     <div class="filter-rows">
-      ${buildChipRow('场景主题', sceneTagList, 'scene_tags', { colorMap: sceneTagColorMap, editable: true, editFn: 'editSceneTagPrompt', addFn: 'newSceneTagPrompt' })}
-      ${buildChipRow('场景大类', SCENE_CATEGORIES, 'scene_category', { colorMap: SCENE_CATEGORY_COLORS })}
+      ${sceneThemeRow}
+      ${buildChipRow('叙事主题', narrativeTagList, 'scene_tags', { colorMap: narrativeColorMap, strict: true, editFn: 'editSceneTagPrompt', addFn: 'newNarrativeTagPrompt' })}
+      ${buildChipRow('地点类型', SCENE_CATEGORIES, 'scene_category', { colorMap: SCENE_CATEGORY_COLORS })}
       ${buildElementChipRow()}
     </div>
   </div>`;
@@ -24400,11 +24520,30 @@ function renderFilters() {
   const secCls = drinkSecondaryOpen ? '' : ' collapsed';
   const secToggleRow = `<div class="drink-sec-toggle" onclick="toggleDrinkSecondary()">${drinkSecondaryOpen ? '▴ 收起其他标签' : '▾ 展开其他标签'}</div>`;
 
+  // 收藏：独立成一栏，与场景/饮品/人群同级
+  const favCount = loadFavorites().size;
+  const favActive = filters.favorites_only;
+  const favSection = `<div class="filter-group fav-group">
+    <div class="filter-group-head">
+      <span class="icon">★</span>
+      <span>收藏</span>
+    </div>
+    <div class="filter-rows">
+      <div class="filter-row">
+        <div class="filter-chips">
+          <span class="filter-chip fav-chip${favActive ? ' active' : ''}${favCount === 0 ? ' zero-count' : ''}"
+            onclick="toggleFavoritesOnly()">
+            ${favActive ? '★' : '☆'} 只看收藏<span class="count">${favCount}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
   const drinkSection = `<div class="filter-group">
     <div class="filter-group-head">
       <span class="icon">🥤</span>
       <span>饮品</span>
-      <span class="sub">类型 / 品类 主轴 · 次要标签可折叠</span>
     </div>
     <div class="filter-rows">
       ${buildChipRow('饮品类型', CATEGORIES, 'category', { colorMap: CATEGORY_COLORS })}
@@ -24423,27 +24562,13 @@ function renderFilters() {
   const groupRow = hasGroups
     ? buildChipRow('组别', [], 'group')
     : '';
-  // 收藏 chip 行
-  const favCount = loadFavorites().size;
-  const favActive = filters.favorites_only;
-  const favRow = `<div class="filter-row">
-    <div class="filter-label">我的</div>
-    <div class="filter-chips">
-      <span class="filter-chip fav-chip${favActive ? ' active' : ''}${favCount === 0 ? ' zero-count' : ''}"
-        onclick="toggleFavoritesOnly()">
-        ${favActive ? '★' : '☆'} 收藏<span class="count">${favCount}</span>
-      </span>
-    </div>
-  </div>`;
 
   const personaSection = `<div class="filter-group">
     <div class="filter-group-head">
       <span class="icon">👤</span>
       <span>人群</span>
-      <span class="sub">收藏 · 城市 · 人群${hasGroups ? ' · 组别' : ''}</span>
     </div>
     <div class="filter-rows">
-      ${favRow}
       ${buildChipRow('城市', CITIES, 'city')}
       ${buildChipRow('人群', PERSONAS, 'persona')}
       ${groupRow}
@@ -24451,7 +24576,8 @@ function renderFilters() {
   </div>`;
 
   wrap.innerHTML = personaSection
-    + `<div class="filter-row-2col">${sceneSection}${drinkSection}</div>`;
+    + `<div class="filter-row-2col">${sceneSection}${drinkSection}</div>`
+    + favSection;
 
   // 编辑按钮显示控制
   const hasEdits = Object.keys(loadEdits()).length > 0;
@@ -24607,10 +24733,11 @@ function renderCard(d) {
   const srcTag = srcParts.length
     ? `<span class="src-tag">${srcParts.join(' · ')}</span>` : '';
 
-  // 场景主题：可编辑（× 删除 + ＋加标签）
-  const tags = getSceneTags(d);
+  // 场景主题：可编辑（× 删除 + ＋加标签）；过滤掉已弃用的标签
+  const hiddenSet = new Set(HIDDEN_SCENE_TAGS);
+  const tags = getSceneTags(d).filter(t => !hiddenSet.has(t));
   const sceneTags = tags.map(t => {
-    const cls = 'badge scene-tag' + (t === '无法分类' ? ' unclassified' : '');
+    const cls = 'badge scene-tag' + ((t === '无法分类' || t === '暂未分类') ? ' unclassified' : '');
     const color = effectiveSceneTagColor(t);
     return `<span class="${cls}" style="background:${color}">
       ${escapeHtml(t)}<span class="x" onclick="event.stopPropagation();removeSceneTag(${escapeAttr(d.id)}, ${escapeAttr(t)})">×</span>
@@ -24720,165 +24847,280 @@ function renderAll() {
   updateSelectionInfo();
 }
 
-/* 默认人工编辑（来自 2026-05-02T03:55 导出，148 条）：首次访问自动注入；用户后续编辑覆盖 */
+/* 默认人工编辑（基线 2026-05-02T12:25：清空收藏 + 中产无娃-哈尔滨-D04 加叙事标签）：首次访问自动注入；用户后续编辑覆盖 */
 const DEFAULT_TAG_DATA = {
   drinks_edits_v1: {
-    "中产无娃-成都-D04": { "scene_tags": ["外面吃饭"] },
-    "中产无娃-上海-D12": { "category": "自制饮品" },
-    "白领-成都-D37": { "scene_tags": ["窝家里-一家人/伴侣"] },
-    "中产有娃-哈尔滨-D09": { "scene_tags": ["户外活动", "景点、乐园"] },
-    "学生-上海-D09": { "scene_tags": ["户外活动", "慢户外"] },
-    "中产有娃-哈尔滨-D16": { "scene_tags": ["户外活动", "景点、乐园"] },
-    "学生-广州-D34": { "scene_tags": ["旅游", "户外活动", "景点、乐园"] },
-    "中产无娃-哈尔滨-D25": { "category": "瓶装饮品", "scene_tags": ["密友相聚"] },
-    "中产无娃-上海-D13": { "category": "自制饮品" },
-    "中产无娃-上海-D14": { "category": "瓶装饮品" },
-    "中产无娃-上海-D15": { "category": "街饮" },
-    "中产无娃-上海-D16": { "category": "其他" },
-    "中产无娃-上海-D17": { "category": "自制饮品" },
-    "中产无娃-上海-D18": { "category": "自制饮品" },
-    "中产无娃-上海-D19": { "category": "自制饮品" },
-    "中产无娃-上海-D20": { "category": "瓶装饮品" },
-    "中产无娃-上海-D21": { "category": "瓶装饮品", "scene_tags": ["外面吃饭"] },
-    "中产无娃-上海-D22": { "category": "街饮" },
-    "中产无娃-上海-D23": { "category": "自制饮品" },
-    "中产无娃-上海-D24": { "category": "瓶装饮品" },
-    "中产无娃-哈尔滨-D09": { "category": "街饮" },
-    "中产无娃-广州-D13": { "category": "自制饮品" },
-    "中产无娃-广州-D14": { "category": "街饮" },
-    "中产无娃-哈尔滨-D19": { "category": "自制饮品" },
-    "中产无娃-哈尔滨-D18": { "category": "自制饮品" },
-    "中产无娃-广州-D12": { "category": "街饮", "scene_tags": ["通勤"] },
-    "中产有娃-成都-D23": { "category": "自制饮品" },
-    "学生-上海-D19": { "category": "街饮", "scene_tags": ["户外活动", "工作学习"] },
-    "学生-上海-D20": { "category": "街饮" },
-    "学生-广州-D18": { "category": "其他" },
-    "学生-成都-D04": { "category": "街饮" },
-    "白领-上海-D04": { "category": "街饮" },
-    "白领-上海-D09": { "category": "街饮" },
-    "白领-哈尔滨-D05": { "category": "街饮" },
-    "白领-广州-D13": { "category": "街饮" },
-    "中产无娃-上海-D31": { "category": "瓶装饮品", "scene_tags": ["养生", "工作学习"] },
-    "中产无娃-哈尔滨-D35": { "category": "瓶装饮品", "scene_tags": ["户外活动", "旅游"] },
-    "中产无娃-广州-D29": { "category": "瓶装饮品", "scene_tags": ["庆祝"] },
-    "中产无娃-广州-D34": { "category": "瓶装饮品" },
-    "中产有娃-哈尔滨-D17": { "category": "其他" },
-    "中产有娃-成都-D33": { "category": "瓶装饮品" },
-    "白领-上海-D46": { "category": "自制饮品" },
-    "白领-广州-D37": { "category": "瓶装饮品" },
-    "白领-成都-D41": { "category": "瓶装饮品" },
-    "白领-成都-D02": { "category": "自制饮品" },
-    "中产无娃-成都-D16": { "category": "瓶装饮品", "scene_tags": ["窝家里-一家人/伴侣", "庆祝", "节日"] },
-    "中产有娃-上海-D06": { "category": "瓶装饮品" },
-    "中产有娃-上海-D09": { "category": "街饮" },
-    "中产有娃-上海-D10": { "category": "瓶装饮品" },
-    "中产有娃-哈尔滨-D12": { "category": "瓶装饮品" },
-    "中产有娃-哈尔滨-D13": { "category": "瓶装饮品" },
-    "中产有娃-成都-D25": { "category": "瓶装饮品" },
-    "中产有娃-成都-D28": { "category": "街饮" },
-    "中产有娃-成都-D38": { "category": "街饮" },
-    "学生-广州-D17": { "category": "瓶装饮品", "scene_tags": ["运动"] },
-    "白领-上海-D30": { "category": "瓶装饮品", "scene_tags": ["密友相聚", "户外活动"] },
-    "白领-上海-D31": { "category": "街饮" },
-    "白领-上海-D32": { "category": "瓶装饮品" },
-    "白领-成都-D36": { "category": "瓶装饮品" },
-    "中产无娃-上海-D11": { "scene_tags": ["旅游", "景点、乐园"] },
-    "中产无娃-上海-D26": { "scene_tags": ["旅游", "节日", "景点、乐园"] },
-    "白领-上海-D11": { "scene_tags": ["旅游", "景点、乐园"] },
-    "白领-上海-D12": { "scene_tags": ["旅游", "景点、乐园"] },
-    "白领-上海-D15": { "scene_tags": ["旅游", "户外活动", "景点、乐园"] },
-    "白领-上海-D16": { "scene_tags": ["旅游", "景点、乐园"] },
-    "中产无娃-成都-D23": { "scene_tags": ["旅游", "密友相聚", "景点、乐园"] },
-    "中产无娃-哈尔滨-D15": { "scene_tags": ["低落的时候"] },
-    "中产无娃-广州-D07": { "scene_tags": ["早餐"] },
-    "中产无娃-成都-D09": { "scene_tags": ["早餐"] },
-    "中产有娃-哈尔滨-D07": { "scene_tags": ["外面吃饭"] },
-    "学生-上海-D01": { "scene_tags": ["工作学习"] },
-    "中产有娃-成都-D20": { "scene_tags": ["密友相聚"] },
-    "中产有娃-成都-D22": { "scene_tags": ["无法分类"] },
-    "学生-上海-D17": { "scene_tags": ["工作学习"] },
-    "学生-上海-D28": { "scene_tags": ["早餐"] },
-    "学生-广州-D09": { "scene_tags": ["早餐"] },
-    "学生-成都-D14": { "scene_tags": ["工作学习", "早餐"] },
-    "学生-成都-D18": { "scene_tags": ["窝家里-一个人", "低落的时候"] },
-    "白领-上海-D17": { "scene_tags": ["早餐"] },
-    "学生-成都-D17": { "scene_tags": ["无法分类"] },
-    "白领-广州-D42": { "scene_tags": ["早餐", "庆祝"] },
-    "学生-广州-D35": {  },
-    "学生-成都-D33": {  },
-    "中产无娃-成都-D29": { "category": "瓶装饮品" },
-    "学生-上海-D10": { "scene_tags": ["工作学习"] },
-    "中产无娃-哈尔滨-D17": { "scene_tags": ["窝家里-一个人", "给予/收获温暖"] },
-    "中产无娃-哈尔滨-D08": { "scene_tags": ["户外活动", "慢户外"] },
-    "中产有娃-广州-D02": { "scene_tags": ["户外活动", "旅游"] },
-    "中产有娃-广州-D07": { "scene_tags": ["户外活动", "景点、乐园"] },
-    "学生-成都-D06": { "scene_tags": ["户外活动", "慢户外"] },
-    "白领-上海-D03": { "scene_tags": ["户外活动", "慢户外"] },
-    "白领-哈尔滨-D18": { "scene_tags": ["庆祝"] },
-    "白领-哈尔滨-D07": { "scene_tags": ["户外活动", "运动"] },
-    "中产无娃-哈尔滨-D38": { "scene_tags": ["休闲"] },
-    "中产无娃-成都-D28": { "scene_tags": ["户外活动", "旅游"] },
-    "中产有娃-哈尔滨-D15": { "scene_tags": ["户外活动", "景点、乐园"] },
-    "中产有娃-成都-D36": { "scene_tags": ["户外活动", "休闲"] },
-    "白领-哈尔滨-D39": { "scene_tags": ["密友相聚"] },
-    "白领-广州-D46": { "scene_tags": ["运动"] },
-    "白领-哈尔滨-D46": { "scene_tags": ["生病"] },
-    "中产无娃-上海-D29": { "scene_tags": ["工作学习"] },
-    "中产有娃-上海-D02": { "scene_tags": ["低落的时候"] },
-    "中产有娃-广州-D04": { "scene_tags": ["低落的时候"] },
-    "中产有娃-成都-D24": { "scene_tags": ["户外活动"] },
-    "学生-上海-D24": { "scene_tags": ["工作学习"] },
-    "学生-成都-D21": { "scene_tags": ["低落的时候"] },
-    "白领-哈尔滨-D08": { "scene_tags": ["大聚会"] },
-    "白领-广州-D11": { "scene_tags": ["户外活动"] },
-    "白领-成都-D30": { "scene_tags": ["庆祝"] },
-    "中产无娃-哈尔滨-D33": { "scene_tags": ["休闲"] },
-    "中产无娃-哈尔滨-D37": { "scene_tags": ["休闲"] },
-    "中产无娃-成都-D22": { "scene_tags": ["通勤"] },
-    "中产无娃-成都-D25": { "scene_tags": ["通勤"] },
-    "中产有娃-广州-D16": { "scene_tags": ["低落的时候"] },
-    "中产无娃-广州-D35": { "scene_tags": ["休闲"] },
-    "中产有娃-成都-D32": { "scene_tags": ["偷懒"] },
-    "学生-上海-D40": { "scene_tags": ["运动"] },
-    "学生-上海-D41": { "scene_tags": ["休闲"] },
-    "白领-上海-D47": { "scene_tags": ["通勤"] },
-    "白领-哈尔滨-D47": { "scene_tags": ["休闲"] },
-    "白领-哈尔滨-D48": { "scene_tags": ["通勤"] },
-    "中产无娃-上海-D27": { "scene_tags": ["窝家里-一家人/伴侣"] },
-    "中产无娃-哈尔滨-D16": { "scene_tags": ["通勤"] },
-    "中产无娃-广州-D11": { "scene_tags": ["庆祝"] },
-    "中产无娃-成都-D07": { "scene_tags": ["密友相聚", "节日", "休闲"] },
-    "中产无娃-成都-D11": { "scene_tags": ["密友相聚", "景点、乐园"] },
-    "中产无娃-成都-D12": { "scene_tags": ["家人聚会", "外面吃饭"] },
-    "中产有娃-广州-D09": { "scene_tags": ["节日"] },
-    "中产有娃-成都-D09": { "scene_tags": ["大聚会"] },
-    "中产有娃-成都-D16": { "scene_tags": ["外面吃饭"] },
-    "学生-广州-D14": { "scene_tags": ["外面吃饭"] },
-    "学生-广州-D16": { "scene_tags": ["外面吃饭"] },
-    "学生-广州-D07": { "scene_tags": ["密友相聚", "家人聚会"] },
-    "学生-广州-D06": { "scene_tags": ["密友相聚", "节日"] },
-    "白领-成都-D44": { "scene_tags": ["旅游"] },
-    "白领-哈尔滨-D43": { "scene_tags": ["工作学习"] },
-    "白领-哈尔滨-D49": { "scene_tags": ["密友相聚", "休闲"] },
-    "白领-上海-D38": { "scene_tags": ["家里聚餐", "家人聚会"] },
-    "白领-上海-D37": { "scene_tags": ["旅游"] },
-    "学生-广州-D28": { "scene_tags": ["休闲", "家人聚会"] },
-    "中产有娃-广州-D17": { "scene_tags": ["庆祝"] },
-    "中产无娃-上海-D45": { "scene_tags": ["庆祝"] },
-    "中产无娃-广州-D31": { "scene_tags": ["工作学习"] },
-    "中产无娃-上海-D42": { "scene_tags": ["旅游"] },
-    "白领-成都-D15": { "scene_tags": ["大聚会"] },
-    "白领-成都-D08": { "scene_tags": ["大聚会"] },
-    "白领-成都-D04": { "scene_tags": ["大聚会"] },
-    "白领-哈尔滨-D19": { "scene_tags": ["密友相聚", "给予/收获温暖"] },
+    "中产无娃-成都-D04": {"scene_tags": ["外面吃饭"]},
+    "中产无娃-上海-D12": {"category": "自制饮品"},
+    "白领-成都-D37": {"scene_tags": ["窝家里-一家人/伴侣", "节日"]},
+    "中产有娃-哈尔滨-D09": {"scene_tags": ["户外活动", "景点、乐园"]},
+    "学生-上海-D09": {"scene_tags": ["户外活动", "慢户外"]},
+    "中产有娃-哈尔滨-D16": {"scene_tags": ["户外活动", "景点、乐园"]},
+    "学生-广州-D34": {"scene_tags": ["户外活动", "主题乐园"]},
+    "中产无娃-哈尔滨-D25": {"scene_tags": ["密友相聚"], "category": "瓶装饮品"},
+    "中产无娃-上海-D13": {"category": "自制饮品"},
+    "中产无娃-上海-D14": {"category": "瓶装饮品"},
+    "中产无娃-上海-D15": {"category": "街饮", "scene_tags": ["通勤"]},
+    "中产无娃-上海-D16": {"category": "其他"},
+    "中产无娃-上海-D17": {"category": "自制饮品"},
+    "中产无娃-上海-D18": {"category": "自制饮品"},
+    "中产无娃-上海-D19": {"category": "自制饮品"},
+    "中产无娃-上海-D20": {"category": "瓶装饮品"},
+    "中产无娃-上海-D21": {"category": "瓶装饮品", "drink_reasons_fixed": ["解腻", "佐餐"], "drink_reasons_custom": [], "scene_tags": ["外面吃饭"]},
+    "中产无娃-上海-D22": {"category": "街饮"},
+    "中产无娃-上海-D23": {"category": "自制饮品"},
+    "中产无娃-上海-D24": {"category": "瓶装饮品", "scene_tags": ["窝家里-一个人"]},
+    "中产无娃-哈尔滨-D09": {"category": "街饮"},
+    "中产无娃-广州-D13": {"category": "自制饮品"},
+    "中产无娃-广州-D14": {"category": "街饮"},
+    "中产无娃-哈尔滨-D19": {"category": "自制饮品"},
+    "中产无娃-哈尔滨-D18": {"category": "自制饮品"},
+    "中产无娃-广州-D12": {"category": "街饮", "scene_tags": ["通勤"]},
+    "中产有娃-成都-D23": {"category": "自制饮品"},
+    "学生-上海-D19": {"category": "街饮", "scene_tags": ["户外活动", "工作学习"]},
+    "学生-上海-D20": {"category": "街饮", "scene_tags": ["窝家里-一个人"]},
+    "学生-广州-D18": {"category": "其他"},
+    "学生-成都-D04": {"category": "街饮", "scene_tags": []},
+    "白领-上海-D04": {"category": "街饮"},
+    "白领-上海-D09": {"category": "街饮"},
+    "白领-哈尔滨-D05": {"category": "街饮"},
+    "白领-广州-D13": {"category": "街饮"},
+    "中产无娃-上海-D31": {"category": "瓶装饮品", "scene_tags": ["养生", "工作学习"]},
+    "中产无娃-哈尔滨-D35": {"category": "瓶装饮品", "scene_tags": ["户外活动", "旅游"]},
+    "中产无娃-广州-D29": {"category": "瓶装饮品", "scene_tags": ["庆祝"]},
+    "中产无娃-广州-D34": {"category": "瓶装饮品"},
+    "中产有娃-哈尔滨-D17": {"category": "其他", "scene_tags": ["暂未分类", "节日"]},
+    "中产有娃-成都-D33": {"category": "瓶装饮品"},
+    "白领-上海-D46": {"category": "自制饮品"},
+    "白领-广州-D37": {"category": "瓶装饮品"},
+    "白领-成都-D41": {"category": "瓶装饮品", "scene_tags": ["暂未分类", "通勤"]},
+    "白领-成都-D02": {"category": "自制饮品"},
+    "中产无娃-成都-D16": {"category": "瓶装饮品", "scene_tags": ["节日"]},
+    "中产有娃-上海-D06": {"category": "瓶装饮品"},
+    "中产有娃-上海-D09": {"category": "街饮"},
+    "中产有娃-上海-D10": {"category": "瓶装饮品", "scene_tags": ["通勤"]},
+    "中产有娃-哈尔滨-D12": {"category": "瓶装饮品", "scene_tags": ["暂未分类", "外面聚餐"]},
+    "中产有娃-哈尔滨-D13": {"category": "瓶装饮品"},
+    "中产有娃-成都-D25": {"category": "瓶装饮品", "scene_tags": ["户外活动"]},
+    "中产有娃-成都-D28": {"category": "街饮", "scene_tags": ["户外活动"]},
+    "中产有娃-成都-D38": {"category": "街饮", "scene_tags": []},
+    "学生-广州-D17": {"category": "瓶装饮品", "scene_tags": ["运动"]},
+    "白领-上海-D30": {"category": "瓶装饮品", "scene_tags": ["密友相聚", "户外活动"]},
+    "白领-上海-D31": {"category": "街饮"},
+    "白领-上海-D32": {"category": "瓶装饮品"},
+    "白领-成都-D36": {"category": "瓶装饮品", "scene_tags": ["工作学习"]},
+    "中产无娃-上海-D11": {"scene_tags": ["主题乐园"]},
+    "中产无娃-上海-D26": {"scene_tags": ["旅游", "节日", "景点、乐园"]},
+    "白领-上海-D11": {"scene_tags": ["主题乐园"]},
+    "白领-上海-D12": {"scene_tags": ["主题乐园"]},
+    "白领-上海-D15": {"scene_tags": ["主题乐园"]},
+    "白领-上海-D16": {"scene_tags": ["主题乐园"]},
+    "中产无娃-成都-D23": {"scene_tags": ["旅游", "密友相聚", "景点、乐园"]},
+    "中产无娃-哈尔滨-D15": {"scene_tags": ["低落的时候"]},
+    "中产无娃-广州-D07": {"scene_tags": ["早餐"]},
+    "中产无娃-成都-D09": {"scene_tags": ["早餐"]},
+    "中产有娃-哈尔滨-D07": {"scene_tags": ["外面吃饭"]},
+    "学生-上海-D01": {"scene_tags": ["工作学习"]},
+    "中产有娃-成都-D20": {"scene_tags": ["无法分类"]},
+    "中产有娃-成都-D22": {"scene_tags": ["无法分类"]},
+    "学生-上海-D17": {"scene_tags": ["工作学习"]},
+    "学生-上海-D28": {"scene_tags": ["早餐"]},
+    "学生-广州-D09": {"scene_tags": ["早餐"]},
+    "学生-成都-D14": {"scene_tags": ["工作学习", "早餐"]},
+    "学生-成都-D18": {"scene_tags": ["窝家里-一个人", "低落的时候"]},
+    "白领-上海-D17": {"scene_tags": ["早餐"]},
+    "学生-成都-D17": {"drink_reasons_fixed": ["佐餐"], "drink_reasons_custom": [], "scene_tags": ["无法分类"]},
+    "白领-广州-D42": {"scene_tags": ["早餐", "庆祝"]},
+    "学生-广州-D35": {"drink_reasons_fixed": ["佐餐"], "drink_reasons_custom": []},
+    "学生-成都-D33": {"drink_reasons_fixed": [], "drink_reasons_custom": ["放松"], "scene_tags": ["窝家里-一个人"]},
+    "中产无娃-成都-D29": {"category": "瓶装饮品", "scene_tags": ["外面聚餐"]},
+    "学生-上海-D10": {"scene_tags": ["工作学习"]},
+    "中产无娃-哈尔滨-D17": {"scene_tags": ["窝家里-一个人", "给予/收获温暖"]},
+    "中产无娃-哈尔滨-D08": {"scene_tags": ["户外活动", "慢户外"]},
+    "中产有娃-广州-D02": {"scene_tags": ["户外活动", "旅游"]},
+    "中产有娃-广州-D07": {"scene_tags": ["户外活动"]},
+    "学生-成都-D06": {"scene_tags": ["户外活动", "慢户外"]},
+    "白领-上海-D03": {"scene_tags": ["户外活动", "慢户外"]},
+    "白领-哈尔滨-D18": {"scene_tags": ["庆祝"]},
+    "白领-哈尔滨-D07": {"scene_tags": ["户外活动", "运动"]},
+    "中产无娃-哈尔滨-D38": {"scene_tags": ["休闲"]},
+    "中产无娃-成都-D28": {"scene_tags": ["户外活动", "旅游"]},
+    "中产有娃-哈尔滨-D15": {"scene_tags": ["户外活动"]},
+    "中产有娃-成都-D36": {"scene_tags": ["户外活动"]},
+    "白领-哈尔滨-D39": {"scene_tags": ["密友相聚"]},
+    "白领-广州-D46": {"scene_tags": ["运动"]},
+    "白领-哈尔滨-D46": {"scene_tags": ["生病"]},
+    "中产无娃-上海-D29": {"scene_tags": ["工作学习"]},
+    "中产有娃-上海-D02": {"scene_tags": ["低落的时候"]},
+    "中产有娃-广州-D04": {"scene_tags": ["低落的时候"]},
+    "中产有娃-成都-D24": {"scene_tags": ["户外活动"]},
+    "学生-上海-D24": {"scene_tags": ["工作学习"]},
+    "学生-成都-D21": {"scene_tags": ["低落的时候"]},
+    "白领-哈尔滨-D08": {"scene_tags": ["大聚会"]},
+    "白领-广州-D11": {"scene_tags": ["户外活动"]},
+    "白领-成都-D30": {"scene_tags": ["庆祝"]},
+    "中产无娃-哈尔滨-D33": {"scene_tags": []},
+    "中产无娃-哈尔滨-D37": {"scene_tags": ["休闲"]},
+    "中产无娃-成都-D22": {"scene_tags": ["通勤"]},
+    "中产无娃-成都-D25": {"scene_tags": ["通勤"]},
+    "中产有娃-广州-D16": {"scene_tags": ["低落的时候"]},
+    "中产无娃-广州-D35": {"scene_tags": []},
+    "中产有娃-成都-D32": {"scene_tags": ["工作学习"]},
+    "学生-上海-D40": {"scene_tags": ["运动"]},
+    "学生-上海-D41": {"scene_tags": []},
+    "白领-上海-D47": {"scene_tags": ["通勤"]},
+    "白领-哈尔滨-D47": {"scene_tags": ["休闲"]},
+    "白领-哈尔滨-D48": {"scene_tags": ["通勤"]},
+    "中产无娃-上海-D27": {"scene_tags": ["窝家里-一家人/伴侣"]},
+    "中产无娃-哈尔滨-D16": {"scene_tags": ["通勤"]},
+    "中产无娃-广州-D11": {"scene_tags": ["庆祝"]},
+    "中产无娃-成都-D07": {"scene_tags": ["密友相聚", "节日"]},
+    "中产无娃-成都-D11": {"scene_tags": ["密友相聚", "景点、乐园"]},
+    "中产无娃-成都-D12": {"scene_tags": ["大聚会"]},
+    "中产有娃-广州-D09": {"scene_tags": ["节日"]},
+    "中产有娃-成都-D09": {"scene_tags": ["大聚会"]},
+    "中产有娃-成都-D16": {"scene_tags": ["外面吃饭"]},
+    "学生-广州-D14": {"scene_tags": ["外面吃饭"]},
+    "学生-广州-D16": {"scene_tags": ["外面吃饭"]},
+    "学生-广州-D07": {"scene_tags": ["大聚会"]},
+    "学生-广州-D06": {"scene_tags": ["密友相聚", "节日"]},
+    "白领-成都-D44": {"scene_tags": ["旅游"]},
+    "白领-哈尔滨-D43": {"scene_tags": ["工作学习"]},
+    "白领-哈尔滨-D49": {"scene_tags": ["密友相聚", "休闲"]},
+    "白领-上海-D38": {"scene_tags": ["家里聚餐"]},
+    "白领-上海-D37": {"scene_tags": ["旅游"]},
+    "学生-广州-D28": {"scene_tags": ["节日"]},
+    "中产有娃-广州-D17": {"scene_tags": ["庆祝"]},
+    "中产无娃-上海-D45": {"scene_tags": ["庆祝"]},
+    "中产无娃-广州-D31": {"scene_tags": ["工作学习"]},
+    "中产无娃-上海-D42": {"scene_tags": ["旅游"]},
+    "白领-成都-D15": {"scene_tags": ["大聚会"]},
+    "白领-成都-D08": {"scene_tags": ["大聚会"]},
+    "白领-成都-D04": {"scene_tags": ["大聚会"]},
+    "白领-哈尔滨-D19": {"scene_tags": ["密友相聚", "给予/收获温暖"]},
+    "中产有娃-广州-D01": {"scene_tags": ["工作学习"]},
+    "中产无娃-上海-D25": {"scene_tags": ["窝家里-一个人"]},
+    "中产无娃-上海-D30": {"scene_tags": ["家里聚餐"]},
+    "中产无娃-哈尔滨-D13": {"scene_tags": ["窝家里-一个人"]},
+    "中产无娃-成都-D03": {"scene_tags": ["养生", "窝家里-一个人"]},
+    "白领-哈尔滨-D26": {"scene_tags": ["工作学习"]},
+    "学生-上海-D08": {"scene_tags": ["无法分类"]},
+    "白领-哈尔滨-D24": {"scene_tags": ["密友相聚"]},
+    "白领-成都-D10": {"scene_tags": ["窝家里-一个人"]},
+    "学生-成都-D01": {"scene_tags": ["早餐"]},
+    "学生-广州-D02": {"scene_tags": ["早餐", "工作学习"]},
+    "白领-广州-D27": {"scene_tags": ["早餐"]},
+    "白领-广州-D26": {"scene_tags": ["早餐"]},
+    "白领-广州-D23": {"scene_tags": ["低落的时候", "早餐"], "drink_reasons_fixed": [], "drink_reasons_custom": []},
+    "白领-广州-D22": {"scene_tags": ["早餐"]},
+    "白领-哈尔滨-D29": {"scene_tags": ["早餐"]},
+    "中产无娃-广州-D18": {"scene_tags": ["无法分类"]},
+    "白领-成都-D09": {"scene_tags": ["养生", "家里聚餐"]},
+    "中产无娃-上海-D37": {"scene_tags": ["窝家里-一家人/伴侣"]},
+    "中产无娃-上海-D32": {"scene_tags": ["早餐"]},
+    "中产无娃-上海-D40": {"scene_tags": ["窝家里-一家人/伴侣"]},
+    "学生-广州-D24": {"scene_tags": ["养生", "窝家里-一个人"]},
+    "白领-广州-D31": {"scene_tags": ["家里聚餐"]},
+    "中产无娃-上海-D03": {"scene_tags": ["休闲（逛街、看电影）"]},
+    "中产无娃-广州-D08": {"scene_tags": ["节日"]},
+    "中产无娃-广州-D10": {"scene_tags": ["外面聚餐"]},
+    "中产无娃-成都-D08": {"scene_tags": ["无法分类"]},
+    "中产有娃-上海-D01": {"scene_tags": ["主题乐园"]},
+    "中产有娃-广州-D06": {"scene_tags": ["户外活动"]},
+    "中产有娃-成都-D15": {"scene_tags": ["户外活动"]},
+    "中产有娃-成都-D21": {"scene_tags": ["无法分类"]},
+    "学生-上海-D04": {"scene_tags": ["密友相聚", "外面聚餐"]},
+    "学生-上海-D07": {"scene_tags": ["密友相聚", "外面聚餐"]},
+    "学生-上海-D05": {"scene_tags": ["密友相聚", "外面聚餐"]},
+    "白领-成都-D32": {"scene_tags": ["窝家里-一个人"]},
+    "中产无娃-上海-D06": {"scene_tags": []},
+    "中产无娃-上海-D10": {"scene_tags": ["运动"]},
+    "中产无娃-上海-D28": {"scene_tags": ["运动"]},
+    "中产无娃-上海-D44": {"scene_tags": ["旅游"]},
+    "中产无娃-上海-D51": {"scene_tags": []},
+    "中产无娃-哈尔滨-D06": {"scene_tags": []},
+    "中产无娃-哈尔滨-D34": {"scene_tags": []},
+    "中产无娃-广州-D01": {"scene_tags": ["窝家里-一个人"]},
+    "中产无娃-广州-D09": {"scene_tags": []},
+    "中产无娃-广州-D17": {"scene_tags": []},
+    "中产无娃-广州-D22": {"scene_tags": ["养生"]},
+    "中产无娃-广州-D30": {"scene_tags": []},
+    "中产无娃-成都-D14": {"scene_tags": ["工作学习"]},
+    "中产无娃-成都-D18": {"scene_tags": []},
+    "中产无娃-成都-D21": {"scene_tags": ["密友相聚"]},
+    "中产无娃-成都-D27": {"scene_tags": []},
+    "中产有娃-上海-D08": {"scene_tags": ["窝家里-一个人"]},
+    "中产有娃-哈尔滨-D01": {"scene_tags": ["工作学习"]},
+    "中产有娃-广州-D05": {"scene_tags": ["户外活动"]},
+    "中产有娃-广州-D11": {"scene_tags": []},
+    "中产有娃-广州-D12": {"scene_tags": ["密友相聚"]},
+    "中产有娃-成都-D03": {"scene_tags": ["旅游"]},
+    "中产有娃-成都-D31": {"scene_tags": ["窝家里-一个人"]},
+    "中产有娃-成都-D34": {"scene_tags": []},
+    "中产有娃-成都-D39": {"scene_tags": []},
+    "学生-上海-D14": {"scene_tags": ["旅游"]},
+    "学生-上海-D27": {"scene_tags": ["窝家里-一个人"]},
+    "学生-上海-D30": {"scene_tags": ["窝家里-一个人"]},
+    "学生-上海-D31": {"scene_tags": ["工作学习"]},
+    "学生-上海-D32": {"scene_tags": ["密友相聚"]},
+    "学生-上海-D33": {"scene_tags": []},
+    "学生-上海-D39": {"scene_tags": []},
+    "学生-广州-D04": {"scene_tags": []},
+    "学生-广州-D26": {"scene_tags": ["密友相聚"]},
+    "学生-广州-D29": {"scene_tags": []},
+    "学生-广州-D38": {"scene_tags": []},
+    "学生-成都-D16": {"scene_tags": ["密友相聚"]},
+    "学生-成都-D26": {"scene_tags": ["窝家里-一家人/伴侣"]},
+    "白领-上海-D08": {"scene_tags": ["窝家里-一个人"]},
+    "白领-上海-D19": {"scene_tags": []},
+    "白领-上海-D24": {"scene_tags": []},
+    "白领-上海-D28": {"scene_tags": ["窝家里-一个人"]},
+    "白领-上海-D29": {"scene_tags": ["窝家里-一个人"]},
+    "白领-上海-D34": {"scene_tags": []},
+    "白领-上海-D39": {"scene_tags": []},
+    "白领-上海-D40": {"scene_tags": ["窝家里-一个人"]},
+    "白领-上海-D44": {"scene_tags": []},
+    "白领-哈尔滨-D14": {"scene_tags": []},
+    "白领-哈尔滨-D23": {"scene_tags": ["窝家里-一家人/伴侣"]},
+    "白领-哈尔滨-D42": {"scene_tags": []},
+    "白领-哈尔滨-D44": {"scene_tags": ["户外活动"]},
+    "白领-广州-D06": {"scene_tags": ["旅游"]},
+    "白领-广州-D09": {"scene_tags": ["密友相聚"]},
+    "白领-广州-D14": {"scene_tags": ["工作学习"]},
+    "白领-广州-D17": {"scene_tags": ["早餐"]},
+    "白领-广州-D20": {"scene_tags": ["窝家里-一个人"]},
+    "白领-广州-D28": {"scene_tags": ["窝家里-一个人"]},
+    "白领-成都-D01": {"scene_tags": ["旅游"]},
+    "白领-成都-D07": {"scene_tags": ["窝家里-一个人"]},
+    "白领-成都-D13": {"scene_tags": ["窝家里-一个人"]},
+    "白领-成都-D16": {"scene_tags": ["窝家里-一个人"]},
+    "白领-成都-D17": {"scene_tags": ["运动"]},
+    "白领-成都-D18": {"scene_tags": ["密友相聚"]},
+    "白领-成都-D26": {"scene_tags": []},
+    "白领-成都-D27": {"scene_tags": []},
+    "白领-成都-D31": {"scene_tags": ["密友相聚"]},
+    "白领-成都-D48": {"scene_tags": []},
+    "白领-上海-D18": {"scene_tags": ["暂未分类", "工作学习"]},
+    "白领-广州-D19": {"scene_tags": ["暂未分类", "外面聚餐"]},
+    "白领-哈尔滨-D40": {"scene_tags": ["暂未分类", "工作学习"]},
+    "白领-哈尔滨-D34": {"scene_tags": ["暂未分类", "工作学习"]},
+    "白领-广州-D05": {"scene_tags": ["户外活动"]},
+    "白领-广州-D04": {"scene_tags": ["早餐"]},
+    "白领-广州-D03": {"scene_tags": ["暂未分类", "工作学习"]},
+    "白领-哈尔滨-D02": {"scene_tags": ["暂未分类", "通勤"]},
+    "白领-哈尔滨-D01": {"scene_tags": ["暂未分类", "窝家里-一个人"]},
+    "中产无娃-广州-D04": {"scene_tags": ["暂未分类", "户外活动"]},
+    "中产无娃-哈尔滨-D01": {"scene_tags": ["暂未分类", "节日"]},
+    "中产无娃-哈尔滨-D04": {"scene_tags": ["给予/收获温暖"]},
   },
-  drinks_scene_tag_defs_v1: { added: ["外面吃饭", "家人聚会"], renames: {}, colors: {} },
+  drinks_scene_tag_defs_v1: {"added": ["家里聚餐", "外面聚餐"], "renames": {"景点、乐园": "主题乐园", "休闲": "休闲（逛街、看电影）", "外面吃饭": "外面聚餐", "庆祝": "节日", "无法分类": "暂未分类"}, "colors": {}},
+  drinks_favorites_v1: [],
 };
 (function seedDefaults() {
-  const FLAG = 'drinks_seeded_v3_2026-05-02-T0355';
+  const FLAG = 'drinks_seeded_v8_2026-05-02-T1225';
   if (localStorage.getItem(FLAG)) return;
+  // v8：基线对齐到 2026-05-02T12:25 导出（清空收藏 + 中产无娃-哈尔滨-D04 改打"给予/收获温暖"叙事标签）。强制覆盖。
   for (const key in DEFAULT_TAG_DATA) {
-    if (localStorage.getItem(key)) continue; // 用户已有数据：不覆盖
     localStorage.setItem(key, JSON.stringify(DEFAULT_TAG_DATA[key]));
   }
   localStorage.setItem(FLAG, '1');
