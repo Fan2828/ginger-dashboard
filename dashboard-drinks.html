@@ -295,9 +295,32 @@
 
   .card .meta {
     font-size: 10.5px; color: #777; line-height: 1.5;
-    display: grid; grid-template-columns: auto 1fr; gap: 1px 8px;
+    display: grid; grid-template-columns: auto 1fr; gap: 3px 8px;
+    align-items: center;
   }
   .card .meta .k { color: #aaa; }
+  .card .meta .meta-vals {
+    display: inline-flex; flex-wrap: wrap; gap: 3px; align-items: center;
+  }
+  .card .meta .meta-chip {
+    display: inline-flex; align-items: center; gap: 2px;
+    background: #f0f2f5; color: #555; padding: 0px 5px 0px 7px;
+    border-radius: 9px; font-size: 10.5px; cursor: pointer;
+    border: 1px solid #e3e6ea;
+  }
+  .card .meta .meta-chip:hover { background: #e7eaf0; color: #333; }
+  .card .meta .meta-chip .x {
+    color: #b0b6bd; cursor: pointer; font-size: 11px;
+    padding: 0 1px 0 2px; line-height: 1;
+  }
+  .card .meta .meta-chip .x:hover { color: #c00; }
+  .card .meta .meta-add {
+    display: inline-flex; align-items: center;
+    color: #999; padding: 0 5px; font-size: 10.5px;
+    cursor: pointer; border: 1px dashed #d0d4d9; border-radius: 9px;
+    background: transparent;
+  }
+  .card .meta .meta-add:hover { color: #333; background: #f7f7f7; }
 
   .card .conflict {
     position: absolute; top: 6px; right: 6px;
@@ -23577,12 +23600,13 @@ function clearSearch() {
 function searchHaystack(d) {
   const parts = [
     d.id, d.city, d.persona, d.group, d.brand, d.subtype,
-    d.frequency, d.company, d.purchase_place, d.temperature, d.experience,
-    d.taste, d.note, d.drink_desc,
+    getCardMeta(d, 'frequency'), getCardMeta(d, 'company'),
+    getCardMeta(d, 'purchase_place'), d.temperature, d.experience,
+    getCardMeta(d, 'taste'), d.note, d.drink_desc,
     (d.scene && d.scene.text) || '',
     (d.scene && d.scene.category) || '',
     getCategory(d),
-    (d.time_slots || []).join(' '),
+    (getCardMeta(d, 'time_slots') || []).join(' '),
     getSceneTags(d).join(' '),
     getElements(d).map(effectiveElementName).join(' '),
     getCardReasonsFixed(d).join(' '),
@@ -23632,7 +23656,12 @@ function setSceneTags(id, tags) {
 function isEdited(d) {
   const edits = loadEdits();
   const e = edits[d.id];
-  return !!(e && (e.scene_tags || e.category));
+  if (!e) return false;
+  return !!(e.scene_tags || e.category
+    || e.drink_reasons_fixed || e.drink_reasons_custom
+    || e.taste !== undefined || e.time_slots !== undefined
+    || e.frequency !== undefined || e.company !== undefined
+    || e.purchase_place !== undefined);
 }
 function clearEditFor(id) {
   const edits = loadEdits();
@@ -23678,6 +23707,7 @@ const TAG_STORAGE_KEYS = [
   'drinks_element_tag_defs_v1',
   'drinks_element_groups_v1', // 旧版数据兼容（已弃用）
   'drinks_favorites_v1',
+  'drinks_meta_opts_v1',
 ];
 
 /* ───────── 撤销 / 重做（Cmd/Ctrl+Z / Shift+Cmd/Ctrl+Z） ───────── */
@@ -23962,6 +23992,122 @@ function removeReasonFromCard(id, reason) {
   renderAll();
 }
 
+/* ───────── 卡片 meta 字段（口味 / 时段 / 频率 / 同伴 / 购买）人工编辑 ───────── */
+const META_OPTS_KEY = 'drinks_meta_opts_v1';
+const META_BASE_OPTS = {
+  time_slots: TIME_SLOTS,
+  frequency: FREQUENCIES,
+  company: COMPANIES,
+  purchase_place: PURCHASE_PLACES,
+};
+const META_LABEL = {
+  taste: '口味', time_slots: '时段', frequency: '频率',
+  company: '同伴', purchase_place: '购买',
+};
+function loadMetaOpts() {
+  try { return JSON.parse(localStorage.getItem(META_OPTS_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveMetaOpts(o) {
+  pushUndoSnapshot();
+  localStorage.setItem(META_OPTS_KEY, JSON.stringify(o));
+}
+function effectiveMetaOpts(key) {
+  const added = (loadMetaOpts()[key] || []);
+  return [...new Set([...(META_BASE_OPTS[key] || []), ...added])];
+}
+function addMetaOpt(key, val) {
+  const trimmed = String(val || '').trim();
+  if (!trimmed) return;
+  const base = META_BASE_OPTS[key] || [];
+  if (base.includes(trimmed)) return;
+  const opts = loadMetaOpts();
+  opts[key] = opts[key] || [];
+  if (!opts[key].includes(trimmed)) {
+    opts[key].push(trimmed);
+    saveMetaOpts(opts);
+  }
+}
+function getCardMeta(d, key) {
+  const e = loadEdits()[d.id];
+  if (e && e[key] !== undefined) return e[key];
+  return d[key];
+}
+function setCardMeta(id, key, value) {
+  const edits = loadEdits();
+  edits[id] = edits[id] || {};
+  edits[id][key] = value;
+  saveEdits(edits);
+}
+function addCardTimeSlot(id, slot) {
+  const d = DATA.find(x => x.id === id); if (!d) return;
+  const cur = (getCardMeta(d, 'time_slots') || []).slice();
+  if (cur.includes(slot)) return;
+  cur.push(slot);
+  setCardMeta(id, 'time_slots', cur);
+  renderAll();
+}
+function removeCardTimeSlot(id, slot) {
+  const d = DATA.find(x => x.id === id); if (!d) return;
+  const cur = (getCardMeta(d, 'time_slots') || []).filter(t => t !== slot);
+  setCardMeta(id, 'time_slots', cur);
+  renderAll();
+}
+function setCardSingleMeta(id, key, val) {
+  setCardMeta(id, key, val);
+  renderAll();
+}
+function clearCardMeta(id, key) {
+  const isList = key === 'time_slots';
+  setCardMeta(id, key, isList ? [] : '');
+  renderAll();
+}
+function editCardTaste(id) {
+  const d = DATA.find(x => x.id === id); if (!d) return;
+  const cur = getCardMeta(d, 'taste') || '';
+  const v = prompt('编辑口味（留空清除）：', cur);
+  if (v === null) return;
+  setCardMeta(id, 'taste', v.trim());
+  renderAll();
+}
+function showMetaPicker(id, key, anchorEl) {
+  const d = DATA.find(x => x.id === id); if (!d) return;
+  const isMulti = key === 'time_slots';
+  const cur = isMulti
+    ? (getCardMeta(d, key) || [])
+    : [getCardMeta(d, key)].filter(Boolean);
+  const picker = document.getElementById('tag-picker');
+  const items = effectiveMetaOpts(key).map(t => {
+    const has = cur.includes(t);
+    const cls = 'tag-picker-item' + (has ? ' disabled' : '');
+    const onclick = has ? '' :
+      (isMulti
+        ? `onclick="addCardTimeSlot(${escapeAttr(id)}, ${escapeAttr(t)});closeTagPicker();"`
+        : `onclick="setCardSingleMeta(${escapeAttr(id)}, ${escapeAttr(key)}, ${escapeAttr(t)});closeTagPicker();"`);
+    return `<span class="${cls}" style="background:#7a8a99;" ${onclick}>${escapeHtml(t)}</span>`;
+  }).join('');
+  const newItem = `<span class="tag-picker-item" style="background:#888;border:1px dashed #fff;"
+      onclick="newMetaOptForCard(${escapeAttr(id)}, ${escapeAttr(key)});">＋ 新建</span>`;
+  picker.innerHTML = `
+    <span class="tag-picker-close" onclick="closeTagPicker()">×</span>
+    <div class="tag-picker-title">${META_LABEL[key]}（${isMulti ? '可多选' : '单选'}）</div>
+    <div class="tag-picker-list">${items}${newItem}</div>
+  `;
+  const r = anchorEl.getBoundingClientRect();
+  picker.style.display = 'block';
+  picker.style.left = `${window.scrollX + r.left}px`;
+  picker.style.top  = `${window.scrollY + r.bottom + 4}px`;
+}
+function newMetaOptForCard(id, key) {
+  const v = prompt(`新「${META_LABEL[key]}」：`);
+  if (!v || !v.trim()) { closeTagPicker(); return; }
+  const trimmed = v.trim();
+  addMetaOpt(key, trimmed);
+  if (key === 'time_slots') addCardTimeSlot(id, trimmed);
+  else setCardSingleMeta(id, key, trimmed);
+  closeTagPicker();
+}
+
 /* 标签库编辑入口 */
 function editSceneTagPrompt(name) {
   const v = prompt(`重命名「${name}」（留空取消）：`, name);
@@ -24208,7 +24354,10 @@ document.addEventListener('click', e => {
       && !picker.contains(e.target)
       && !e.target.classList.contains('add-tag-btn')
       && !e.target.classList.contains('cat-pickable')
-      && !e.target.closest('.cat-pickable')) {
+      && !e.target.closest('.cat-pickable')
+      && !e.target.classList.contains('meta-add')
+      && !e.target.classList.contains('meta-chip')
+      && !e.target.closest('.meta-chip')) {
     closeTagPicker();
   }
 });
@@ -24224,6 +24373,7 @@ function buildChipRow(label, options, key, opts = {}) {
     if (key === 'scene_tags') v = getSceneTags(d);
     else if (key === 'scene_category') v = (d.scene && d.scene.category) || '';
     else if (key === 'category') v = getCategory(d);
+    else if (META_BASE_OPTS[key]) v = getCardMeta(d, key);
     else v = d[key];
     if (Array.isArray(v)) v.forEach(e => counts[e] = (counts[e] || 0) + 1);
     else if (v) counts[v] = (counts[v] || 0) + 1;
@@ -24656,10 +24806,10 @@ function matchesAllExcept(d, skipKey) {
   if (!m('brand', d.brand)) return false;
   if (!m('temperature', d.temperature)) return false;
   if (!m('experience', d.experience)) return false;
-  if (!m('time_slots', d.time_slots || [])) return false;
-  if (!m('frequency', d.frequency)) return false;
-  if (!m('company', d.company)) return false;
-  if (!m('purchase_place', d.purchase_place)) return false;
+  if (!m('time_slots', getCardMeta(d, 'time_slots') || [])) return false;
+  if (!m('frequency', getCardMeta(d, 'frequency'))) return false;
+  if (!m('company', getCardMeta(d, 'company'))) return false;
+  if (!m('purchase_place', getCardMeta(d, 'purchase_place'))) return false;
   if (skipKey !== 'conflict_only' && filters.conflict_only
       && d.category_source !== 'color≠vlm') return false;
   if (filters.favorites_only && !loadFavorites().has(d.id)) return false;
@@ -24703,6 +24853,30 @@ function renderCards() {
     html += '</div>';
   });
   area.innerHTML = html;
+}
+
+function renderMetaRow(d, key) {
+  const label = META_LABEL[key];
+  if (key === 'taste') {
+    const v = getCardMeta(d, 'taste') || '';
+    const valHtml = v
+      ? `<span class="meta-chip" title="点击编辑" onclick="event.stopPropagation();editCardTaste(${escapeAttr(d.id)})">${escapeHtml(v)}<span class="x" title="清除" onclick="event.stopPropagation();clearCardMeta(${escapeAttr(d.id)}, 'taste')">×</span></span>`
+      : `<span class="meta-add" onclick="event.stopPropagation();editCardTaste(${escapeAttr(d.id)})">＋ 加</span>`;
+    return `<span class="k">${label}</span><span class="meta-vals">${valHtml}</span>`;
+  }
+  if (key === 'time_slots') {
+    const list = getCardMeta(d, 'time_slots') || [];
+    const chips = list.map(t =>
+      `<span class="meta-chip" title="点击移除">${escapeHtml(t)}<span class="x" onclick="event.stopPropagation();removeCardTimeSlot(${escapeAttr(d.id)}, ${escapeAttr(t)})">×</span></span>`
+    ).join('');
+    const add = `<span class="meta-add" title="加时段" onclick="event.stopPropagation();showMetaPicker(${escapeAttr(d.id)}, 'time_slots', this)">＋</span>`;
+    return `<span class="k">${label}</span><span class="meta-vals">${chips}${add}</span>`;
+  }
+  const v = getCardMeta(d, key) || '';
+  const chip = v
+    ? `<span class="meta-chip" title="点击修改" onclick="event.stopPropagation();showMetaPicker(${escapeAttr(d.id)}, ${escapeAttr(key)}, this)">${escapeHtml(v)}<span class="x" title="清除" onclick="event.stopPropagation();clearCardMeta(${escapeAttr(d.id)}, ${escapeAttr(key)})">×</span></span>`
+    : `<span class="meta-add" onclick="event.stopPropagation();showMetaPicker(${escapeAttr(d.id)}, ${escapeAttr(key)}, this)">＋ 加</span>`;
+  return `<span class="k">${label}</span><span class="meta-vals">${chip}</span>`;
 }
 
 function renderCard(d) {
@@ -24781,13 +24955,8 @@ function renderCard(d) {
     d.experience  ? `<span class="badge small">${EXP_EMOJI[d.experience] || ''} ${d.experience}</span>` : '',
   ].filter(Boolean).join('');
 
-  const meta = [
-    d.taste ? ['口味', escapeHtml(d.taste)] : null,
-    d.time_slots && d.time_slots.length ? ['时段', d.time_slots.join(' · ')] : null,
-    d.frequency ? ['频率', d.frequency] : null,
-    d.company ? ['同伴', d.company] : null,
-    d.purchase_place ? ['购买', d.purchase_place] : null,
-  ].filter(Boolean).map(([k, v]) => `<span class="k">${k}</span><span>${v}</span>`).join('');
+  const meta = ['taste', 'time_slots', 'frequency', 'company', 'purchase_place']
+    .map(k => renderMetaRow(d, k)).join('');
 
   const sceneDesc = d.scene && d.scene.text
     ? `<div class="desc scene-desc">📍 ${highlightSearch(escapeHtml(d.scene.text))}</div>` : '';
