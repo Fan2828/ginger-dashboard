@@ -164,10 +164,22 @@
   .filter-chip.elem-chip:hover .chip-edit { display: inline-block; opacity: 1; }
   .filter-chip.elem-chip.has-color .chip-color { display: inline-block; opacity: 1; }
   .filter-chip.add-chip {
-    background: #fff; color: #5b86c2; border: 1px dashed #aaa;
-    cursor: pointer;
+    background: transparent; color: #aaa; border: 1px dashed #d0d0d0;
+    cursor: pointer; font-size: 10px; padding: 1px 7px;
+    font-weight: 400;
   }
-  .filter-chip.add-chip:hover { background: #f0f6ff; border-color: #5b86c2; }
+  .filter-chip.add-chip:hover { background: #f5f5f5; color: #666; border-color: #aaa; }
+  .wip-tag {
+    display: inline-block; margin-left: 6px;
+    font-size: 9px; font-weight: 500; color: #999;
+    background: #f5f5f5; border: 1px solid #e0e0e0;
+    padding: 1px 5px; border-radius: 4px;
+    letter-spacing: 0.3px; vertical-align: middle;
+    text-decoration: none; cursor: pointer; transition: all 0.15s;
+  }
+  a.wip-tag:hover {
+    color: #c44; background: #fff5f5; border-color: #f5b5b5;
+  }
   .filter-chip.zero-count { opacity: 0.55; }
 
   /* 卡片上的元素标签徽章 */
@@ -390,6 +402,108 @@
     z-index: 1000; cursor: zoom-out;
   }
   .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+
+  /* ── 新增标签：选择模式 ── */
+  .btn.btn-newtag {
+    background: #f3e8ff; color: #6b21a8; border-color: #c4a5e6; font-weight: 600;
+  }
+  .btn.btn-newtag:hover { background: #e9d5ff; border-color: #9333ea; }
+  .btn.btn-newtag.active { background: #6b21a8; color: #fff; border-color: #6b21a8; }
+
+  .selection-bar {
+    position: sticky; top: 0; z-index: 200;
+    background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+    border: 1.5px solid #c4a5e6; border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 14px;
+    box-shadow: 0 4px 16px rgba(107,33,168,0.12);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .selection-bar-title {
+    font-size: 12px; font-weight: 700; color: #6b21a8;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .selection-bar-main {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .select-all-btn {
+    font-size: 14px; font-weight: 700; padding: 10px 22px;
+    background: #16a34a; color: #fff; border: none;
+    border-radius: 10px; cursor: pointer;
+    box-shadow: 0 2px 6px rgba(22,163,74,0.25);
+    transition: transform 0.1s, box-shadow 0.15s;
+  }
+  .select-all-btn:hover {
+    background: #15803d;
+    box-shadow: 0 4px 10px rgba(22,163,74,0.35);
+    transform: translateY(-1px);
+  }
+  .select-all-btn.unselect { background: #dc2626; box-shadow: 0 2px 6px rgba(220,38,38,0.25); }
+  .select-all-btn.unselect:hover { background: #b91c1c; box-shadow: 0 4px 10px rgba(220,38,38,0.35); }
+  .select-all-btn:disabled {
+    background: #d1d5db; color: #6b7280; cursor: not-allowed;
+    box-shadow: none; transform: none;
+  }
+  .selection-count {
+    font-size: 13px; color: #444; font-weight: 600;
+  }
+  .selection-count b { color: #6b21a8; font-size: 16px; }
+  .selection-count .off-screen {
+    color: #9333ea; font-size: 11px; font-weight: 500; margin-left: 4px;
+  }
+  .selection-bar-actions {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .selection-bar-actions .btn { font-size: 12px; }
+  .btn.btn-create {
+    background: #6b21a8; color: #fff; border-color: #6b21a8; font-weight: 700;
+  }
+  .btn.btn-create:hover { background: #581c87; border-color: #581c87; }
+  .btn.btn-create:disabled {
+    background: #d1d5db; color: #6b7280; border-color: #d1d5db; cursor: not-allowed;
+  }
+
+  /* 选择模式下：卡片可点选、内部按钮禁用 */
+  body.selection-mode .card.selectable {
+    cursor: pointer;
+  }
+  body.selection-mode .card.selectable * {
+    pointer-events: none;
+  }
+  body.selection-mode .card.selectable {
+    pointer-events: auto;
+  }
+  .card.selectable { transition: box-shadow 0.15s, transform 0.1s; }
+  .card.selectable:hover {
+    box-shadow: 0 4px 12px rgba(107,33,168,0.18);
+    transform: translateY(-1px);
+  }
+  .card.selected {
+    box-shadow: 0 0 0 3px #6b21a8, 0 4px 12px rgba(107,33,168,0.25) !important;
+  }
+  .card-checkbox {
+    position: absolute; top: 8px; left: 8px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    border: 2px solid #6b21a8;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #6b21a8;
+    z-index: 10; user-select: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .card.selected .card-checkbox {
+    background: #6b21a8; color: #fff;
+  }
+  /* 选择模式下，让 fav/conflict/edited 标志给 checkbox 让位 */
+  body.selection-mode .card .edited-mark { left: 42px; }
+
+  /* 新标签 chip 行：紫色调 */
+  .filter-chip.user-tag-chip {
+    background: #faf5ff; color: #6b21a8; border: 1px solid #c4a5e6;
+  }
+  .filter-chip.user-tag-chip:hover { background: #f3e8ff; }
+  .filter-chip.user-tag-chip.active {
+    background: #6b21a8; color: #fff; border-color: #6b21a8;
+  }
 </style>
 </head>
 <body>
@@ -402,6 +516,8 @@
   <a class="nav-link" href="dashboard-heating.html">🔥 加热设备选型</a>
   <a class="nav-link" href="dashboard-devices.html">📷 用户实拍设备</a>
   <a class="nav-link" href="dashboard-complaints.html">💢 不好的体验</a>
+  <a class="nav-link" href="dashboard-scenes-drinks.html">🔗 场景-饮品配对</a>
+  <a class="nav-link" href="dashboard-wishes.html">⭐ 理想饮品许愿</a>
 </div>
 
 <!-- 三大筛选区：场景 / 饮品 / 人群 -->
@@ -416,6 +532,7 @@
       <span id="search-clear" class="search-clear" onclick="clearSearch()" style="display:none;">×</span>
     </div>
     <button class="btn" id="favorites-toggle-btn" onclick="toggleFavoritesOnly()">★ 只看收藏</button>
+    <button class="btn btn-newtag" id="selection-mode-btn" onclick="toggleSelectionMode()">🏷 新增标签</button>
     <button class="btn" onclick="clearAllFilters()">清空所有筛选</button>
     <button class="btn" onclick="exportTagData()">⬇ 导出标签</button>
     <button class="btn" onclick="document.getElementById('import-file-input').click()">⬆ 导入标签</button>
@@ -424,6 +541,7 @@
   </div>
 </div>
 
+<div id="selection-bar-host"></div>
 <div class="stats-line" id="stats-line"></div>
 <div id="cards-area"></div>
 
@@ -23574,6 +23692,10 @@ let DATA = INIT_DATA.slice();
 let drinkSecondaryOpen = false;
 let elementsRowOpen = false;
 
+/* ───────── 选择模式状态（不持久化；退出页面会丢） ───────── */
+let selectionMode = false;
+const selectedIds = new Set();
+
 /* ───────── 搜索 ───────── */
 let searchQuery = '';
 let searchTokens = [];
@@ -23703,6 +23825,7 @@ const TAG_STORAGE_KEYS = [
   'drinks_edits_v1',
   'drinks_scene_tag_defs_v1',
   'drinks_narrative_added_v1',
+  'drinks_user_tag_defs_v1',
   'drinks_reason_defs_v1',
   'drinks_element_tag_defs_v1',
   'drinks_element_groups_v1', // 旧版数据兼容（已弃用）
@@ -23894,6 +24017,31 @@ function defaultColorFor(name) {
   return `hsl(${hue}, 55%, 50%)`;
 }
 
+/* 用户新建标签：与场景主题共用 scene_tags 字段，但单独维护白名单，
+   独立成「新标签」一行，不混入「场景主题」未分组区。 */
+const USER_TAG_DEFS_KEY = 'drinks_user_tag_defs_v1';
+function loadUserTags() {
+  try { return JSON.parse(localStorage.getItem(USER_TAG_DEFS_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveUserTags(arr) {
+  pushUndoSnapshot();
+  localStorage.setItem(USER_TAG_DEFS_KEY, JSON.stringify(arr));
+}
+function addUserTag(name) {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) return false;
+  const cur = loadUserTags();
+  if (cur.includes(trimmed)) return false;
+  saveUserTags([...cur, trimmed]);
+  return true;
+}
+function effectiveUserTags() {
+  return loadUserTags()
+    .map(t => resolveTag(SCENE_TAG_DEFS_KEY, t))
+    .filter((t, i, a) => a.indexOf(t) === i);
+}
+
 /* 叙事主题：与场景主题共用 scene_tags 字段（rename 走 SCENE_TAG_DEFS_KEY），
    只是另外维护一个白名单：哪些标签被视作"叙事"而非"场景"。 */
 const NARRATIVE_DEFS_KEY = 'drinks_narrative_added_v1';
@@ -23922,6 +24070,7 @@ function effectiveSceneTags() {
   const all = [...SCENE_TAGS, ...defs.added].map(t => resolveTag(SCENE_TAG_DEFS_KEY, t));
   const excluded = new Set([
     ...effectiveNarrativeTags(),
+    ...effectiveUserTags(),
     ...HIDDEN_SCENE_TAGS.map(t => resolveTag(SCENE_TAG_DEFS_KEY, t)),
   ]);
   return [...new Set(all)].filter(t => !excluded.has(t));
@@ -24434,6 +24583,71 @@ function buildChipRow(label, options, key, opts = {}) {
   </div>`;
 }
 
+function buildUserTagFilterRow(userTagList) {
+  const visible = filterByCellsExcept('scene_tags');
+  const counts = {};
+  visible.forEach(d => {
+    getSceneTags(d).forEach(t => {
+      counts[t] = (counts[t] || 0) + 1;
+    });
+  });
+  const chips = userTagList.map(t => {
+    const active = filters.scene_tags.has(t);
+    const n = counts[t] || 0;
+    let cls = 'filter-chip user-tag-chip' + (active ? ' active' : '');
+    if (n === 0) cls += ' zero-count';
+    const editBtn = `<span class="chip-edit" title="重命名" onclick="event.stopPropagation();editUserTagPrompt(${escapeAttr(t)})">✎</span>`;
+    const delBtn = `<span class="chip-edit" title="删除标签" style="color:#c62828;" onclick="event.stopPropagation();deleteUserTagPrompt(${escapeAttr(t)})">🗑</span>`;
+    return `<span class="${cls}" onclick="toggleFilter('scene_tags', ${escapeAttr(t)})">
+      🏷 ${escapeHtml(t)}<span class="count">${n}</span>${editBtn}${delBtn}
+    </span>`;
+  }).join('');
+  return `<div class="filter-row">
+    <div class="filter-label">新标签</div>
+    <div class="filter-chips">${chips}</div>
+  </div>`;
+}
+
+function editUserTagPrompt(name) {
+  const v = prompt(`重命名「${name}」（留空取消）：`, name);
+  if (!v) return;
+  const trimmed = v.trim();
+  if (!trimmed || trimmed === name) return;
+  // 同时更新 user-tags 列表 + 走 SCENE_TAG_DEFS 的 rename，让卡片标签也跟着重命名
+  const list = loadUserTags();
+  const idx = list.indexOf(name);
+  if (idx >= 0) {
+    list[idx] = trimmed;
+    saveUserTags(list);
+  }
+  renameTagDef(SCENE_TAG_DEFS_KEY, name, trimmed);
+  if (filters.scene_tags.has(name)) {
+    filters.scene_tags.delete(name);
+    filters.scene_tags.add(trimmed);
+  }
+  renderAll();
+}
+function deleteUserTagPrompt(name) {
+  // 数一下有多少卡用了它
+  let used = 0;
+  DATA.forEach(d => { if (getSceneTags(d).includes(name)) used++; });
+  const msg = used > 0
+    ? `删除「${name}」？\n\n这会从 ${used} 张卡上同时移除该标签。\n（不可撤销，但可以用 Ctrl/Cmd+Z 撤销）`
+    : `删除「${name}」？`;
+  if (!confirm(msg)) return;
+  // 从所有卡上移除
+  DATA.forEach(d => {
+    const cur = getSceneTags(d);
+    if (!cur.includes(name)) return;
+    const next = cur.filter(t => t !== name);
+    setSceneTags(d.id, next.length ? next : ['无法分类']);
+  });
+  // 从用户标签列表移除
+  saveUserTags(loadUserTags().filter(t => t !== name));
+  if (filters.scene_tags.has(name)) filters.scene_tags.delete(name);
+  renderAll();
+}
+
 function buildDrinkReasonsFilter() {
   const visible = filterByCellsExcept('drink_reasons');
   const cnt = {};
@@ -24474,7 +24688,7 @@ function buildDrinkReasonsFilter() {
   const addChip = `<span class="filter-chip add-chip" onclick="newReasonPrompt()">＋ 新建</span>`;
 
   return `<div class="filter-row">
-    <div class="filter-label">为什么喝</div>
+    <div class="filter-label">为什么喝<a class="wip-tag" href="dashboard-reasons.html" target="_blank" rel="noopener" title="点击查看「为什么喝」标签重提取过程">under construction →</a></div>
     <div class="filter-chips">${chips}${addChip}</div>
   </div>`;
 }
@@ -24639,12 +24853,20 @@ function renderFilters() {
   const narrativeTagList = effectiveNarrativeTags();
   const narrativeColorMap = {};
   narrativeTagList.forEach(t => { narrativeColorMap[t] = sceneColorFor(t); });
+
+  // 「新标签」：用户用选择模式批量创建出来的标签
+  const userTagList = effectiveUserTags();
+  const userTagRow = userTagList.length
+    ? buildUserTagFilterRow(userTagList)
+    : '';
+
   const sceneSection = `<div class="filter-group">
     <div class="filter-group-head">
       <span class="icon">📍</span>
       <span>场景</span>
     </div>
     <div class="filter-rows">
+      ${userTagRow}
       ${sceneThemeRow}
       ${buildChipRow('叙事主题', narrativeTagList, 'scene_tags', { colorMap: narrativeColorMap, strict: true, editFn: 'editSceneTagPrompt', addFn: 'newNarrativeTagPrompt' })}
       ${buildChipRow('地点类型', SCENE_CATEGORIES, 'scene_category', { colorMap: SCENE_CATEGORY_COLORS })}
@@ -24752,6 +24974,113 @@ function toggleFilter(key, value) {
   else filters[key].add(value);
   renderAll();
 }
+
+/* ───────── 选择模式：进入 / 退出 / 选卡 / 全选 / 创建新标签 ───────── */
+function toggleSelectionMode() {
+  selectionMode = !selectionMode;
+  document.body.classList.toggle('selection-mode', selectionMode);
+  closeTagPicker();
+  renderAll();
+}
+function toggleCardSelection(id) {
+  if (!selectionMode) return;
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  renderAll();
+}
+function clearSelection() {
+  selectedIds.clear();
+  renderAll();
+}
+function selectAllVisible() {
+  const visible = applyAllFilters();
+  if (visible.length === 0) return;
+  const allSelected = visible.every(d => selectedIds.has(d.id));
+  if (allSelected) {
+    visible.forEach(d => selectedIds.delete(d.id));
+  } else {
+    visible.forEach(d => selectedIds.add(d.id));
+  }
+  renderAll();
+}
+function createTagFromSelection() {
+  if (selectedIds.size === 0) return;
+  const name = prompt(`为这 ${selectedIds.size} 张卡创建一个新标签：\n（标签会出现在「新标签」一行，可以像普通筛选标签一样使用）`);
+  if (!name || !name.trim()) return;
+  const trimmed = name.trim();
+
+  // 与已有标签同名时给出提示
+  const allExisting = [
+    ...effectiveSceneTags(),
+    ...effectiveNarrativeTags(),
+    ...effectiveUserTags(),
+  ];
+  if (allExisting.includes(trimmed)) {
+    if (!confirm(`「${trimmed}」已存在。\n\n是否仍要把所选卡片打上这个标签？\n（不会重复创建标签，只会把卡片打上去）`)) {
+      return;
+    }
+  } else {
+    addUserTag(trimmed);
+  }
+
+  // 批量给所选卡片加 scene_tag
+  const ids = Array.from(selectedIds);
+  ids.forEach(id => {
+    const d = DATA.find(x => x.id === id);
+    if (!d) return;
+    const cur = getSceneTags(d);
+    if (cur.includes(trimmed)) return;
+    const next = cur.filter(t => t !== '无法分类');
+    next.push(trimmed);
+    setSceneTags(id, next);
+  });
+
+  alert(`已为 ${ids.length} 张卡片打上「${trimmed}」标签。\n\n选中状态保留，可继续操作；点「退出选择模式」即可回到正常视图。`);
+  renderAll();
+}
+
+function renderSelectionBar() {
+  const host = document.getElementById('selection-bar-host');
+  const btn = document.getElementById('selection-mode-btn');
+  if (btn) {
+    btn.textContent = selectionMode ? '✕ 退出选择模式' : '🏷 新增标签';
+    btn.classList.toggle('active', selectionMode);
+  }
+  if (!selectionMode) {
+    host.innerHTML = '';
+    return;
+  }
+  const visible = applyAllFilters();
+  const visibleCount = visible.length;
+  const visibleSelected = visible.filter(d => selectedIds.has(d.id)).length;
+  const allVisibleSelected = visibleCount > 0 && visibleSelected === visibleCount;
+  const total = selectedIds.size;
+  const offScreen = total - visibleSelected;
+
+  const selectAllLabel = allVisibleSelected
+    ? `✗ 取消全选当前 ${visibleCount} 张`
+    : `✓ 全选当前 ${visibleCount} 张`;
+  const selectAllCls = 'select-all-btn' + (allVisibleSelected ? ' unselect' : '');
+  const selectAllDisabled = visibleCount === 0 ? ' disabled' : '';
+
+  host.innerHTML = `
+    <div class="selection-bar">
+      <div class="selection-bar-title">🏷 选择模式 · 跨筛选选卡 → 一键创建新标签</div>
+      <div class="selection-bar-main">
+        <button class="${selectAllCls}"${selectAllDisabled} onclick="selectAllVisible()">${selectAllLabel}</button>
+        <span class="selection-count">
+          已选 <b>${total}</b> 张${offScreen > 0 ? `<span class="off-screen">（${offScreen} 张不在当前筛选中）</span>` : ''}
+        </span>
+      </div>
+      <div class="selection-bar-actions">
+        <button class="btn btn-create"${total === 0 ? ' disabled' : ''} onclick="createTagFromSelection()">✚ 用所选卡片创建新标签</button>
+        <button class="btn"${total === 0 ? ' disabled' : ''} onclick="clearSelection()">清空选中</button>
+        <button class="btn" onclick="toggleSelectionMode()">退出选择模式</button>
+      </div>
+    </div>
+  `;
+}
+
 function toggleConflictFilter() {
   filters.conflict_only = !filters.conflict_only;
   renderAll();
@@ -24965,8 +25294,14 @@ function renderCard(d) {
   const note = d.note
     ? `<div class="desc note-desc">💬 ${highlightSearch(escapeHtml(d.note))}</div>` : '';
 
-  return `<div class="card${isEdited(d) ? ' edited' : ''}${fav ? ' favorited' : ''}">
-    ${favBtn}${conflict}${editedMark}
+  const isSelected = selectedIds.has(d.id);
+  const selCls = selectionMode ? ' selectable' : '';
+  const selectedCls = (selectionMode && isSelected) ? ' selected' : '';
+  const cardOnclick = selectionMode ? ` onclick="toggleCardSelection(${escapeAttr(d.id)})"` : '';
+  const checkboxHtml = selectionMode ? `<div class="card-checkbox">${isSelected ? '✓' : ''}</div>` : '';
+
+  return `<div class="card${isEdited(d) ? ' edited' : ''}${fav ? ' favorited' : ''}${selCls}${selectedCls}"${cardOnclick}>
+    ${checkboxHtml}${favBtn}${conflict}${editedMark}
     <img class="photo" src="${encodeURI(d.card_image)}" loading="lazy"
          onclick="openLightbox('${encodeURI(d.card_image)}')"
          onerror="this.style.background='#fee';this.alt='图片加载失败';">
@@ -25012,6 +25347,7 @@ function updateSelectionInfo() {
 
 function renderAll() {
   renderFilters();
+  renderSelectionBar();
   renderCards();
   updateSelectionInfo();
 }
