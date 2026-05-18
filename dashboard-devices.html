@@ -245,7 +245,6 @@
   <a class="nav-link" href="dashboard-heating.html">🔥 加热设备选型</a>
   <a class="nav-link active" href="dashboard-devices.html">📷 用户实拍设备</a>
   <a class="nav-link" href="dashboard-complaints.html">💢 不好的体验</a>
-  <a class="nav-link" href="dashboard-scenes-drinks.html">🔗 场景-饮品配对</a>
   <a class="nav-link" href="dashboard-wishes.html">⭐ 理想饮品许愿</a>
 </div>
     <div style="display:flex;gap:8px;">
@@ -320,6 +319,10 @@ const INIT_DATA = [
   { id:"哈尔滨-中产-10", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled-6.png", text:"有的时候会往里面放一些热饮，比如咖啡、热水等保持温度。", tags:["保温杯"] },
   { id:"哈尔滨-中产-11", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled-7.png", text:"烧热水必备。", tags:["养生壶"] },
   { id:"哈尔滨-中产-12", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/Untitled.png", text:"再办公室时使用，可以长时间保温，很方便", tags:["加热杯垫"] },
+  { id:"哈尔滨-中产-13", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/补充-5月18号/Untitled-1.png", text:"加热黑枸杞 有时候也可以是咖啡", tags:["养生壶"] },
+  { id:"哈尔滨-中产-14", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/补充-5月18号/Untitled-2.png", text:"出门前我会自制一些养生茶、或者咖啡和饮品保温饮用，冬天可挺来方便", tags:["养生壶"] },
+  { id:"哈尔滨-中产-15", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/补充-5月18号/Untitled-3.png", text:"在家时，我会用它煮茶。煮热水。放一些自己喜欢的小料", tags:["养生壶"] },
+  { id:"哈尔滨-中产-16", city:"哈尔滨", persona:"中产", image:"原始数据/加热设备/中产-哈尔滨/补充-5月18号/Untitled.png", text:"在家煮水或者直接泡茶", tags:["煮水器"] },
   { id:"广州-中产-01", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Group 17386.png", text:"奶/豆奶：很多玻璃瓶装的豆奶（如维他奶）或鲜奶，放在加热垫上温热后，口感会像刚挤出来...", tags:["加热杯垫"] },
   { id:"广州-中产-02", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Group 17389.png", text:"公司里面的热饮机", tags:["热饮机"] },
   { id:"广州-中产-03", city:"广州", persona:"中产", image:"原始数据/加热设备/中产-广州/Group 17398.png", text:"吃饭的时候，用来保温汤或者茶水", tags:["加热杯垫"] },
@@ -349,6 +352,8 @@ const INIT_DATA = [
   { id:"上海-学生-15", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 15721.png", text:"保温杯 上课/自习时用，用来装瓶装热饮，能长时间保温，随时喝都是...", tags:["保温杯"] },
   { id:"上海-学生-16", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 7139.png", text:"家里自己冲泡的暖饮可以加热", tags:["微波炉"] },
   { id:"上海-学生-17", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/Group 7140.png", text:"我白天买了一杯热饮或者是热奶茶，到了晚上时可以用这个保温的设备加热", tags:["保温杯"] },
+  { id:"上海-学生-18", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/补充-5月18号/Untitled-1.png", text:"我今天买了一杯热饮或者是热茶，到了晚上时可以用这个保温的设备加热", tags:["加热杯垫"] },
+  { id:"上海-学生-19", city:"上海", persona:"学生", image:"原始数据/加热设备/学生-上海/补充-5月18号/Untitled.png", text:"家里自己加热的饮料可以加热", tags:["微波炉"] },
   { id:"哈尔滨-学生-01", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16858.png", text:"保温杯喝热饮的效果好一点", tags:["保温杯"] },
   { id:"哈尔滨-学生-02", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16859.png", text:"在卧室用杯子喝热饮方便一点", tags:["热饮杯"] },
   { id:"哈尔滨-学生-03", city:"哈尔滨", persona:"学生", image:"原始数据/加热设备/学生-哈尔滨/Group 16860.png", text:"从不锈钢盆里捞出来，用纸垫着倒进保温杯里。", tags:["保温杯"] },
@@ -410,6 +415,10 @@ const INIT_DATA = [
   { id:"广州-中产有娃-06", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Untitled-4.png", text:"主要在家或者办公室里用加热垫，加热牛奶、茶饮等饮料", tags:["加热杯垫"] },
   { id:"广州-中产有娃-07", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Untitled-5.png", text:"保温杯，主要用来保温咖啡，热饮降温的没那么快", tags:["保温杯"] },
   { id:"广州-中产有娃-08", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/Untitled.png", text:"早上赶时间或者在家喝饮料的时候，用，比如牛奶、瓶装咖啡、煮的热饮，丢进去热一下很快就能喝上...", tags:["微波炉"] },
+  { id:"广州-中产有娃-09", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/补充-5月18号/Untitled-1.png", text:"加热瓶装材料", tags:["暖奶器"] },
+  { id:"广州-中产有娃-10", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/补充-5月18号/Untitled-1111.png", text:"微波炉加热饮料，但是比较慢，需要侧倒出来", tags:["微波炉"] },
+  { id:"广州-中产有娃-11", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/补充-5月18号/Untitled.png", text:"办公室 的时候可以加热倒入杯子里面的饮料", tags:["加热杯垫"] },
+  { id:"广州-中产有娃-12", city:"广州", persona:"中产·有娃", image:"原始数据/加热设备/有娃-广州/补充-5月18号/Untitled000.png", text:"加热杯垫，会用来加热饮料的材料", tags:["加热杯垫"] },
   { id:"成都-中产有娃-01", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Group 16448.png", text:"冬天加热杯子很友好，随时喝热水", tags:["加热杯垫"] },
   { id:"成都-中产有娃-02", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Group 17168.png", text:"一般就加热一些水或者把瓶装的饮品扔去加热", tags:["电热水壶"] },
   { id:"成都-中产有娃-03", city:"成都", persona:"中产·有娃", image:"原始数据/加热设备/有娃-成都/Group 17365.png", text:"小型热饮杯，办公室防办公桌旁边很方便，冬日再也不怕水冷了", tags:["加热杯垫"] },
@@ -427,6 +436,12 @@ const INIT_DATA = [
   { id:"上海-年轻白领-08", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Untitled-4.png", text:"保暖一些茶饮", tags:["保温杯"] },
   { id:"上海-年轻白领-09", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Untitled-5.png", text:"用来制作冲泡热饮品", tags:["电热水壶"] },
   { id:"上海-年轻白领-10", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/Untitled.png", text:"雪平锅很适合用来加热，导热快，而且还可以自己往里面加料 diy，比如水果切片", tags:["锅"] },
+  { id:"上海-年轻白领-11", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/补充-5月18号/Untitled-1.png", text:"农夫山泉热饮水机，用他加热保温水，加热速度挺好，还可以泡茶", tags:["热饮水机"] },
+  { id:"上海-年轻白领-12", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/补充-5月18号/Untitled-1111.png", text:"贴入加热饮料的照片", tags:["饮料杯"] },
+  { id:"上海-年轻白领-13", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/补充-5月18号/Untitled-2.png", text:"电热水壶，平时上班的时候煮茶喝的红豆薏米水", tags:["养生壶"] },
+  { id:"上海-年轻白领-14", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/补充-5月18号/Untitled-3.png", text:"保温杯，用来保温。", tags:["保温杯"] },
+  { id:"上海-年轻白领-15", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/补充-5月18号/Untitled.png", text:"养生壶，挺好用的，加热茶水和糖水，功能多", tags:["养生壶"] },
+  { id:"上海-年轻白领-16", city:"上海", persona:"年轻白领", image:"原始数据/加热设备/白领-上海/补充-5月18号/Untitled00.png", text:"加热", tags:["加热杯垫"] },
   { id:"哈尔滨-年轻白领-01", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-1.png", text:"外出需要喝热水时就会选择保温杯。", tags:["保温杯"] },
   { id:"哈尔滨-年轻白领-02", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-10.png", text:"自己冲的奶茶咖啡", tags:["保温杯"] },
   { id:"哈尔滨-年轻白领-03", city:"哈尔滨", persona:"年轻白领", image:"原始数据/加热设备/白领-哈尔滨/Untitled-2.png", text:"微波炉，居家休闲时用来快速加热瓶装茶饮品，短时间升温，驱散寒冷。", tags:["微波炉"] },
@@ -442,6 +457,8 @@ const INIT_DATA = [
   { id:"广州-年轻白领-02", city:"广州", persona:"年轻白领", image:"原始数据/加热设备/白领-广州/Group 17105.png", text:"配上轻便的保温杯，出门携带方便，走到哪冷了喝，想喝杯热的，随时可以喝得到，而不...", tags:["保温杯"] },
   { id:"广州-年轻白领-03", city:"广州", persona:"年轻白领", image:"原始数据/加热设备/白领-广州/Untitled-1.png", text:"会放在陶瓷碗当中再放入微波炉加热3分钟左右", tags:["微波炉"] },
   { id:"广州-年轻白领-04", city:"广州", persona:"年轻白领", image:"原始数据/加热设备/白领-广州/Untitled.png", text:"用电陶炉直接加热饮品，或者拿个锅放在电陶炉加热3分钟左右", tags:["加热杯垫"] },
+  { id:"广州-年轻白领-05", city:"广州", persona:"年轻白领", image:"原始数据/加热设备/白领-广州/补充-5月18号/Untitled-1.png", text:"配上轻便的保温杯，出门携带方便，走到哪喝到哪，想喝杯热的，随时可以喝得到，而也不用担心会冷得快。", tags:["保温杯"] },
+  { id:"广州-年轻白领-06", city:"广州", persona:"年轻白领", image:"原始数据/加热设备/白领-广州/补充-5月18号/Untitled.png", text:"用小巧的加热垫保温，尤其是来杯能持续保持温热的饮品，可以减少冷却时间。", tags:["加热杯垫"] },
   { id:"成都-年轻白领-01", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Group 17099.png", text:"在家里用这个加热垫，可以快速升温。比较安全，又方便。", tags:["加热杯垫"] },
   { id:"成都-年轻白领-02", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Group 17102.png", text:"水浴加热，在家里比如理期时会用到，会加热一些牛奶类或者红豆薏米水", tags:["锅"] },
   { id:"成都-年轻白领-03", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Group 17103.png", text:"上班路上，平时出门的时候会用这种杯套能保持时间的。保留合适的温度，基本上能喝管...", tags:["保温杯"] },
@@ -451,6 +468,9 @@ const INIT_DATA = [
   { id:"成都-年轻白领-07", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Untitled-4.png", text:"在家自制一些暖饮，加热牛奶的时候就会用到这个烧水壶，具有加热功能，而且操作简单，好清洗；", tags:["养生壶"] },
   { id:"成都-年轻白领-08", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Untitled-5.png", text:"在家或者需要外出的时候，把一些热饮进行保温的时候会用到保温杯；", tags:["保温杯"] },
   { id:"成都-年轻白领-09", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/Untitled.png", text:"我会用保温杯装一些热茶热饮，比如枸杞大枣，这样子一天都是暖的，而且很养生", tags:["保温杯"] },
+  { id:"成都-年轻白领-10", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/补充-5月18号/Untitled-1.png", text:"上班路上，平时出门的时候会用这种杯套来保持饮料可能长时间的，保留住合适的温度，基本上能保持半天。", tags:["保温杯"] },
+  { id:"成都-年轻白领-11", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/补充-5月18号/Untitled-2.png", text:"水冷却，在家里如处理明的合适用具，会加热一些华干类或者红豆蜜水", tags:["锅"] },
+  { id:"成都-年轻白领-12", city:"成都", persona:"年轻白领", image:"原始数据/加热设备/白领-成都/补充-5月18号/Untitled.png", text:"在办公室的情况下用这种/型的加热器，可以快速提高温度。比较安全，又方便。", tags:["加热杯垫"] },
 ];
 
 const STORAGE_KEY = 'dashboard-devices-v1';
@@ -589,7 +609,7 @@ function buildCell(city, persona, items) {
 
   const head = document.createElement('div');
   head.className = 'cell-count';
-  head.innerHTML = `${items.length}<span class="total-label">人</span>`;
+  head.innerHTML = `${items.length}<span class="total-label">条</span>`;
   cell.appendChild(head);
 
   if (items.length === 0) {
@@ -681,7 +701,7 @@ function renderDetail() {
 
   detail.className = 'detail';
   detail.innerHTML = '';
-  info.textContent = `已选 ${keys.length} 格 · 共 ${items.length} 人`;
+  info.textContent = `已选 ${keys.length} 格 · 共 ${items.length} 条`;
   clearBtn.disabled = false;
 
   const head = document.createElement('div');
