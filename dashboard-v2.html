@@ -338,7 +338,10 @@
 
 <div class="toolbar">
   <div id="selection-info" style="font-size:13px;color:#666"></div>
-  <button class="clear-btn" id="clear-btn" onclick="clearSelection()" disabled>清空选择</button>
+  <div style="display:flex;gap:8px;">
+    <button class="clear-btn" id="select-all-btn" onclick="selectAll()">一键全选</button>
+    <button class="clear-btn" id="clear-btn" onclick="clearSelection()" disabled>清空选择</button>
+  </div>
 </div>
 
 <!-- 矩阵 -->
@@ -944,6 +947,17 @@ function divEl(cls, text) {
 
 function clearSelection() {
   state.selectedCells.clear();
+  render();
+}
+
+function selectAll() {
+  state.selectedCells.clear();
+  CITIES.forEach(c => {
+    PERSONAS.forEach(p => {
+      const has = DATA.some(d => d.city === c && d.persona === p);
+      if (has) state.selectedCells.add(cellKey(c, p));
+    });
+  });
   render();
 }
 
