@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" font-family="'PingFang SC','Source Han Sans SC','Noto Sans SC','Apple Color Emoji','Segoe UI Emoji','Helvetica Neue',Arial,sans-serif">
+<rect width="1200" height="1200" fill="#FFFFFF"/>
+<g transform="translate(50,70)">
+<text x="0" y="0" font-size="11" letter-spacing="3" fill="#888888">LAYER 1 · 场景指纹 · #1  ·  v9</text>
+<text x="0" y="40" font-size="32" font-weight="700" letter-spacing="6" fill="#1A1A1A">冬日通勤</text>
+<text x="0" y="66" font-size="11" letter-spacing="2.5" fill="#999999">WINTER COMMUTE</text>
+</g>
+<g transform="translate(870,70)">
+<rect x="0" y="0" width="280" height="28" rx="14" fill="#6B7C82"/>
+<text x="140" y="19" font-size="11" font-weight="600" letter-spacing="2" fill="#FFFFFF" text-anchor="middle">macro · 冬日底色 · 熬冬</text>
+<text x="0" y="50" font-size="10" letter-spacing="1.5" fill="#888888">SCENE DEFINITION</text>
+<text x="0" y="68" font-size="11" letter-spacing="0.5" fill="#444444">上下班/上下学通勤</text>
+<text x="0" y="84" font-size="11" letter-spacing="0.5" fill="#444444">路上，惨兮兮、冷冷的</text>
+</g>
+<circle cx="520" cy="540" r="94.4" fill="#D24545" stroke="#FFFFFF" stroke-width="2"/>
+<text x="520" y="508.8" font-size="8" letter-spacing="3" fill="#FFFFFF" text-anchor="middle" opacity="0.85">L1 · SCENE</text>
+<text x="520" y="528.7" font-size="14" font-weight="700" letter-spacing="3" fill="#FFFFFF" text-anchor="middle">冬日通勤</text>
+<text x="520" y="554.2" font-size="24" font-weight="700" fill="#FFFFFF" text-anchor="middle" font-family="'DIN Alternate',Arial,sans-serif">40</text>
+<text x="520" y="572.1" font-size="7" letter-spacing="1.5" fill="#FFFFFF" text-anchor="middle" opacity="0.9">40 张  ·  3.9% of 1038</text>
+<path d="M 520.00 374.75 A 165.2533400123213 165.2533400123213 0 0 1 649.20 643.03 L 598.44 602.56 A 100.33238500748081 100.33238500748081 0 0 0 520.00 439.67 Z" fill="#C13584" stroke="#FFFFFF" stroke-width="1.5"/>
+<g transform="rotate(-25.7 639.6 482.4)"><text x="639.6" y="476.4" font-size="13" font-weight="600" letter-spacing="1" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central">醒🧠</text><text x="639.6" y="491.4" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" font-family="'DIN Alternate',Arial,sans-serif" opacity="0.92">15</text></g>
+<path d="M 649.20 643.03 A 165.2533400123213 165.2533400123213 0 0 1 520.00 705.25 L 520.00 640.33 A 100.33238500748081 100.33238500748081 0 0 0 598.44 602.56 Z" fill="#E89031" stroke="#FFFFFF" stroke-width="1.5"/>
+<g transform="rotate(64.3 577.6 659.6)"><text x="577.6" y="653.6" font-size="13" font-weight="600" letter-spacing="1" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central">暖☀️</text><text x="577.6" y="668.6" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" font-family="'DIN Alternate',Arial,sans-serif" opacity="0.92">6</text></g>
+<path d="M 520.00 705.25 A 165.2533400123213 165.2533400123213 0 0 1 407.60 661.14 L 451.76 613.55 A 100.33238500748081 100.33238500748081 0 0 0 520.00 640.33 Z" fill="#82A85F" stroke="#FFFFFF" stroke-width="1.5"/>
+<g transform="rotate(291.4 471.5 663.6)"><text x="471.5" y="657.6" font-size="13" font-weight="600" letter-spacing="1" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central">养🌱</text><text x="471.5" y="672.6" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" font-family="'DIN Alternate',Arial,sans-serif" opacity="0.92">5</text></g>
+<path d="M 407.60 661.14 A 165.2533400123213 165.2533400123213 0 0 1 358.89 576.77 L 422.18 562.33 A 100.33238500748081 100.33238500748081 0 0 0 451.76 613.55 Z" fill="#FFCE00" stroke="#FFFFFF" stroke-width="1.5"/>
+<g transform="rotate(330.0 405.0 606.4)"><text x="405.0" y="600.4" font-size="13" font-weight="600" letter-spacing="1" fill="#222222" text-anchor="middle" dominant-baseline="central">乐😁</text><text x="405.0" y="615.4" font-size="12" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" font-family="'DIN Alternate',Arial,sans-serif" opacity="0.92">4</text></g>
+<path d="M 358.89 576.77 A 165.2533400123213 165.2533400123213 0 0 1 355.21 527.65 L 419.95 532.50 A 100.33238500748081 100.33238500748081 0 0 0 422.18 562.33 Z" fill="#5A9BB8" stroke="#FFFFFF" stroke-width="1.5"/>
+<g transform="rotate(355.7 387.6 549.9)"><text x="387.6" y="543.9" font-size="13" font-weight="600" letter-spacing="1" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central">饮💧</text><text x="387.6" y="558.9" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" font-family="'DIN Alternate',Arial,sans-serif" opacity="0.92">2</text></g>
+<path d="M 355.21 527.65 A 165.2533400123213 165.2533400123213 0 0 1 358.89 503.23 L 422.18 517.67 A 100.33238500748081 100.33238500748081 0 0 0 419.95 532.50 Z" fill="#C49A3C" stroke="#FFFFFF" stroke-width="1.5"/>
+<text x="388.7" y="520.2" font-size="10" font-weight="600" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(368.6 388.7 520.2)">解👅·1</text>
+<path d="M 358.89 503.23 A 165.2533400123213 165.2533400123213 0 0 1 390.80 436.97 L 441.56 477.44 A 100.33238500748081 100.33238500748081 0 0 0 422.18 517.67 Z" fill="#D5D5D5" stroke="#FFFFFF" stroke-width="1.5"/>
+<g transform="rotate(385.7 400.4 482.4)"><text x="400.4" y="476.4" font-size="13" font-weight="600" letter-spacing="1" fill="#222222" text-anchor="middle" dominant-baseline="central">未</text><text x="400.4" y="491.4" font-size="12" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" font-family="'DIN Alternate',Arial,sans-serif" opacity="0.92">3</text></g>
+<path d="M 390.80 436.97 A 165.2533400123213 165.2533400123213 0 0 1 520.00 374.75 L 520.00 439.67 A 100.33238500748081 100.33238500748081 0 0 0 441.56 477.44 Z" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="0.8" stroke-dasharray="3,3"/>
+<text x="462.4" y="416.4" font-size="10" font-weight="600" fill="#999999" text-anchor="middle" dominant-baseline="central" letter-spacing="1" transform="rotate(424.3 462.4 420.4)">无饮品</text>
+<text x="462.4" y="428.4" font-size="10" font-weight="700" fill="#999999" text-anchor="middle" dominant-baseline="central" transform="rotate(424.3 462.4 420.4)">·6</text>
+<path d="M 520.00 303.92 A 236.07620001760188 236.07620001760188 0 0 1 750.16 487.47 L 686.86 501.91 A 171.15524501276136 171.15524501276136 0 0 0 520.00 368.84 Z" fill="#5C3520" stroke="#FFFFFF" stroke-width="1"/>
+<text x="647.0" y="380.8" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(-51.4 647.0 380.8)">咖啡·9</text>
+<path d="M 750.16 487.47 A 236.07620001760188 236.07620001760188 0 0 1 750.16 592.53 L 686.86 578.09 A 171.15524501276136 171.15524501276136 0 0 0 686.86 501.91 Z" fill="#D4A877" stroke="#FFFFFF" stroke-width="1"/>
+<text x="723.6" y="540.0" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(0.0 723.6 540.0)">奶茶·3</text>
+<path d="M 750.16 592.53 A 236.07620001760188 236.07620001760188 0 0 1 724.45 658.04 L 668.22 625.58 A 171.15524501276136 171.15524501276136 0 0 0 686.86 578.09 Z" fill="#C5D3A8" stroke="#FFFFFF" stroke-width="1"/>
+<text x="709.5" y="614.4" font-size="11" font-weight="600" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(21.4 709.5 614.4)">无糖茶·2</text>
+<path d="M 724.45 658.04 A 236.07620001760188 236.07620001760188 0 0 1 704.57 687.19 L 653.81 646.71 A 171.15524501276136 171.15524501276136 0 0 0 668.22 625.58 Z" fill="#F0E8D5" stroke="#FFFFFF" stroke-width="1"/>
+<text x="688.2" y="654.7" font-size="9" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(34.3 688.2 654.7)">植物·1</text>
+<path d="M 704.57 687.19 A 236.07620001760188 236.07620001760188 0 0 1 622.43 752.70 L 594.26 694.21 A 171.15524501276136 171.15524501276136 0 0 0 653.81 646.71 Z" fill="#D4A877" stroke="#FFFFFF" stroke-width="1"/>
+<text x="647.0" y="699.2" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(51.4 647.0 699.2)">奶茶·3</text>
+<path d="M 622.43 752.70 A 236.07620001760188 236.07620001760188 0 0 1 555.19 773.44 L 545.51 709.24 A 171.15524501276136 171.15524501276136 0 0 0 594.26 694.21 Z" fill="#F0E8D5" stroke="#FFFFFF" stroke-width="1"/>
+<text x="580.0" y="734.6" font-size="11" font-weight="600" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(72.9 580.0 734.6)">植物蛋白·2</text>
+<path d="M 555.19 773.44 A 236.07620001760188 236.07620001760188 0 0 1 520.00 776.08 L 520.00 711.16 A 171.15524501276136 171.15524501276136 0 0 0 545.51 709.24 Z" fill="#5C7250" stroke="#FFFFFF" stroke-width="1"/>
+<text x="535.2" y="743.0" font-size="9" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(85.7 535.2 743.0)">草本·1</text>
+<path d="M 520.00 776.08 A 236.07620001760188 236.07620001760188 0 0 1 417.57 752.70 L 445.74 694.21 A 171.15524501276136 171.15524501276136 0 0 0 520.00 711.16 Z" fill="#5C7250" stroke="#FFFFFF" stroke-width="1"/>
+<text x="474.7" y="738.5" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(282.9 474.7 738.5)">草本养生·3</text>
+<path d="M 417.57 752.70 A 236.07620001760188 236.07620001760188 0 0 1 387.01 735.06 L 423.58 681.42 A 171.15524501276136 171.15524501276136 0 0 0 445.74 694.21 Z" fill="#F0E8D5" stroke="#FFFFFF" stroke-width="1"/>
+<text x="418.2" y="716.3" font-size="9" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(300.0 418.2 716.3)">植物·1</text>
+<path d="M 387.01 735.06 A 236.07620001760188 236.07620001760188 0 0 1 359.43 713.06 L 403.58 665.47 A 171.15524501276136 171.15524501276136 0 0 0 423.58 681.42 Z" fill="#B8D4DC" stroke="#FFFFFF" stroke-width="1"/>
+<text x="393.0" y="699.2" font-size="9" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(308.6 393.0 699.2)">包装·1</text>
+<path d="M 359.43 713.06 A 236.07620001760188 236.07620001760188 0 0 1 315.55 658.04 L 371.78 625.58 A 171.15524501276136 171.15524501276136 0 0 0 403.58 665.47 Z" fill="#D4A877" stroke="#FFFFFF" stroke-width="1"/>
+<text x="360.8" y="667.0" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(321.4 360.8 667.0)">奶茶·2</text>
+<path d="M 315.55 658.04 A 236.07620001760188 236.07620001760188 0 0 1 300.24 626.25 L 360.68 602.53 A 171.15524501276136 171.15524501276136 0 0 0 371.78 625.58 Z" fill="#C5D3A8" stroke="#FFFFFF" stroke-width="1"/>
+<text x="336.5" y="628.3" font-size="9" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(334.3 336.5 628.3)">无糖·1</text>
+<path d="M 300.24 626.25 A 236.07620001760188 236.07620001760188 0 0 1 289.84 592.53 L 353.14 578.09 A 171.15524501276136 171.15524501276136 0 0 0 360.68 602.53 Z" fill="#F5EBD5" stroke="#FFFFFF" stroke-width="1"/>
+<text x="325.4" y="600.0" font-size="9" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(342.9 325.4 600.0)">牛奶·1</text>
+<path d="M 289.84 592.53 A 236.07620001760188 236.07620001760188 0 0 1 284.58 557.64 L 349.32 552.79 A 171.15524501276136 171.15524501276136 0 0 0 353.14 578.09 Z" fill="#D4A877" stroke="#FFFFFF" stroke-width="1"/>
+<text x="318.7" y="570.3" font-size="9" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(351.4 318.7 570.3)">奶茶·1</text>
+<path d="M 284.58 557.64 A 236.07620001760188 236.07620001760188 0 0 1 284.58 522.36 L 349.32 527.21 A 171.15524501276136 171.15524501276136 0 0 0 349.32 552.79 Z" fill="#B8D4DC" stroke="#FFFFFF" stroke-width="1"/>
+<text x="316.4" y="540.0" font-size="9" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(360.0 316.4 540.0)">包装·1</text>
+<path d="M 284.58 522.36 A 236.07620001760188 236.07620001760188 0 0 1 289.84 487.47 L 353.14 501.91 A 171.15524501276136 171.15524501276136 0 0 0 349.32 527.21 Z" fill="#7A4A2E" stroke="#FFFFFF" stroke-width="1"/>
+<text x="318.7" y="509.7" font-size="9" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(368.6 318.7 509.7)">可可·1</text>
+<path d="M 289.84 487.47 A 236.07620001760188 236.07620001760188 0 0 1 300.24 453.75 L 360.68 477.47 A 171.15524501276136 171.15524501276136 0 0 0 353.14 501.91 Z" fill="#D4A877" stroke="#FFFFFF" stroke-width="1"/>
+<text x="325.4" y="480.0" font-size="9" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central" transform="rotate(377.1 325.4 480.0)">奶茶·1</text>
+<path d="M 300.24 453.75 A 236.07620001760188 236.07620001760188 0 0 1 315.55 421.96 L 371.78 454.42 A 171.15524501276136 171.15524501276136 0 0 0 360.68 477.47 Z" fill="#B8D4DC" stroke="#FFFFFF" stroke-width="1"/>
+<text x="336.5" y="451.7" font-size="9" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(385.7 336.5 451.7)">包装·1</text>
+<path d="M 315.55 421.96 A 236.07620001760188 236.07620001760188 0 0 1 335.43 392.81 L 386.19 433.29 A 171.15524501276136 171.15524501276136 0 0 0 371.78 454.42 Z" fill="#F0E8D5" stroke="#FFFFFF" stroke-width="1"/>
+<text x="351.8" y="425.3" font-size="9" font-weight="700" fill="#222222" text-anchor="middle" dominant-baseline="central" transform="rotate(394.3 351.8 425.3)">植物·1</text>
+<path d="M 335.43 392.81 A 236.07620001760188 236.07620001760188 0 0 1 520.00 303.92 L 520.00 368.84 A 171.15524501276136 171.15524501276136 0 0 0 386.19 433.29 Z" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="0.8" stroke-dasharray="3,3"/>
+<text x="431.7" y="356.5" font-size="10" fill="#999999" text-anchor="middle" dominant-baseline="central" letter-spacing="0.5" transform="rotate(424.3 431.7 356.5)">— 留白 —</text>
+<g transform="translate(905,220)">
+<text x="0" y="0" font-size="10" letter-spacing="2.5" fill="#999999" font-weight="600">中圈 · 为什么喝</text>
+<rect x="0" y="22" width="12" height="12" fill="#C13584"/>
+<text x="18" y="32" font-size="10" letter-spacing="0.5" fill="#222222">[醒]🧠 清醒提神</text>
+<text x="130" y="32" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#C13584</text>
+<text x="220" y="32" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">15</text>
+<rect x="0" y="41" width="12" height="12" fill="#E89031"/>
+<text x="18" y="51" font-size="10" letter-spacing="0.5" fill="#222222">[暖]☀️ 向外驱寒</text>
+<text x="130" y="51" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#E89031</text>
+<text x="220" y="51" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">6</text>
+<rect x="0" y="60" width="12" height="12" fill="#82A85F"/>
+<text x="18" y="70" font-size="10" letter-spacing="0.5" fill="#222222">[养]🌱 向内补给</text>
+<text x="130" y="70" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#82A85F</text>
+<text x="220" y="70" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">5</text>
+<rect x="0" y="79" width="12" height="12" fill="#FFCE00"/>
+<text x="18" y="89" font-size="10" letter-spacing="0.5" fill="#222222">[乐]😁 纯快乐</text>
+<text x="130" y="89" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#FFCE00</text>
+<text x="220" y="89" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">4</text>
+<rect x="0" y="98" width="12" height="12" fill="#5A9BB8"/>
+<text x="18" y="108" font-size="10" letter-spacing="0.5" fill="#222222">[饮]💧 纯生理</text>
+<text x="130" y="108" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#5A9BB8</text>
+<text x="220" y="108" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">2</text>
+<rect x="0" y="117" width="12" height="12" fill="#C49A3C"/>
+<text x="18" y="127" font-size="10" letter-spacing="0.5" fill="#222222">[解]👅 口腔解决</text>
+<text x="130" y="127" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#C49A3C</text>
+<text x="220" y="127" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">1</text>
+<rect x="0" y="136" width="12" height="12" fill="#D5D5D5" stroke="#CCC" stroke-width="0.3"/>
+<text x="18" y="146" font-size="10" letter-spacing="0.5" fill="#222222">未捕捉</text>
+<text x="130" y="146" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#D5D5D5</text>
+<text x="220" y="146" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">3</text>
+<rect x="0" y="155" width="12" height="12" fill="#FFFFFF" stroke="#CCC" stroke-width="0.8" stroke-dasharray="2,2"/>
+<text x="18" y="165" font-size="10" letter-spacing="0.5" fill="#222222">无饮品 · 留白</text>
+<text x="220" y="165" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">6</text>
+</g>
+<g transform="translate(905,418)">
+<text x="0" y="0" font-size="10" letter-spacing="2.5" fill="#999999" font-weight="600">外圈 · 喝什么</text>
+<rect x="0" y="22" width="12" height="12" fill="#D4A877" stroke="#DDDDDD" stroke-width="0.4"/>
+<text x="18" y="32" font-size="10" letter-spacing="0.5" fill="#222222">奶茶</text>
+<text x="130" y="32" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#D4A877</text>
+<text x="220" y="32" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">10</text>
+<rect x="0" y="41" width="12" height="12" fill="#5C3520" stroke="#DDDDDD" stroke-width="0.4"/>
+<text x="18" y="51" font-size="10" letter-spacing="0.5" fill="#222222">咖啡</text>
+<text x="130" y="51" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#5C3520</text>
+<text x="220" y="51" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">9</text>
+<rect x="0" y="60" width="12" height="12" fill="#F0E8D5" stroke="#DDDDDD" stroke-width="0.4"/>
+<text x="18" y="70" font-size="10" letter-spacing="0.5" fill="#222222">植物蛋白</text>
+<text x="130" y="70" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#F0E8D5</text>
+<text x="220" y="70" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">5</text>
+<rect x="0" y="79" width="12" height="12" fill="#5C7250" stroke="#DDDDDD" stroke-width="0.4"/>
+<text x="18" y="89" font-size="10" letter-spacing="0.5" fill="#222222">草本养生</text>
+<text x="130" y="89" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#5C7250</text>
+<text x="220" y="89" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">4</text>
+<rect x="0" y="98" width="12" height="12" fill="#C5D3A8" stroke="#DDDDDD" stroke-width="0.4"/>
+<text x="18" y="108" font-size="10" letter-spacing="0.5" fill="#222222">无糖茶</text>
+<text x="130" y="108" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#C5D3A8</text>
+<text x="220" y="108" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">3</text>
+<rect x="0" y="117" width="12" height="12" fill="#B8D4DC" stroke="#DDDDDD" stroke-width="0.4"/>
+<text x="18" y="127" font-size="10" letter-spacing="0.5" fill="#222222">包装水</text>
+<text x="130" y="127" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#B8D4DC</text>
+<text x="220" y="127" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">3</text>
+<rect x="0" y="136" width="12" height="12" fill="#F5EBD5" stroke="#DDDDDD" stroke-width="0.4"/>
+<text x="18" y="146" font-size="10" letter-spacing="0.5" fill="#222222">牛奶</text>
+<text x="130" y="146" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#F5EBD5</text>
+<text x="220" y="146" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">1</text>
+<rect x="0" y="155" width="12" height="12" fill="#7A4A2E" stroke="#DDDDDD" stroke-width="0.4"/>
+<text x="18" y="165" font-size="10" letter-spacing="0.5" fill="#222222">可可饮</text>
+<text x="130" y="165" font-size="9" letter-spacing="0.5" fill="#999999" font-family="'DIN Alternate',Menlo,monospace">#7A4A2E</text>
+<text x="220" y="165" font-size="11" fill="#444444" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">1</text>
+</g>
+<g transform="translate(50,930)">
+<rect x="0" y="0" width="400" height="200" fill="#FAFAFA" stroke="#E5E5E5" stroke-width="0.6" rx="6"/>
+<text x="16" y="24" font-size="11" letter-spacing="2.5" font-weight="600" fill="#999999">CARD BREAKDOWN · 卡片构成</text>
+<text x="16" y="44" font-size="10" letter-spacing="0.5" fill="#666666">来源：看板 INIT_DATA 人工标签 + 关键词补遗</text>
+<rect x="16" y="57" width="11" height="11" fill="#82A85F" stroke="#CCC" stroke-width="0.3"/>
+<text x="32" y="66" font-size="11" letter-spacing="0.5" fill="#333333">看板标注 (drink_reasons_fixed)</text>
+<text x="385" y="66" font-size="12" fill="#222222" font-weight="700" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">23</text>
+<rect x="16" y="78" width="11" height="11" fill="#5A9BB8" stroke="#CCC" stroke-width="0.3"/>
+<text x="32" y="87" font-size="11" letter-spacing="0.5" fill="#333333">关键词补遗 (subtype/desc推断)</text>
+<text x="385" y="87" font-size="12" fill="#222222" font-weight="700" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">8</text>
+<rect x="16" y="99" width="11" height="11" fill="#D5D5D5" stroke="#CCC" stroke-width="0.3"/>
+<text x="32" y="108" font-size="11" letter-spacing="0.5" fill="#333333">未捕捉</text>
+<text x="385" y="108" font-size="12" fill="#222222" font-weight="700" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">3</text>
+<rect x="16" y="120" width="11" height="11" fill="#FFFFFF" stroke="#CCC" stroke-width="0.8" stroke-dasharray="2,2"/>
+<text x="32" y="129" font-size="11" letter-spacing="0.5" fill="#333333">无饮品场景 (L2/L3 留白)</text>
+<text x="385" y="129" font-size="12" fill="#222222" font-weight="700" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">6</text>
+<line x1="16" y1="138" x2="385" y2="138" stroke="#E5E5E5" stroke-width="0.6"/>
+<text x="32" y="155" font-size="11" letter-spacing="0.5" fill="#666666" font-weight="600">合计 · 冬日通勤</text>
+<text x="385" y="155" font-size="12" fill="#222222" font-weight="700" text-anchor="end" font-family="'DIN Alternate',Arial,sans-serif">40</text>
+</g>
+<g transform="translate(710,930)">
+<rect x="0" y="0" width="450" height="200" fill="#FAFAFA" stroke="#E5E5E5" stroke-width="0.6" rx="6"/>
+<text x="16" y="24" font-size="11" letter-spacing="2.5" font-weight="600" fill="#999999">DEMOGRAPHICS</text>
+<text x="16" y="44" font-size="10" letter-spacing="0.5" fill="#666666">40 张卡 · 性别按人群比例估算</text>
+<path d="M 50.00 80.00 A 30 30 0 1 1 47.61 139.90 L 48.73 125.95 A 16 16 0 1 0 50.00 94.00 Z" fill="#4A7088"/>
+<path d="M 47.61 139.90 A 30 30 0 0 1 50.00 80.00 L 50.00 94.00 A 16 16 0 0 0 48.73 125.95 Z" fill="#C77B96"/>
+<text x="96" y="92" font-size="10" letter-spacing="2.5" font-weight="600" fill="#999999">性别 GENDER</text>
+<rect x="96" y="103" width="9" height="9" fill="#4A7088"/>
+<text x="110" y="112" font-size="11" letter-spacing="0.5" fill="#222222">男 · 21 (51%)</text>
+<rect x="96" y="120" width="9" height="9" fill="#C77B96"/>
+<text x="110" y="129" font-size="11" letter-spacing="0.5" fill="#222222">女 · 19 (49%)</text>
+<text x="220" y="92" font-size="10" letter-spacing="2.5" font-weight="600" fill="#999999">年龄段 AGE</text>
+<text x="220" y="112" font-size="10" fill="#222222" font-family="'DIN Alternate',Arial,sans-serif">16-23</text>
+<rect x="270" y="105" width="18.0" height="9" fill="#7A3A20" fill-opacity="0.5"/>
+<text x="294.0" y="112" font-size="10" fill="#666666" font-family="'DIN Alternate',Arial,sans-serif">8·20%</text>
+<text x="220" y="129" font-size="10" fill="#222222" font-family="'DIN Alternate',Arial,sans-serif">24-28</text>
+<rect x="270" y="122" width="42.75" height="9" fill="#7A3A20" fill-opacity="0.5"/>
+<text x="318.75" y="129" font-size="10" fill="#666666" font-family="'DIN Alternate',Arial,sans-serif">19·48%</text>
+<text x="220" y="146" font-size="10" fill="#222222" font-family="'DIN Alternate',Arial,sans-serif">29-35</text>
+<rect x="270" y="139" width="29.25" height="9" fill="#7A3A20" fill-opacity="0.5"/>
+<text x="305.25" y="146" font-size="10" fill="#666666" font-family="'DIN Alternate',Arial,sans-serif">13·32%</text>
+<text x="16" y="172" font-size="10" letter-spacing="2.5" font-weight="600" fill="#999999">城市 CITY</text>
+<text x="96" y="172" font-size="10" fill="#222222">上海</text>
+<text x="118" y="172" font-size="10" fill="#666666" font-family="'DIN Alternate',Arial,sans-serif">11</text>
+<text x="176" y="172" font-size="10" fill="#222222">广州</text>
+<text x="198" y="172" font-size="10" fill="#666666" font-family="'DIN Alternate',Arial,sans-serif">9</text>
+<text x="256" y="172" font-size="10" fill="#222222">成都</text>
+<text x="278" y="172" font-size="10" fill="#666666" font-family="'DIN Alternate',Arial,sans-serif">11</text>
+<text x="336" y="172" font-size="10" fill="#222222">哈尔滨</text>
+<text x="358" y="172" font-size="10" fill="#666666" font-family="'DIN Alternate',Arial,sans-serif">9</text>
+</g>
+<line x1="60" y1="1158" x2="1140" y2="1158" stroke="#EEEEEE" stroke-width="0.6"/>
+<text x="60" y="1172" font-size="10" letter-spacing="0.5" fill="#888888">DATA · 暖饮调查 2026.05 · v9 · 含无饮品场景 1038 · 冬日通勤=40张 · 圆径∝√(n/max)</text>
+</svg>
