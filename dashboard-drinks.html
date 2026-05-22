@@ -41759,12 +41759,17 @@ const DEFAULT_TAG_DATA = {
 };
 (function seedDefaults() {
   const FLAG = 'drinks_seeded_reclass_20260521T1830';
-  if (localStorage.getItem(FLAG)) return;
+  // 分享链接带 ?v=日期（如 ?v=20260522）可强制用内嵌最新数据覆盖 localStorage，
+  // 保证看到的是 html 里的权威版、不受旧 localStorage 影响。换一个新日期即再次强制刷新。
+  const urlV = new URLSearchParams(location.search).get('v');
+  const force = urlV && localStorage.getItem('drinks_seed_url_v') !== urlV;
+  if (localStorage.getItem(FLAG) && !force) return;
   // v11：补 431 个饮品卡性别进编辑层 + 白领-上海-D24/中产有娃-上海-D02 改判冬日通勤。强制覆盖。
   for (const key in DEFAULT_TAG_DATA) {
     localStorage.setItem(key, JSON.stringify(DEFAULT_TAG_DATA[key]));
   }
   localStorage.setItem(FLAG, '1');
+  if (urlV) localStorage.setItem('drinks_seed_url_v', urlV);
 })();
 
 /* 一次性迁移：把 localStorage 里残留的「蜜友相聚」改名为「密友相聚」 */
