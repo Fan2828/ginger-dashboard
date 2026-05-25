@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>窝一窝 · 场景看板 V2</title>
+<style>
+  /* === palette (from 2026-05-19-场景01-冬日通勤-v10.svg) === */
+  :root {
+    --ink: #222222;
+    --ink-2: #444444;
+    --ink-3: #666666;
+    --ink-4: #999999;
+    --rule: #E5E5E5;
+    --rule-2: #EEEEEE;
+    --paper: #F7F4EE;
+    --card: #FFFFFF;
+    --cream: #F5EBD5;
+    --cream-2: #F0E8D5;
+    /* === brand palette (exact hex from Project Ginger footer) ===
+       金黄 #FAD760 · 粉 #FABABB · 蓝紫 #7D7BF8 · 浅黄 #F0EAB4
+       赤陶 #D27538 · 薰衣草 #D7BFE9 · 绿 #5FD27B */
+    --brown-1: #D27538;   /* 赤陶 - 主强调色 */
+    --brown-2: #A85A28;   /* 赤陶加深(派生) */
+    --brown-3: #BB6630;   /* 赤陶中间(派生) */
+    --tan: #FAD760;       /* 金黄 */
+    --tan-2: #F0EAB4;     /* 浅黄 */
+    --blue-1: #7D7BF8;    /* 蓝紫 */
+    --blue-2: #9A98F5;    /* 蓝紫(派生浅) */
+    --blue-3: #D7BFE9;    /* 薰衣草 */
+    --green-1: #5FD27B;   /* 绿 */
+    --green-2: #5FD27B;   /* 绿 */
+    --green-3: #BDEBC8;   /* 绿(派生浅) */
+    --pink: #FABABB;      /* 粉 */
+    --lavender: #D7BFE9;  /* 薰衣草 */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--paper); color: var(--ink); padding: 20px;
+    max-width: 1500px; margin: 0 auto;
+  }
+
+  .top-bar { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+  h1 { font-size: 22px; }
+  .h1-tag {
+    display: inline-block; background: var(--brown-1); color: #fff;
+    padding: 3px 10px; border-radius: 8px; font-size: 16px; font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .hint { color: #888; font-size: 12px; margin-bottom: 14px; }
+
+  .nav-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    border: 1px solid var(--rule); background: var(--card); color: var(--ink-2);
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-link:hover { background: var(--cream-2); }
+  .nav-link.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* sub-theme filter */
+  .sub-chips { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .sub-chip {
+    padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    background: var(--card); border: 2px solid #ECE6DC; cursor: pointer;
+    user-select: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .sub-chip .count {
+    background: var(--rule-2); color: var(--ink-3); font-size: 11px;
+    padding: 1px 7px; border-radius: 8px; font-weight: 600;
+  }
+  .sub-chip:hover { border-color: var(--brown-1); }
+  .sub-chip.active { background: var(--brown-1); color: #fff; border-color: var(--brown-1); }
+  .sub-chip.active .count { background: rgba(255,255,255,0.22); color: #fff; }
+
+  /* top stats row */
+  .stat-row {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    margin-bottom: 16px;
+  }
+  .panel {
+    background: var(--card); border: 2px solid #EDE7DD; border-radius: 12px;
+    padding: 16px 18px; overflow: hidden;
+  }
+  /* C-style colored header strip (full-width, pulled to panel edges) */
+  .panel-title {
+    margin: -16px -18px 16px; padding: 12px 18px;
+    background: var(--brown-1); color: #fff;
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: baseline; gap: 9px;
+  }
+  .panel-title .sub {
+    font-weight: 400; color: rgba(255,255,255,0.82); font-size: 11px;
+  }
+  .panel-title .num {
+    font-weight: 800; color: #fff; font-size: 16px; margin-left: auto;
+  }
+
+  /* horizontal bar chart */
+  .bars { display: flex; flex-direction: column; gap: 5px; }
+  .bar-row {
+    display: grid; grid-template-columns: 90px 1fr 56px; gap: 8px;
+    align-items: center; font-size: 12px;
+  }
+  .bar-label { color: var(--ink-2); text-align: right; }
+  .bar-track {
+    background: #F1ECE3; height: 20px; border-radius: 4px; position: relative;
+  }
+  /* 标题条用赤陶，bar 统一用蓝紫，两者区分但同性质内部一致 */
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    background: var(--blue-1);
+  }
+  .bar-fill.alt { background: var(--blue-1); }
+  .bar-fill.green { background: var(--blue-1); }
+  .bar-num { color: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .bar-num b { color: var(--ink); font-weight: 700; }
+  .bar-num .pct { color: var(--ink-4); }
+
+  /* two-column drink/bottle */
+  .col-2 {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  @media (max-width: 1100px) {
+    .col-2 { grid-template-columns: 1fr; }
+  }
+
+  /* big-num block */
+  .big-num-block {
+    display: flex; align-items: center; gap: 18px;
+    background: var(--tan); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 14px;
+  }
+  .big-num {
+    font-size: 44px; font-weight: 800; color: var(--brown-1); line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .big-num-sub { font-size: 13px; color: #6A4A28; line-height: 1.7; font-weight: 600; }
+  .big-num-sub b { color: var(--ink); }
+
+  /* sub-section title within panel */
+  .sub-title {
+    font-size: 12px; font-weight: 700; color: var(--ink-3);
+    margin: 14px 0 6px; padding-top: 8px; border-top: 1px dashed var(--rule-2);
+    letter-spacing: 0.04em;
+  }
+  .sub-title:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  .sub-title .meta { font-weight: 400; color: var(--ink-4); font-size: 11px; margin-left: 6px; letter-spacing: 0; }
+
+  /* brand wrap */
+  .brand-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .brand-chip {
+    background: var(--tan-2); color: var(--ink-2); font-size: 12px;
+    padding: 3px 11px; border-radius: 6px; border: none;
+  }
+  .brand-chip b { font-weight: 700; }
+  .brand-chip .n { color: var(--brown-1); margin-left: 4px; font-weight: 700; }
+
+  .empty-note { color: var(--ink-4); font-size: 11px; padding: 6px 0; }
+
+  /* === subtype × category matrix (heatmap-style) === */
+  .matrix-wrap { margin-top: 4px; }
+  .matrix {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    font-size: 12px; font-variant-numeric: tabular-nums;
+  }
+  .matrix th, .matrix td {
+    padding: 7px 10px; text-align: right;
+    border-bottom: 1px solid var(--rule-2);
+  }
+  /* column header */
+  .matrix thead th {
+    font-size: 11px; color: var(--ink-2); font-weight: 700;
+    background: var(--paper); letter-spacing: 0.04em;
+    padding: 8px 10px 6px;
+    border-bottom: 2px solid var(--ink);
+    position: relative;
+  }
+  .matrix thead th .col-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+    margin-right: 5px; vertical-align: 1px;
+  }
+  .matrix thead th .col-total {
+    display: block; font-weight: 500; color: var(--ink-4);
+    font-size: 10px; margin-top: 2px;
+  }
+  /* row label */
+  .matrix th.sub-th, .matrix td.sub-cell {
+    text-align: left; color: var(--ink); font-weight: 600;
+    border-right: 1px solid var(--rule-2);
+    background: var(--paper);
+  }
+  .matrix td.sub-cell { font-size: 12.5px; }
+  /* bottle column (emphasized) */
+  .matrix th.bottle-col {
+    background: var(--cream);
+    border-bottom-color: var(--brown-1);
+  }
+  .matrix td.bottle-col {
+    background: var(--cream-2);
+    border-right: 1px solid var(--tan);
+  }
+  /* total column */
+  .matrix th.total-col, .matrix td.total-col {
+    background: #F7F7F7; color: var(--ink);
+    border-left: 2px solid var(--ink-4);
+  }
+  /* cell content */
+  .matrix .cell-n {
+    font-weight: 800; font-size: 14px; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .matrix .cell-pct {
+    color: var(--ink-4); font-size: 10px; margin-left: 3px;
+    font-weight: 500; vertical-align: 1px;
+  }
+  .matrix td.heat-cell { position: relative; }
+  /* heatmap intensity overrides — apply on top of column base bg */
+  .matrix .h1 { background: rgba(210,117,56,0.10); }
+  .matrix .h2 { background: rgba(210,117,56,0.20); }
+  .matrix .h3 { background: rgba(210,117,56,0.34); }
+  .matrix .h4 { background: rgba(210,117,56,0.50); }
+  .matrix .h4 .cell-n { color: #fff; }
+  .matrix .h4 .cell-pct { color: rgba(255,255,255,0.78); }
+  .matrix .h3 .cell-n { color: var(--brown-2); }
+  /* bottle column heats — slightly warmer */
+  .matrix .bottle-col.h1 { background: #EFE3D0; }
+  .matrix .bottle-col.h2 { background: #E5D2B5; }
+  .matrix .bottle-col.h3 { background: #D4A877; }
+  .matrix .bottle-col.h4 { background: var(--brown-1); }
+  /* total column heats */
+  .matrix .total-col.h1 { background: #EEEEEE; }
+  .matrix .total-col.h2 { background: #DDDDDD; }
+  .matrix .total-col.h3 { background: #999999; }
+  .matrix .total-col.h3 .cell-n { color: #fff; }
+  .matrix .total-col.h3 .cell-pct { color: rgba(255,255,255,0.75); }
+  .matrix .total-col.h4 { background: var(--ink); }
+  .matrix .total-col.h4 .cell-n { color: #fff; }
+  .matrix .total-col.h4 .cell-pct { color: rgba(255,255,255,0.75); }
+
+  .matrix td.cell-zero {
+    color: #D5D5D5; font-weight: 400; font-size: 13px;
+  }
+  /* row stripe — alternate rows */
+  .matrix tbody tr:nth-child(even) td.sub-cell { background: #FCFAF6; }
+  /* footer */
+  .matrix tfoot td {
+    font-weight: 800; font-size: 13px; color: var(--ink);
+    border-top: 2px solid var(--ink); border-bottom: none;
+    background: var(--paper);
+    padding: 8px 10px;
+  }
+  .matrix tfoot td.sub-cell { color: var(--ink-2); }
+  /* legend below matrix */
+  .matrix-legend {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10.5px; color: var(--ink-4);
+    margin-top: 8px; padding-top: 6px;
+    border-top: 1px dashed var(--rule-2);
+  }
+  .matrix-legend .scale {
+    display: inline-flex; gap: 0; border-radius: 3px; overflow: hidden;
+    border: 1px solid var(--rule);
+  }
+  .matrix-legend .scale span {
+    width: 22px; height: 12px; display: block;
+  }
+
+  /* === 可点击提示 + 底部饮品卡原图画廊 === */
+  .click-note {
+    color: var(--brown-2); font-size: 12px; margin: -6px 0 14px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .bar-row.clickable { cursor: pointer; }
+  .bar-row.clickable:hover .bar-track { outline: 2px solid var(--brown-1); outline-offset: 1px; }
+  .bar-row.clickable:hover .bar-fill { filter: brightness(1.08); }
+  .brand-chip.clickable { cursor: pointer; }
+  .brand-chip.clickable:hover { outline: 2px solid var(--brown-1); }
+  .matrix td.heat-cell.clickable { cursor: pointer; }
+  .matrix td.heat-cell.clickable:hover { outline: 2px solid var(--brown-1); outline-offset: -2px; }
+
+  #gallery.panel { margin-top: 16px; display: none; }
+  #gallery.open { display: block; }
+  .gallery-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .gallery-head .gt { font-size: 15px; font-weight: 800; color: var(--ink); }
+  .gallery-head .gn { color: var(--ink-4); font-size: 12px; }
+  .gallery-head .close {
+    margin-left: auto; cursor: pointer; border: 1px solid var(--rule);
+    border-radius: 6px; padding: 5px 12px; font-size: 12px;
+    background: var(--card); color: var(--ink-2);
+  }
+  .gallery-head .close:hover { background: var(--cream-2); border-color: var(--brown-1); }
+  /* 画廊卡片：与 dashboard-drinks-v2.html 的饮品卡同款（图 + 徽标 + 描述，点图放大） */
+  .gallery-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px;
+    align-items: start;
+  }
+  .gcard {
+    background: var(--card); border: 1px solid #EAE3D7; border-radius: 12px; overflow: hidden;
+    display: flex; flex-direction: column; transition: box-shadow .15s, transform .15s;
+  }
+  .gcard:hover { box-shadow: 0 6px 20px rgba(0,0,0,.10); transform: translateY(-2px); }
+  .gcard .gimg {
+    width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block;
+    background: #F1ECE3; cursor: zoom-in;
+  }
+  .gcard .gimg.noimg {
+    display: flex; align-items: center; justify-content: center; aspect-ratio: 3 / 4;
+    color: #CBC4B8; font-size: 11px; cursor: default;
+  }
+  .gcard .gbody { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+  .gcard .gbadges { display: flex; flex-wrap: wrap; gap: 4px; }
+  .gbadge { font-size: 11px; padding: 2px 8px; border-radius: 5px; font-weight: 600; color: #fff; white-space: nowrap; }
+  .gbadge.cat { background: #D27538; }
+  .gbadge.subtype { background: #7D7BF8; }
+  .gbadge.temp { background: #5FD27B; }
+  .gbadge.temp.cold { background: #5B9BD5; }
+  .gbadge.brand { background: #F0EAB4; color: var(--ink-2); }
+  .gbadge.src { background: #EFE7D8; color: var(--ink-3); }
+  .gbadge.cardid { background: var(--ink); color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .gcard .gdesc {
+    font-size: 11.5px; color: var(--ink-3); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .lightbox {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+    z-index: 999; align-items: center; justify-content: center; cursor: zoom-out;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 92%; max-height: 92%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+</style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <a class="nav-link" href="dashboard-drinks-v2.html">🥤 饮品卡 V2 · 总</a>
+  <a class="nav-link" href="dashboard-scene-dongri-tongqin-v2.html">冬日通勤</a>
+  <a class="nav-link" href="dashboard-scene-nanshangjianan-v2.html">偶尔难上加难</a>
+  <a class="nav-link" href="dashboard-scene-courenao-v2.html">凑热闹</a>
+  <a class="nav-link" href="dashboard-scene-huanqing-v2.html">欢庆相聚</a>
+  <a class="nav-link" href="dashboard-scene-zijiren-v2.html">自己人时刻</a>
+  <a class="nav-link" href="dashboard-scene-dongri-dongqu-v2.html">冬日动趣</a>
+  <a class="nav-link active" href="dashboard-scene-woyiwo-v2.html">窝一窝</a>
+  <a class="nav-link" href="dashboard-scene-zaocan-v2.html">日常早餐</a>
+  <a class="nav-link" href="dashboard-scene-gongzuo-xuexi-v2.html">日常工作学习</a>
+  <a class="nav-link" href="dashboard-scene-fandian-v2.html">日常饭点</a>
+</div>
+
+<div class="top-bar">
+  <span class="h1-tag">7. 窝一窝</span>
+  <h1>主题看板</h1>
+</div>
+<div class="hint">点上方子主题切换：宁静独处 / 游戏追剧 / 睡前仪式。"瓶饮"栏只统计 category = 瓶装饮品 的卡。数据源：card_summary.csv。</div>
+
+<div class="sub-chips" id="subChips"></div>
+
+<div class="click-note">📌 点任意<strong>条形 / 矩阵格子 / 品牌</strong>，可在页面底部展开对应饮品卡原图（点图可放大）。</div>
+
+<!-- 第一行：城市 + group -->
+<div class="stat-row">
+  <div class="panel head-peri">
+    <div class="panel-title">城市 <span class="sub">分布</span></div>
+    <div class="bars" id="cityBars"></div>
+  </div>
+  <div class="panel head-ink">
+    <div class="panel-title">Group <span class="sub">人群</span></div>
+    <div class="bars" id="personaBars"></div>
+  </div>
+</div>
+
+<!-- 第二行：饮品 / 瓶饮 两栏 -->
+<div class="col-2">
+  <!-- 左栏：饮品数/总 -->
+  <div class="panel">
+    <div class="panel-title">
+      饮品
+      <span class="sub">所有有饮品的卡</span>
+    </div>
+
+    <div class="sub-title">品类 <span class="meta">（大类）</span></div>
+    <div class="bars" id="drinkCategoryBars"></div>
+
+    <div class="sub-title">子品类 × 品类 <span class="meta">单元格 = n · 占该列%，颜色深浅按列内占比</span></div>
+    <div class="matrix-wrap">
+      <table class="matrix" id="subtypeMatrix"></table>
+      <div class="matrix-legend">
+        <span>列内占比</span>
+        <span class="scale">
+          <span style="background:#fff"></span>
+          <span style="background:rgba(210,117,56,0.10)"></span>
+          <span style="background:rgba(210,117,56,0.20)"></span>
+          <span style="background:rgba(210,117,56,0.34)"></span>
+          <span style="background:rgba(210,117,56,0.50)"></span>
+        </span>
+        <span>0 → 40%+</span>
+      </div>
+    </div>
+
+    <div class="sub-title">品牌 <span class="meta" id="drinkBrandMeta"></span></div>
+    <div class="brand-chips" id="drinkBrandChips"></div>
+
+    <div class="sub-title">购买地点</div>
+    <div class="bars" id="drinkPlaceBars"></div>
+  </div>
+
+  <!-- 右栏：瓶饮数/总 -->
+  <div class="panel">
+    <div class="panel-title">
+      瓶饮
+      <span class="sub">category = 瓶装饮品</span>
+    </div>
+
+    <div class="big-num-block">
+      <div class="big-num" id="bottlePct">—%</div>
+      <div class="big-num-sub">
+        瓶饮数量：<b id="bottleCount">—</b><br>
+        饮品数量：<b id="drinkCount">—</b><br>
+        瓶饮数量/饮品数量 <b id="bottleFrac">—% （— / —）</b>
+      </div>
+    </div>
+
+    <div class="sub-title">瓶饮 · 品类 <span class="meta">subtype</span></div>
+    <div class="bars" id="bottleSubtypeBars"></div>
+
+    <div class="sub-title">瓶饮 · 品牌 <span class="meta" id="bottleBrandMeta"></span></div>
+    <div class="brand-chips" id="bottleBrandChips"></div>
+
+    <div class="sub-title">瓶饮 · 购买地点</div>
+    <div class="bars" id="bottlePlaceBars"></div>
+  </div>
+</div>
+
+<!-- 底部：点击条形/格子/品牌后展开的饮品卡原图画廊 -->
+<div class="panel" id="gallery">
+  <div class="gallery-head">
+    <span class="gt" id="galTitle"></span>
+    <span class="gn" id="galCount"></span>
+    <span class="close" onclick="closeGallery()">收起 ✕</span>
+  </div>
+  <div class="gallery-grid" id="galGrid"></div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()"><img id="lbImg" src="" alt=""></div>
+
+<script>window.WO_DATA = {"cards": [{"theme": "窝一窝", "sub": "睡前仪式", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "伊利", "purchase_place": "电商", "desc": "睡前热牛奶，可以更好的帮助睡眠。", "id": "中产无娃-上海-D12", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-18.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "OATLY", "purchase_place": "超市/便利店", "desc": "感觉加热以后的燕麦的质地会更加浓稠，热热的很暖胃，也有点饱腹感，作为夜宵比较健康。", "id": "中产无娃-上海-D22", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-27.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "三得利", "purchase_place": "电商", "desc": "因为是放松休闲的作用，所以一般会选小甜水，但是这款果茶又不会太甜也不至于太罪恶", "id": "中产无娃-上海-D24", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-4.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "悦鲜活", "purchase_place": "电商", "desc": "睡前喝牛奶方便入睡，我一般会自己把瓶子放在热水里热一下，这样喝起来也不会伤胃", "id": "中产无娃-上海-D25", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-5.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "维他奶", "purchase_place": "超市/便利店", "desc": "周末居家追剧的时候，给自己可拿铁，用维他奶和Moccona咖啡结合", "id": "中产无娃-上海-D33", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "同仁堂和NAC...", "purchase_place": "其他", "desc": "生可可粉搭配中式药材", "id": "中产无娃-上海-D35", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "不同品牌", "purchase_place": "电商", "desc": "会根据心情选择红茶、绿茶、白茶，不一定都是每次喝一样的/", "id": "中产无娃-上海-D37", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "植物蛋白", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "豆浆机预定好的时间，在睡前可以马上喝到，不会花费太多精力", "id": "中产无娃-上海-D38", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬日适合在房间里放一个雪松味道的清冷香薰", "id": "中产无娃-上海-W09", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 17114.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬日不想出门的时候，插花增加点卧室的氛围感", "id": "中产无娃-上海-W10", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 17115.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "窝在家里撸猫", "id": "中产无娃-上海-W25", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 17130.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天的第一场雪，我一定会一个人叫外卖，配炸鸡和啤酒，已经成为了约定俗成的仪式感", "id": "中产无娃-上海-W36", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 17142.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "美可卓", "purchase_place": "电商", "desc": "睡前我都会冲泡一杯牛奶 有助于睡眠", "id": "中产无娃-哈尔滨-D05", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/其他-5.png"}, {"theme": "窝一窝", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "元气森林", "purchase_place": "超市/便利店", "desc": "这款饮品非常清爽，加热之后风味更浓，喝完解渴。", "id": "中产无娃-哈尔滨-D13", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/瓶装饮品-3.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "有糖茶", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "自制柠檬红茶材料简单方便", "id": "中产无娃-哈尔滨-D23", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "有糖茶", "temp": "热", "brand": "自制饮品", "purchase_place": "其他", "desc": "在家自制枸杞红茶", "id": "中产无娃-哈尔滨-D24", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-3.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "同仁堂", "purchase_place": "电商", "desc": "居家休息时我就会冲泡一杯玫瑰花茶 美容养颜", "id": "中产无娃-哈尔滨-D26", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-5.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "斯琴妹子", "purchase_place": "超市/便利店", "desc": "冲泡一杯烤奶皮奶茶，奶香四溢，十分美妙", "id": "中产无娃-哈尔滨-D27", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "SOSO", "purchase_place": "不是自己购买的", "desc": "深夜的热茶更加养胃", "id": "中产无娃-哈尔滨-D28", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "平时爱喝茶会在家自己煮茶", "id": "中产无娃-哈尔滨-D31", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "泡热水脚+护肤养生\n在自己的小房间、浴室\n睡前泡泡脚，涂身体乳、护手霜，精致护肤，暖乎乎入睡，舒服又放松", "id": "中产无娃-哈尔滨-W05", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 7055.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "4. 被窝追剧宅家\n📍地点：温暖的卧室、家里沙发\n🧸和谁：自己、伴侣、小猫小狗\n📺在做什么：裹厚被子、喝热牛奶、追热播剧、慵懒宅家 ...", "id": "中产无娃-哈尔滨-W07", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 7057.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在家里看看喜欢的电视剧 听听喜欢的歌曲 冬天没有比这更惬意的事情了 煮一壶热茶", "id": "中产无娃-哈尔滨-W09", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 7059.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "三得利", "purchase_place": "不是自己购买的", "desc": "按摩完配上热的桃胶，真的整个人人都神清气爽", "id": "中产无娃-广州-D17", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-10.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "自制咖啡", "purchase_place": "其他", "desc": "自制的咖啡，第一次尝试，没有踩雷，非常棒。", "id": "中产无娃-广州-D18", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-11.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "天冷喝一杯玫瑰桂花奶，能暖身驱寒。花香奶香舒缓心情，在家喝着放松又惬意...", "id": "中产无娃-广州-D21", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "日春", "purchase_place": "电商", "desc": "轻轻抿一口，热水滑过喉咙，带着微微的暖意，仿佛把冬日的冰冷都融化在了这小小的杯盏里", "id": "中产无娃-广州-D23", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "德运奶粉", "purchase_place": "电商", "desc": "自己冲调的牛奶", "id": "中产无娃-广州-D27", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "双在自己的房间里，和我的布朗熊公仔一起，抱着它窝在暖光下看剧，暖乎乎的很舒服。", "id": "中产无娃-广州-W06", "card_image": "原始数据/冬日ingeneral场景/广州-中产/Group 17187.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "猪肉汤味", "id": "中产无娃-成都-D01", "card_image": "原始数据/饮品卡/中产无娃-成都/其他-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "农夫山泉打奶茶低糖，配料是真牛奶和原叶茶，没有乱七八糟的添加剂。", "id": "中产无娃-成都-D03", "card_image": "原始数据/饮品卡/中产无娃-成都/瓶装饮品-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "菊乐", "purchase_place": "超市/便利店", "desc": "自己打了热的牛奶草莓奶昔，草莓是超市买的，牛奶是菊乐的小瓶奶", "id": "中产无娃-成都-D20", "card_image": "原始数据/饮品卡/中产无娃-成都/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "中产无娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "霸王茶姬", "purchase_place": "其他", "desc": "冬天打游戏本来手就冷，身上也冷，这个时候喜欢点杯霸王茶姬的伯牙绝弦", "id": "中产无娃-成都-D27", "card_image": "原始数据/饮品卡/中产无娃-成都/街饮-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在家，在被窝窝着", "id": "中产无娃-成都-W01", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 7046.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬季在室内进行锻炼和运动", "id": "中产无娃-成都-W04", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 7049.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬季在家里开着地暖在沙发上躺着", "id": "中产无娃-成都-W05", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 7050.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "新年会自己去文殊院，伴着清冷禅意的空气，拜拜各路神仙，诚心求取福字，祈愿平安，把新年的好运接到~贴在家里。", "id": "中产无娃-成都-W08", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17148.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "", "brand": "元气森林", "purchase_place": "超市/便利店", "desc": "味道不错，没有糖，不会睡不着", "id": "中产无娃-成都-组pilot-D01", "card_image": "原始数据/饮品卡/中产无娃-成都-组pilot/其他饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产有娃", "category": "自制饮品", "subtype": "可可饮", "temp": "热", "brand": "花田萃", "purchase_place": "电商", "desc": "自己在家里拿水杯冲，自已调整浓度，一条杯。", "id": "中产有娃-上海-D08", "card_image": "原始数据/饮品卡/中产有娃-上海/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产有娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "海艺旗", "purchase_place": "超市/便利店", "desc": "自己泡的: 原味茶", "id": "中产有娃-哈尔滨-D14", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "可可饮", "temp": "热", "brand": "维他", "purchase_place": "超市/便利店", "desc": "维他最经典的巧克力豆奶", "id": "中产有娃-广州-D08", "card_image": "原始数据/饮品卡/中产有娃-广州/瓶装饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产有娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "节假日赖在床上睡到自然醒。", "id": "中产有娃-广州-WS03", "card_image": "原始数据/冬日ingeneral场景/广州-有娃-暖饮机补充/Untitled-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "自己泡的养生茶，感觉很舒服", "id": "中产有娃-成都-D23", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-8.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "树夏", "purchase_place": "其他", "desc": "在家无聊随便喝点", "id": "中产有娃-成都-D27", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "自制", "purchase_place": "电商", "desc": "冬天喝咖啡会先把牛奶和椰奶加热然后再调配，如果外卖不如先做咖啡好喝享受制作过程", "id": "中产有娃-成都-D29", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "", "purchase_place": "电商", "desc": "喝一杯减脂茶感觉全身轻松", "id": "中产有娃-成都-D31", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "街饮", "subtype": "可可饮", "temp": "热", "brand": "瑞幸/一点点", "purchase_place": "其他", "desc": "会喝瑞幸的热可可，或者一点点的阿华田，抱着杯子边喝边看剧，暖乎乎的很放松，而且胃也暖和多了", "id": "学生-上海-D20", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-27.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "电商", "desc": "阿萨姆奶茶，裹着毯子x追剧，一口下去是暖平平的茶香奶味，感觉非常放松", "id": "学生-上海-D27", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-33.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "哇哈哈", "purchase_place": "超市/便利店", "desc": "AD钙奶酸甜好喝，口感顺滑，喝着很过瘾。既能补营养，又是小时候的味道，很怀念。", "id": "学生-上海-D30", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-6.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "自己在寝室里，点一份沙拉外卖，吹着暖气，看着电影，很开心", "id": "学生-上海-W21", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16944.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "暖乎乎被被窝里，独自捧着书，度过安静的冬日午后。", "id": "学生-上海-W28", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16951.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "窝在被子里，开着暖光台灯看小说，外面冷得发抖，里面却暖得不想动", "id": "学生-上海-W38", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16961.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在小屋里烤火：就着暖烘烘的火光坐着，看着火苗一跳一跳的，整个人都放松下来了，喜欢温暖感", "id": "学生-上海-W40", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16963.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "自己练习喜欢的钢琴曲", "id": "学生-哈尔滨-W03", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17066.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "自己打游戏", "id": "学生-哈尔滨-W06", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17069.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "喜欢在家里看电视具喝奶茶", "id": "学生-哈尔滨-W09", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17073.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "喜欢自己一个人画画", "id": "学生-哈尔滨-W24", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17089.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "接下来是拼豆，这是我最近才发现的很适合我的休闲娱乐方式，是一个很容易进入心流模式的娱乐活...", "id": "学生-哈尔滨-W37", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17103.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "这个冬天我在家看我喜欢的羽毛球运动员比赛，他们居然夺冠了。我非常激动，非常兴奋，好像自己...", "id": "学生-哈尔滨-W43", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17109.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "学生", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "优乐美", "purchase_place": "超市/便利店", "desc": "麦香味奶茶", "id": "学生-广州-D24", "card_image": "原始数据/饮品卡/学生-广州/自制饮品-5.png"}, {"theme": "窝一窝", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "爱马仕国王奶茶", "purchase_place": "电商", "desc": "休息的时候点的泰国奶茶", "id": "学生-广州-D31", "card_image": "原始数据/饮品卡/学生-广州/街饮-14.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在一个寻常的夜晚，独自一人出来家附近的酒馆小酌", "id": "学生-广州-W21", "card_image": "原始数据/冬日ingeneral场景/广州-学生/Group 17042.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "自制饮品", "subtype": "果汁", "temp": "热", "brand": "", "purchase_place": "超市/便利店", "desc": "手比较冷，自冲了一杯橙汁来喝，既能喝点有味道的饮品，也能暖手", "id": "学生-成都-D25", "card_image": "原始数据/饮品卡/学生-成都/自制饮品-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "自制饮品", "subtype": "可可饮", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "好喝", "id": "学生-成都-D27", "card_image": "原始数据/饮品卡/学生-成都/自制饮品-3.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "清爽解渴", "id": "学生-成都-D29", "card_image": "原始数据/饮品卡/学生-成都/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "茶百道", "purchase_place": "其他", "desc": "做完大扫除，给自己点了一杯热奶茶，准备跨在沙发上", "id": "学生-成都-D33", "card_image": "原始数据/饮品卡/学生-成都/街饮-3.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "一个人趴在窗台晒太阳，任由阳光裹满全身，什么都不用想。", "id": "学生-成都-W11", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 16990.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "寒假在家里窝在暖和被窝里，戴上耳机与世隔绝，享受独处时光。", "id": "学生-成都-W14", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 16993.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "自己动手煮一锅热乎香甜的奶茶，慢悠悠熬出浓郁奶香，整个人被暖意和松弛感包裹", "id": "学生-成都-W16", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 16995.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "寒假，放寒假是对大学生来说很放松的假期，用舒服很慵懒", "id": "学生-成都-W32", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 17011.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "周末或者平时没课窝在被子里，抱着暖手宝看剧，不用出门，忙里偷闲，独属于自己的空间", "id": "学生-成都-W36", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 17015.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "其他", "subtype": "奶茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "我看到有特色的西藏奶茶，特地去品尝了一下，感觉很有特色，甜甜的口味。", "id": "白领-上海-D02", "card_image": "原始数据/饮品卡/白领-上海/其他.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "可可饮", "temp": "热", "brand": "罗森", "purchase_place": "电商", "desc": "因为它捂着暖手，喝起来的浓郁的可可很治愈并能让我放松，让追剧的时间更加舒适...", "id": "白领-上海-D08", "card_image": "原始数据/饮品卡/白领-上海/瓶装饮品-14.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "酒", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "水果+红酒", "id": "白领-上海-D25", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "植物蛋白", "temp": "热", "brand": "龙王", "purchase_place": "电商", "desc": "喝了自己冲泡的豆浆，让我感觉非常满足，有成就感，微甜不腻", "id": "白领-上海-D26", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "", "purchase_place": "电商", "desc": "各种咖啡豆的手冲咖啡", "id": "白领-上海-D27", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-3.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "自制", "purchase_place": "不是自己购买的", "desc": "红糖姜茶", "id": "白领-上海-D28", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "自制", "purchase_place": "电商", "desc": "有段时间沉迷抹茶，所以买了打抹茶的器具在家尝试自己做抹茶", "id": "白领-上海-D33", "card_image": "原始数据/饮品卡/白领-上海/自制饮品.png"}, {"theme": "窝一窝", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "咖啡店制作", "purchase_place": "其他", "desc": "姜黄玫瑰咖啡，很适合冬天的一个饮品，咖啡里面带着一些热气和玫瑰的香气", "id": "白领-上海-D34", "card_image": "原始数据/饮品卡/白领-上海/街饮-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "可可饮", "temp": "热", "brand": "星巴克", "purchase_place": "其他", "desc": "选了星巴克的经典热巧克力，感觉暖暖的甜甜的很幸福，但是有点过甜了", "id": "白领-上海-D42", "card_image": "原始数据/饮品卡/白领-上海/街饮-5.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在家里一个人独自窝在被窝里刷剧，非常慵懒舒适的感觉，很自在。", "id": "白领-上海-W28", "card_image": "原始数据/冬日ingeneral场景/上海-白领/Group 17254.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "酒", "temp": "热", "brand": "RIO", "purchase_place": "超市/便利店", "desc": "打游戏的时候我比较喜欢在旁边放一杯热的酒饮 既可以提升手温 还能保持大脑活跃", "id": "白领-哈尔滨-D01", "card_image": "原始数据/饮品卡/白领-哈尔滨/其他-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "宏宝莱", "purchase_place": "超市/便利店", "desc": "容量不多不至于上头所以可以解渴", "id": "白领-哈尔滨-D14", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-18.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "好自在…", "purchase_place": "超市/便利店", "desc": "喝子不舒服，感觉对喝子好", "id": "白领-哈尔滨-D23", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在被窝里躺着过寒假，不用上班非常幸福。", "id": "白领-哈尔滨-W02", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-白领/Group 10336.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在家拼积木，解压有趣，我喜欢消磨时间。", "id": "白领-哈尔滨-W04", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-白领/Group 10338.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在家画画，画出来的作品装裱挂在家里，很有成就感。", "id": "白领-哈尔滨-W05", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-白领/Group 10339.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "白领", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "瑞幸", "purchase_place": "电商", "desc": "那时候我就带了一杯热饮咖啡静静的坐在那里看书，挺宁静静气的。", "id": "白领-广州-D06", "card_image": "原始数据/饮品卡/白领-广州/其他-6.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "热茶，作为地方习惯，一年四季都会喝热茶。", "id": "白领-广州-D24", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "可可饮", "temp": "热", "brand": "摩岛", "purchase_place": "电商", "desc": "看剧时自己泡了一杯可可饮，挺甜的还润口。", "id": "白领-广州-D28", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "", "brand": "自制", "purchase_place": "其他", "desc": "在家自制的奶茶，一个人打游戏的时候喝的", "id": "白领-广州-D32", "card_image": "原始数据/饮品卡/白领-广州/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "周末宅家开着暖气，裹着软乎乎的毯子，追完了囤了好久的剧。那种不用赶时间，还可以睡到自然醒真的感觉特别的治愈。", "id": "白领-广州-W02", "card_image": "原始数据/冬日ingeneral场景/广州-白领/Group 7032.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "一人份私汤温泉", "id": "白领-广州-W29", "card_image": "原始数据/冬日ingeneral场景/广州-白领/Group 17280.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "摸摸小猫万事不愁", "id": "白领-广州-W30", "card_image": "原始数据/冬日ingeneral场景/广州-白领/Group 17281.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "豆本豆", "purchase_place": "超市/便利店", "desc": "洗完澡配一杯温热豆奶，简单单纯，就是冬天很舒服的晚间小放松---", "id": "白领-成都-D07", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-13.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "宅家不想和太甜的饮品，无糖茉莉花茶清解腻，用家的配套专属热饮机正好加热，方便又...", "id": "白领-成都-D10", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-16.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "特仑苏", "purchase_place": "超市/便利店", "desc": "睡前不合适甜饮，特仑苏牛奶口感醇厚，能舒缓情绪，帮助安神入睡", "id": "白领-成都-D11", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-17.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺旺", "purchase_place": "超市/便利店", "desc": "追剧配牛奶，安心又惬意", "id": "白领-成都-D13", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-19.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "伊利", "purchase_place": "超市/便利店", "desc": "午后晒太阳本来就很惬意，热牛奶和舒缓，安神放松，整个个人很松弛", "id": "白领-成都-D16", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-21.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "", "brand": "特仑苏", "purchase_place": "超市/便利店", "desc": "去口口便利店买了一盒热牛奶，喝的时候全身暖暖的，既补充了能量，又感觉到了暖意", "id": "白领-成都-D32", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "香飘飘", "purchase_place": "电商", "desc": "自制奶茶可以按自己想要的k风味搭配，可以制作出多种不同的口味，可以激发创造欲。", "id": "白领-成都-D38", "card_image": "原始数据/饮品卡/白领-成都/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "有糖茶", "temp": "热", "brand": "茶π", "purchase_place": "自贩机/智能柜", "desc": "雨天温冷，手捧着热饮，身上瞬间回暖，啜里香甜甜的，阴冷的天气也变得舒服", "id": "白领-成都-D41", "card_image": "原始数据/饮品卡/白领-成都/街饮-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "霸王茶姬", "purchase_place": "其他", "desc": "喝的霸王茶姬桂花香，茶味清香，奶味浓郁", "id": "白领-成都-D48", "card_image": "原始数据/饮品卡/白领-成都/街饮饮品-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "自己在家看电影真爱至上，这是我每年冬天都要做的事情，电影里的人都穿的毛茸茸的，让我有身历其境的感觉，而且我喜欢每一对男女主的感情故事", "id": "白领-成都-W03", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 7038.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "窝在暖暖的被窝里面开一盏小灯。追剧感觉与世隔绝的样子很舒适，松弛。", "id": "白领-成都-W04", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 7039.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "窝在家里打游戏，夏天我比较喜欢到处走走，但是冬天我可能宅家的时间更多，我的小屋有暖气，所以在家很舒服，我享受独处的游戏时光", "id": "白领-成都-W07", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 7042.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天把被子晒的暖烘烘的，晚上钻进被窝，全是阳光的味道，睡起来特别安心舒服", "id": "白领-成都-W37", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 17268.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "不用出门的周末，裹着晒过太阳的毯子，抱着热奶茶看着喜欢的剧，是冬天最放松的时刻", "id": "白领-成都-W38", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 17269.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "请优先选择您拍摄的照片，如果找不到自己拍摄的，可以用图", "id": "白领-成都-组pilot-D09", "card_image": "原始数据/饮品卡/白领-成都-组pilot/瓶装饮品.png"}]};</script>
+<script>
+const ALL_CARDS = window.WO_DATA.cards;
+const SUB_ORDER = ['全部', '宁静独处', '游戏追剧', '睡前仪式', '未分类'];
+const CITY_ORDER = ['上海', '哈尔滨', '成都', '广州'];
+const PERSONA_ORDER = ['学生', '白领', '中产无娃', '中产有娃'];
+const CATEGORY_ORDER = ['自制饮品', '瓶装饮品', '街饮', '其他'];
+const PLACE_ORDER = ['超市/便利店', '电商', '其他', '自贩机/智能柜', '不是自己购买的'];
+
+let currentSub = '全部';
+
+function filterCards() {
+  if (currentSub === '全部') return ALL_CARDS;
+  if (currentSub === '未分类') return ALL_CARDS.filter(c => !c.sub);
+  return ALL_CARDS.filter(c => c.sub === currentSub);
+}
+
+function countBy(cards, fn) {
+  const m = new Map();
+  for (const c of cards) {
+    const v = fn(c);
+    if (!v) continue;
+    m.set(v, (m.get(v)||0) + 1);
+  }
+  return m;
+}
+
+function renderBars(el, items, total, opts = {}) {
+  el.innerHTML = '';
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-note">无数据</div>';
+    return;
+  }
+  const max = Math.max(...items.map(x=>x[1]));
+  for (const [label, n] of items) {
+    const pct = total > 0 ? (n/total*100).toFixed(0) : 0;
+    const w = max > 0 ? (n/max*100).toFixed(1) : 0;
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-label">${label}</div>
+      <div class="bar-track"><div class="bar-fill ${opts.cls||''}" style="width:${w}%"></div></div>
+      <div class="bar-num"><b>${n}</b> <span class="pct">${pct}%</span></div>
+    `;
+    if (opts.pool && opts.field) {
+      row.classList.add('clickable');
+      row.onclick = () => showGallery(
+        `${opts.title || ''} · ${label}`,
+        opts.pool.filter(c => c[opts.field] === label)
+      );
+    }
+    el.appendChild(row);
+  }
+}
+
+function orderedItems(map, order) {
+  const out = [];
+  const seen = new Set();
+  for (const k of order) {
+    if (map.has(k)) { out.push([k, map.get(k)]); seen.add(k); }
+  }
+  // append any remaining keys (sorted desc by count)
+  const rest = [...map.entries()].filter(([k]) => !seen.has(k)).sort((a,b)=>b[1]-a[1]);
+  return out.concat(rest);
+}
+
+function topItems(map, n=8) {
+  return [...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0, n);
+}
+
+// subtype × category 矩阵：列顺序 瓶装饮品 → 自制饮品 → 街饮 → 其他 → 合计
+const MATRIX_COLS = ['瓶装饮品', '自制饮品', '街饮', '其他'];
+// 同一组品类不做颜色区分，统一中性色（瓶装饮品另有列底强调）
+const COL_DOTS = {
+  '瓶装饮品': '#C9BFB0',
+  '自制饮品': '#C9BFB0',
+  '街饮':     '#C9BFB0',
+  '其他':     '#C9BFB0',
+};
+// percentage → heat bucket class
+function heatClass(pct) {
+  if (pct <= 0) return '';
+  if (pct < 8)  return 'h1';
+  if (pct < 18) return 'h2';
+  if (pct < 30) return 'h3';
+  return 'h4';
+}
+function renderSubtypeMatrix(drinkCards) {
+  const el = document.getElementById('subtypeMatrix');
+  const cellMap = new Map();    // sub → {cat → n}
+  const colTotal = new Map();
+  const rowTotal = new Map();
+  let grand = 0;
+  for (const c of drinkCards) {
+    const cat = c.category || '';
+    const sub = c.subtype || '(空)';
+    if (!MATRIX_COLS.includes(cat)) continue;
+    if (!cellMap.has(sub)) cellMap.set(sub, {});
+    cellMap.get(sub)[cat] = (cellMap.get(sub)[cat] || 0) + 1;
+    colTotal.set(cat, (colTotal.get(cat) || 0) + 1);
+    rowTotal.set(sub, (rowTotal.get(sub) || 0) + 1);
+    grand++;
+  }
+  const rows = [...rowTotal.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+
+  // header
+  let html = '<thead><tr><th class="sub-th">子品类</th>';
+  for (const cat of MATRIX_COLS) {
+    const cls = cat === '瓶装饮品' ? 'bottle-col' : '';
+    const ct = colTotal.get(cat) || 0;
+    const dot = COL_DOTS[cat] || '#999';
+    html += `<th class="${cls}"><span class="col-dot" style="background:${dot}"></span>${cat}<span class="col-total">n = ${ct}</span></th>`;
+  }
+  html += `<th class="total-col"><span class="col-dot" style="background:#222"></span>合计<span class="col-total">n = ${grand}</span></th></tr></thead><tbody>`;
+
+  for (const sub of rows) {
+    html += `<tr><td class="sub-cell">${sub}</td>`;
+    const cells = cellMap.get(sub) || {};
+    for (const cat of MATRIX_COLS) {
+      const n = cells[cat] || 0;
+      const ct = colTotal.get(cat) || 0;
+      const base = cat === '瓶装饮品' ? 'bottle-col' : '';
+      if (n === 0) {
+        html += `<td class="${base} cell-zero heat-cell">—</td>`;
+      } else {
+        const pct = ct > 0 ? Math.round(n/ct*100) : 0;
+        const heat = heatClass(pct);
+        html += `<td class="${base} heat-cell clickable ${heat}" data-sub="${sub}" data-cat="${cat}"><span class="cell-n">${n}</span><span class="cell-pct">${pct}%</span></td>`;
+      }
+    }
+    const rt = rowTotal.get(sub) || 0;
+    const pct = grand > 0 ? Math.round(rt/grand*100) : 0;
+    const heat = heatClass(pct);
+    html += `<td class="total-col heat-cell clickable ${heat}" data-sub="${sub}"><span class="cell-n">${rt}</span><span class="cell-pct">${pct}%</span></td>`;
+    html += '</tr>';
+  }
+  html += '</tbody><tfoot><tr><td class="sub-cell">合计</td>';
+  for (const cat of MATRIX_COLS) {
+    const cls = cat === '瓶装饮品' ? 'bottle-col' : '';
+    html += `<td class="${cls}">${colTotal.get(cat) || 0}</td>`;
+  }
+  html += `<td class="total-col">${grand}</td></tr></tfoot>`;
+  el.innerHTML = html;
+
+  // 矩阵格子点击 → 展开对应子品类(×品类)的饮品卡原图
+  el.querySelectorAll('td.heat-cell.clickable[data-sub]').forEach(td => {
+    td.onclick = () => {
+      const sub = td.dataset.sub;
+      const cat = td.dataset.cat;   // 合计列无 data-cat
+      const sel = cat
+        ? drinkCards.filter(c => (c.subtype || '(空)') === sub && c.category === cat)
+        : drinkCards.filter(c => (c.subtype || '(空)') === sub);
+      showGallery(`子品类 ${sub} · ${cat || '合计'}`, sel);
+    };
+  });
+}
+
+function renderBrandChips(el, brandMap, metaEl, pool, title) {
+  el.innerHTML = '';
+  const total = brandMap.size;
+  const sorted = [...brandMap.entries()].sort((a,b)=>b[1]-a[1]);
+  if (metaEl) metaEl.textContent = `${total} 个品牌 · ${sorted.reduce((s,x)=>s+x[1],0)} 次`;
+  if (!sorted.length) {
+    el.innerHTML = '<div class="empty-note">无品牌数据</div>';
+    return;
+  }
+  for (const [b, n] of sorted) {
+    const chip = document.createElement('span');
+    chip.className = 'brand-chip';
+    chip.innerHTML = `<b>${b}</b><span class="n">·${n}</span>`;
+    if (pool) {
+      chip.classList.add('clickable');
+      chip.onclick = () => showGallery(`${title || '品牌'} · ${b}`, pool.filter(c => c.brand === b));
+    }
+    el.appendChild(chip);
+  }
+}
+
+function renderAll() {
+  const cards = filterCards();
+  const total = cards.length;
+  const _tn=document.getElementById('totalNum'); if(_tn)_tn.textContent=total;
+
+  // 城市
+  renderBars(
+    document.getElementById('cityBars'),
+    orderedItems(countBy(cards, c=>c.city), CITY_ORDER),
+    total, {cls: 'alt', pool: cards, field: 'city', title: '城市'}
+  );
+  // persona
+  renderBars(
+    document.getElementById('personaBars'),
+    orderedItems(countBy(cards, c=>c.persona), PERSONA_ORDER),
+    total, {cls: 'alt', pool: cards, field: 'persona', title: 'Group'}
+  );
+
+  // 饮品（有饮品的卡）
+  const drinkCards = cards.filter(c => c.category);
+
+  renderBars(
+    document.getElementById('drinkCategoryBars'),
+    orderedItems(countBy(drinkCards, c=>c.category), CATEGORY_ORDER),
+    drinkCards.length, {pool: drinkCards, field: 'category', title: '品类'}
+  );
+  renderSubtypeMatrix(drinkCards);
+  renderBrandChips(
+    document.getElementById('drinkBrandChips'),
+    countBy(drinkCards, c=>c.brand),
+    document.getElementById('drinkBrandMeta'),
+    drinkCards, '品牌'
+  );
+  renderBars(
+    document.getElementById('drinkPlaceBars'),
+    orderedItems(countBy(drinkCards, c=>c.purchase_place), PLACE_ORDER),
+    drinkCards.length, {cls: 'green', pool: drinkCards, field: 'purchase_place', title: '购买地点'}
+  );
+
+  // 瓶饮（category = 瓶装饮品）
+  const bottleCards = drinkCards.filter(c => c.category === '瓶装饮品');
+  const bottlePct = drinkCards.length > 0 ? (bottleCards.length/drinkCards.length*100) : 0;
+  document.getElementById('bottlePct').textContent = bottlePct.toFixed(0) + '%';
+  document.getElementById('bottleCount').textContent = bottleCards.length;
+  document.getElementById('drinkCount').textContent = drinkCards.length;
+  document.getElementById('bottleFrac').textContent = `${bottlePct.toFixed(0)}% （${bottleCards.length} / ${drinkCards.length}）`;
+
+  renderBars(
+    document.getElementById('bottleSubtypeBars'),
+    [...countBy(bottleCards, c=>c.subtype).entries()].sort((a,b)=>b[1]-a[1]),
+    bottleCards.length, {cls: 'alt', pool: bottleCards, field: 'subtype', title: '瓶饮 · 品类'}
+  );
+  renderBrandChips(
+    document.getElementById('bottleBrandChips'),
+    countBy(bottleCards, c=>c.brand),
+    document.getElementById('bottleBrandMeta'),
+    bottleCards, '瓶饮 · 品牌'
+  );
+  renderBars(
+    document.getElementById('bottlePlaceBars'),
+    orderedItems(countBy(bottleCards, c=>c.purchase_place), PLACE_ORDER),
+    bottleCards.length, {cls: 'green', pool: bottleCards, field: 'purchase_place', title: '瓶饮 · 购买地点'}
+  );
+}
+
+// === 底部饮品卡原图画廊 ===
+function showGallery(title, cards) {
+  const g = document.getElementById('gallery');
+  const withImg = cards.filter(c => c.card_image);
+  document.getElementById('galTitle').textContent = title;
+  document.getElementById('galCount').textContent =
+    `${cards.length} 张` + (withImg.length < cards.length ? `（${withImg.length} 张有原图）` : '');
+  const grid = document.getElementById('galGrid');
+  grid.innerHTML = '';
+  if (!cards.length) {
+    grid.innerHTML = '<div class="empty-note">该项下没有卡片</div>';
+  }
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const cold = t => t === '冰' || t === '常温';
+  for (const c of cards) {
+    const div = document.createElement('div');
+    div.className = 'gcard';
+    // 徽标：与 dashboard-drinks-v2.html 同款（编号/品类/子品类/温度/品牌/城市·人群）
+    const badges = [];
+    if (c.id) badges.push(`<span class="gbadge cardid">#${esc(c.id)}</span>`);
+    if (c.category) badges.push(`<span class="gbadge cat">${esc(c.category)}</span>`);
+    if (c.subtype) badges.push(`<span class="gbadge subtype">${esc(c.subtype)}</span>`);
+    if (c.temp) badges.push(`<span class="gbadge temp${cold(c.temp) ? ' cold' : ''}">${esc(c.temp)}</span>`);
+    if (c.brand) badges.push(`<span class="gbadge brand">${esc(c.brand)}</span>`);
+    badges.push(`<span class="gbadge src">${esc(c.city || '')}${c.persona ? '·' + esc(c.persona) : ''}</span>`);
+    const desc = c.desc || '';
+    const body = `<div class="gbody"><div class="gbadges">${badges.join('')}</div>` +
+      (desc ? `<div class="gdesc" title="${esc(desc)}">${esc(desc)}</div>` : '') + `</div>`;
+    if (c.card_image) {
+      const src = encodeURI(c.card_image);
+      div.innerHTML = `<img class="gimg" loading="lazy" src="${src}" alt="">${body}`;
+      div.querySelector('.gimg').onclick = () => zoom(src);
+    } else {
+      div.innerHTML = `<div class="gimg noimg">无原图</div>${body}`;
+    }
+    grid.appendChild(div);
+  }
+  g.classList.add('open');
+  g.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+function closeGallery() { document.getElementById('gallery').classList.remove('open'); }
+function zoom(src) {
+  document.getElementById('lbImg').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lbImg').src = '';
+}
+
+function renderSubChips() {
+  const el = document.getElementById('subChips');
+  const counts = new Map();
+  for (const c of ALL_CARDS) {
+    const key = c.sub || '未分类';
+    counts.set(key, (counts.get(key)||0) + 1);
+  }
+  const items = [['全部', ALL_CARDS.length]].concat(
+    SUB_ORDER.filter(k => k !== '全部' && counts.has(k)).map(k => [k, counts.get(k)])
+  );
+  el.innerHTML = '';
+  for (const [name, n] of items) {
+    const chip = document.createElement('div');
+    chip.className = 'sub-chip' + (name === currentSub ? ' active' : '');
+    chip.innerHTML = `${name} <span class="count">${n}</span>`;
+    chip.onclick = () => { currentSub = name; closeGallery(); renderSubChips(); renderAll(); };
+    el.appendChild(chip);
+  }
+}
+
+renderSubChips();
+renderAll();
+</script>
+</body>
+</html>

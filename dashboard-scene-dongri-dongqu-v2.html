@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>冬日动趣 · 场景看板 V2</title>
+<style>
+  /* === palette (from 2026-05-19-场景01-冬日通勤-v10.svg) === */
+  :root {
+    --ink: #222222;
+    --ink-2: #444444;
+    --ink-3: #666666;
+    --ink-4: #999999;
+    --rule: #E5E5E5;
+    --rule-2: #EEEEEE;
+    --paper: #F7F4EE;
+    --card: #FFFFFF;
+    --cream: #F5EBD5;
+    --cream-2: #F0E8D5;
+    /* === brand palette (exact hex from Project Ginger footer) ===
+       金黄 #FAD760 · 粉 #FABABB · 蓝紫 #7D7BF8 · 浅黄 #F0EAB4
+       赤陶 #D27538 · 薰衣草 #D7BFE9 · 绿 #5FD27B */
+    --brown-1: #D27538;   /* 赤陶 - 主强调色 */
+    --brown-2: #A85A28;   /* 赤陶加深(派生) */
+    --brown-3: #BB6630;   /* 赤陶中间(派生) */
+    --tan: #FAD760;       /* 金黄 */
+    --tan-2: #F0EAB4;     /* 浅黄 */
+    --blue-1: #7D7BF8;    /* 蓝紫 */
+    --blue-2: #9A98F5;    /* 蓝紫(派生浅) */
+    --blue-3: #D7BFE9;    /* 薰衣草 */
+    --green-1: #5FD27B;   /* 绿 */
+    --green-2: #5FD27B;   /* 绿 */
+    --green-3: #BDEBC8;   /* 绿(派生浅) */
+    --pink: #FABABB;      /* 粉 */
+    --lavender: #D7BFE9;  /* 薰衣草 */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--paper); color: var(--ink); padding: 20px;
+    max-width: 1500px; margin: 0 auto;
+  }
+
+  .top-bar { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+  h1 { font-size: 22px; }
+  .h1-tag {
+    display: inline-block; background: var(--brown-1); color: #fff;
+    padding: 3px 10px; border-radius: 8px; font-size: 16px; font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .hint { color: #888; font-size: 12px; margin-bottom: 14px; }
+
+  .nav-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    border: 1px solid var(--rule); background: var(--card); color: var(--ink-2);
+    text-decoration: none; transition: all 0.15s;
+  }
+  .nav-link:hover { background: var(--cream-2); }
+  .nav-link.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* sub-theme filter */
+  .sub-chips { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .sub-chip {
+    padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    background: var(--card); border: 2px solid #ECE6DC; cursor: pointer;
+    user-select: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .sub-chip .count {
+    background: var(--rule-2); color: var(--ink-3); font-size: 11px;
+    padding: 1px 7px; border-radius: 8px; font-weight: 600;
+  }
+  .sub-chip:hover { border-color: var(--brown-1); }
+  .sub-chip.active { background: var(--brown-1); color: #fff; border-color: var(--brown-1); }
+  .sub-chip.active .count { background: rgba(255,255,255,0.22); color: #fff; }
+
+  /* top stats row */
+  .stat-row {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    margin-bottom: 16px;
+  }
+  .panel {
+    background: var(--card); border: 2px solid #EDE7DD; border-radius: 12px;
+    padding: 16px 18px; overflow: hidden;
+  }
+  /* C-style colored header strip (full-width, pulled to panel edges) */
+  .panel-title {
+    margin: -16px -18px 16px; padding: 12px 18px;
+    background: var(--brown-1); color: #fff;
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: baseline; gap: 9px;
+  }
+  .panel-title .sub {
+    font-weight: 400; color: rgba(255,255,255,0.82); font-size: 11px;
+  }
+  .panel-title .num {
+    font-weight: 800; color: #fff; font-size: 16px; margin-left: auto;
+  }
+
+  /* horizontal bar chart */
+  .bars { display: flex; flex-direction: column; gap: 5px; }
+  .bar-row {
+    display: grid; grid-template-columns: 90px 1fr 56px; gap: 8px;
+    align-items: center; font-size: 12px;
+  }
+  .bar-label { color: var(--ink-2); text-align: right; }
+  .bar-track {
+    background: #F1ECE3; height: 20px; border-radius: 4px; position: relative;
+  }
+  /* 标题条用赤陶，bar 统一用蓝紫，两者区分但同性质内部一致 */
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    background: var(--blue-1);
+  }
+  .bar-fill.alt { background: var(--blue-1); }
+  .bar-fill.green { background: var(--blue-1); }
+  .bar-num { color: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .bar-num b { color: var(--ink); font-weight: 700; }
+  .bar-num .pct { color: var(--ink-4); }
+
+  /* two-column drink/bottle */
+  .col-2 {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  @media (max-width: 1100px) {
+    .col-2 { grid-template-columns: 1fr; }
+  }
+
+  /* big-num block */
+  .big-num-block {
+    display: flex; align-items: center; gap: 18px;
+    background: var(--tan); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 14px;
+  }
+  .big-num {
+    font-size: 44px; font-weight: 800; color: var(--brown-1); line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .big-num-sub { font-size: 13px; color: #6A4A28; line-height: 1.7; font-weight: 600; }
+  .big-num-sub b { color: var(--ink); }
+
+  /* sub-section title within panel */
+  .sub-title {
+    font-size: 12px; font-weight: 700; color: var(--ink-3);
+    margin: 14px 0 6px; padding-top: 8px; border-top: 1px dashed var(--rule-2);
+    letter-spacing: 0.04em;
+  }
+  .sub-title:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  .sub-title .meta { font-weight: 400; color: var(--ink-4); font-size: 11px; margin-left: 6px; letter-spacing: 0; }
+
+  /* brand wrap */
+  .brand-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .brand-chip {
+    background: var(--tan-2); color: var(--ink-2); font-size: 12px;
+    padding: 3px 11px; border-radius: 6px; border: none;
+  }
+  .brand-chip b { font-weight: 700; }
+  .brand-chip .n { color: var(--brown-1); margin-left: 4px; font-weight: 700; }
+
+  .empty-note { color: var(--ink-4); font-size: 11px; padding: 6px 0; }
+
+  /* === subtype × category matrix (heatmap-style) === */
+  .matrix-wrap { margin-top: 4px; }
+  .matrix {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    font-size: 12px; font-variant-numeric: tabular-nums;
+  }
+  .matrix th, .matrix td {
+    padding: 7px 10px; text-align: right;
+    border-bottom: 1px solid var(--rule-2);
+  }
+  /* column header */
+  .matrix thead th {
+    font-size: 11px; color: var(--ink-2); font-weight: 700;
+    background: var(--paper); letter-spacing: 0.04em;
+    padding: 8px 10px 6px;
+    border-bottom: 2px solid var(--ink);
+    position: relative;
+  }
+  .matrix thead th .col-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+    margin-right: 5px; vertical-align: 1px;
+  }
+  .matrix thead th .col-total {
+    display: block; font-weight: 500; color: var(--ink-4);
+    font-size: 10px; margin-top: 2px;
+  }
+  /* row label */
+  .matrix th.sub-th, .matrix td.sub-cell {
+    text-align: left; color: var(--ink); font-weight: 600;
+    border-right: 1px solid var(--rule-2);
+    background: var(--paper);
+  }
+  .matrix td.sub-cell { font-size: 12.5px; }
+  /* bottle column (emphasized) */
+  .matrix th.bottle-col {
+    background: var(--cream);
+    border-bottom-color: var(--brown-1);
+  }
+  .matrix td.bottle-col {
+    background: var(--cream-2);
+    border-right: 1px solid var(--tan);
+  }
+  /* total column */
+  .matrix th.total-col, .matrix td.total-col {
+    background: #F7F7F7; color: var(--ink);
+    border-left: 2px solid var(--ink-4);
+  }
+  /* cell content */
+  .matrix .cell-n {
+    font-weight: 800; font-size: 14px; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .matrix .cell-pct {
+    color: var(--ink-4); font-size: 10px; margin-left: 3px;
+    font-weight: 500; vertical-align: 1px;
+  }
+  .matrix td.heat-cell { position: relative; }
+  /* heatmap intensity overrides — apply on top of column base bg */
+  .matrix .h1 { background: rgba(210,117,56,0.10); }
+  .matrix .h2 { background: rgba(210,117,56,0.20); }
+  .matrix .h3 { background: rgba(210,117,56,0.34); }
+  .matrix .h4 { background: rgba(210,117,56,0.50); }
+  .matrix .h4 .cell-n { color: #fff; }
+  .matrix .h4 .cell-pct { color: rgba(255,255,255,0.78); }
+  .matrix .h3 .cell-n { color: var(--brown-2); }
+  /* bottle column heats — slightly warmer */
+  .matrix .bottle-col.h1 { background: #EFE3D0; }
+  .matrix .bottle-col.h2 { background: #E5D2B5; }
+  .matrix .bottle-col.h3 { background: #D4A877; }
+  .matrix .bottle-col.h4 { background: var(--brown-1); }
+  /* total column heats */
+  .matrix .total-col.h1 { background: #EEEEEE; }
+  .matrix .total-col.h2 { background: #DDDDDD; }
+  .matrix .total-col.h3 { background: #999999; }
+  .matrix .total-col.h3 .cell-n { color: #fff; }
+  .matrix .total-col.h3 .cell-pct { color: rgba(255,255,255,0.75); }
+  .matrix .total-col.h4 { background: var(--ink); }
+  .matrix .total-col.h4 .cell-n { color: #fff; }
+  .matrix .total-col.h4 .cell-pct { color: rgba(255,255,255,0.75); }
+
+  .matrix td.cell-zero {
+    color: #D5D5D5; font-weight: 400; font-size: 13px;
+  }
+  /* row stripe — alternate rows */
+  .matrix tbody tr:nth-child(even) td.sub-cell { background: #FCFAF6; }
+  /* footer */
+  .matrix tfoot td {
+    font-weight: 800; font-size: 13px; color: var(--ink);
+    border-top: 2px solid var(--ink); border-bottom: none;
+    background: var(--paper);
+    padding: 8px 10px;
+  }
+  .matrix tfoot td.sub-cell { color: var(--ink-2); }
+  /* legend below matrix */
+  .matrix-legend {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10.5px; color: var(--ink-4);
+    margin-top: 8px; padding-top: 6px;
+    border-top: 1px dashed var(--rule-2);
+  }
+  .matrix-legend .scale {
+    display: inline-flex; gap: 0; border-radius: 3px; overflow: hidden;
+    border: 1px solid var(--rule);
+  }
+  .matrix-legend .scale span {
+    width: 22px; height: 12px; display: block;
+  }
+
+  /* === 可点击提示 + 底部饮品卡原图画廊 === */
+  .click-note {
+    color: var(--brown-2); font-size: 12px; margin: -6px 0 14px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .bar-row.clickable { cursor: pointer; }
+  .bar-row.clickable:hover .bar-track { outline: 2px solid var(--brown-1); outline-offset: 1px; }
+  .bar-row.clickable:hover .bar-fill { filter: brightness(1.08); }
+  .brand-chip.clickable { cursor: pointer; }
+  .brand-chip.clickable:hover { outline: 2px solid var(--brown-1); }
+  .matrix td.heat-cell.clickable { cursor: pointer; }
+  .matrix td.heat-cell.clickable:hover { outline: 2px solid var(--brown-1); outline-offset: -2px; }
+
+  #gallery.panel { margin-top: 16px; display: none; }
+  #gallery.open { display: block; }
+  .gallery-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .gallery-head .gt { font-size: 15px; font-weight: 800; color: var(--ink); }
+  .gallery-head .gn { color: var(--ink-4); font-size: 12px; }
+  .gallery-head .close {
+    margin-left: auto; cursor: pointer; border: 1px solid var(--rule);
+    border-radius: 6px; padding: 5px 12px; font-size: 12px;
+    background: var(--card); color: var(--ink-2);
+  }
+  .gallery-head .close:hover { background: var(--cream-2); border-color: var(--brown-1); }
+  /* 画廊卡片：与 dashboard-drinks-v2.html 的饮品卡同款（图 + 徽标 + 描述，点图放大） */
+  .gallery-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px;
+    align-items: start;
+  }
+  .gcard {
+    background: var(--card); border: 1px solid #EAE3D7; border-radius: 12px; overflow: hidden;
+    display: flex; flex-direction: column; transition: box-shadow .15s, transform .15s;
+  }
+  .gcard:hover { box-shadow: 0 6px 20px rgba(0,0,0,.10); transform: translateY(-2px); }
+  .gcard .gimg {
+    width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block;
+    background: #F1ECE3; cursor: zoom-in;
+  }
+  .gcard .gimg.noimg {
+    display: flex; align-items: center; justify-content: center; aspect-ratio: 3 / 4;
+    color: #CBC4B8; font-size: 11px; cursor: default;
+  }
+  .gcard .gbody { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+  .gcard .gbadges { display: flex; flex-wrap: wrap; gap: 4px; }
+  .gbadge { font-size: 11px; padding: 2px 8px; border-radius: 5px; font-weight: 600; color: #fff; white-space: nowrap; }
+  .gbadge.cat { background: #D27538; }
+  .gbadge.subtype { background: #7D7BF8; }
+  .gbadge.temp { background: #5FD27B; }
+  .gbadge.temp.cold { background: #5B9BD5; }
+  .gbadge.brand { background: #F0EAB4; color: var(--ink-2); }
+  .gbadge.src { background: #EFE7D8; color: var(--ink-3); }
+  .gbadge.cardid { background: var(--ink); color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .gcard .gdesc {
+    font-size: 11.5px; color: var(--ink-3); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .lightbox {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+    z-index: 999; align-items: center; justify-content: center; cursor: zoom-out;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 92%; max-height: 92%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+</style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <a class="nav-link" href="dashboard-drinks-v2.html">🥤 饮品卡 V2 · 总</a>
+  <a class="nav-link" href="dashboard-scene-dongri-tongqin-v2.html">冬日通勤</a>
+  <a class="nav-link" href="dashboard-scene-nanshangjianan-v2.html">偶尔难上加难</a>
+  <a class="nav-link" href="dashboard-scene-courenao-v2.html">凑热闹</a>
+  <a class="nav-link" href="dashboard-scene-huanqing-v2.html">欢庆相聚</a>
+  <a class="nav-link" href="dashboard-scene-zijiren-v2.html">自己人时刻</a>
+  <a class="nav-link active" href="dashboard-scene-dongri-dongqu-v2.html">冬日动趣</a>
+  <a class="nav-link" href="dashboard-scene-woyiwo-v2.html">窝一窝</a>
+  <a class="nav-link" href="dashboard-scene-zaocan-v2.html">日常早餐</a>
+  <a class="nav-link" href="dashboard-scene-gongzuo-xuexi-v2.html">日常工作学习</a>
+  <a class="nav-link" href="dashboard-scene-fandian-v2.html">日常饭点</a>
+</div>
+
+<div class="top-bar">
+  <span class="h1-tag">6. 冬日动趣</span>
+  <h1>主题看板</h1>
+</div>
+<div class="hint">"瓶饮"栏只统计 category = 瓶装饮品 的卡。数据源：card_summary.csv。</div>
+
+<div class="sub-chips" id="subChips"></div>
+
+<div class="click-note">📌 点任意<strong>条形 / 矩阵格子 / 品牌</strong>，可在页面底部展开对应饮品卡原图（点图可放大）。</div>
+
+<!-- 第一行：城市 + group -->
+<div class="stat-row">
+  <div class="panel head-peri">
+    <div class="panel-title">城市 <span class="sub">分布</span></div>
+    <div class="bars" id="cityBars"></div>
+  </div>
+  <div class="panel head-ink">
+    <div class="panel-title">Group <span class="sub">人群</span></div>
+    <div class="bars" id="personaBars"></div>
+  </div>
+</div>
+
+<!-- 第二行：饮品 / 瓶饮 两栏 -->
+<div class="col-2">
+  <!-- 左栏：饮品数/总 -->
+  <div class="panel">
+    <div class="panel-title">
+      饮品
+      <span class="sub">所有有饮品的卡</span>
+    </div>
+
+    <div class="sub-title">品类 <span class="meta">（大类）</span></div>
+    <div class="bars" id="drinkCategoryBars"></div>
+
+    <div class="sub-title">子品类 × 品类 <span class="meta">单元格 = n · 占该列%，颜色深浅按列内占比</span></div>
+    <div class="matrix-wrap">
+      <table class="matrix" id="subtypeMatrix"></table>
+      <div class="matrix-legend">
+        <span>列内占比</span>
+        <span class="scale">
+          <span style="background:#fff"></span>
+          <span style="background:rgba(210,117,56,0.10)"></span>
+          <span style="background:rgba(210,117,56,0.20)"></span>
+          <span style="background:rgba(210,117,56,0.34)"></span>
+          <span style="background:rgba(210,117,56,0.50)"></span>
+        </span>
+        <span>0 → 40%+</span>
+      </div>
+    </div>
+
+    <div class="sub-title">品牌 <span class="meta" id="drinkBrandMeta"></span></div>
+    <div class="brand-chips" id="drinkBrandChips"></div>
+
+    <div class="sub-title">购买地点</div>
+    <div class="bars" id="drinkPlaceBars"></div>
+  </div>
+
+  <!-- 右栏：瓶饮数/总 -->
+  <div class="panel">
+    <div class="panel-title">
+      瓶饮
+      <span class="sub">category = 瓶装饮品</span>
+    </div>
+
+    <div class="big-num-block">
+      <div class="big-num" id="bottlePct">—%</div>
+      <div class="big-num-sub">
+        瓶饮数量：<b id="bottleCount">—</b><br>
+        饮品数量：<b id="drinkCount">—</b><br>
+        瓶饮数量/饮品数量 <b id="bottleFrac">—% （— / —）</b>
+      </div>
+    </div>
+
+    <div class="sub-title">瓶饮 · 品类 <span class="meta">subtype</span></div>
+    <div class="bars" id="bottleSubtypeBars"></div>
+
+    <div class="sub-title">瓶饮 · 品牌 <span class="meta" id="bottleBrandMeta"></span></div>
+    <div class="brand-chips" id="bottleBrandChips"></div>
+
+    <div class="sub-title">瓶饮 · 购买地点</div>
+    <div class="bars" id="bottlePlaceBars"></div>
+  </div>
+</div>
+
+<!-- 底部：点击条形/格子/品牌后展开的饮品卡原图画廊 -->
+<div class="panel" id="gallery">
+  <div class="gallery-head">
+    <span class="gt" id="galTitle"></span>
+    <span class="gn" id="galCount"></span>
+    <span class="close" onclick="closeGallery()">收起 ✕</span>
+  </div>
+  <div class="gallery-grid" id="galGrid"></div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()"><img id="lbImg" src="" alt=""></div>
+
+<script>window.WO_DATA = {"cards": [{"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "咖啡", "temp": "热", "brand": "BOSS", "purchase_place": "自贩机/智能柜", "desc": "自助售货机里的产品感觉都是小包装的，拿在手里暖手很方便，特别旅行时吹冷风的时候很合适。", "id": "中产无娃-上海-D20", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-25.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "包装水", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "那么冷的地方只能喝热的，让自己暖和起来，冰岛水都是可以直接喝的，所以每天都在酒店里烧好...", "id": "中产无娃-上海-D34", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-3.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "瑞幸", "purchase_place": "电商", "desc": "去云南大理吃了她们比较出名的云南鲜花饼和饵块，正好看到朋友边有瑞幸，点了杯小黄油美式", "id": "中产无娃-上海-D42", "card_image": "原始数据/饮品卡/中产无娃-上海/街饮-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "瑞幸", "purchase_place": "其他", "desc": "有好看的杯子造型，艺术设计感，并且大小合适在车子的杯架上。", "id": "中产无娃-上海-D44", "card_image": "原始数据/饮品卡/中产无娃-上海/街饮-11.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "宝圆圆", "purchase_place": "其他", "desc": "爬山很累需要热量和多巴胺刺激我进发更好状态。", "id": "中产无娃-上海-D49", "card_image": "原始数据/饮品卡/中产无娃-上海/街饮-6.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "会在11、12月的样子约上朋友一起去江浙沪附近，或者去云南、四川一起徒步", "id": "中产无娃-上海-W01", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 10278.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬日里的徒步看到日照金山的时候感觉人生没有白活", "id": "中产无娃-上海-W07", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 17112.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "周末和爱车一起去自驾度假，一个人游玩可以更好激发我的灵感", "id": "中产无娃-上海-W16", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 17121.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和朋友们一起去骑马活动，体验马术的快乐和动物的交流", "id": "中产无娃-上海-W19", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 17124.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "会和家里人，利用假期的时间出国旅游。", "id": "中产无娃-上海-W29", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 17134.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "滑雪是冬天的限定户外活动，和几个朋友约在一起去享受一下大自然的馈赠", "id": "中产无娃-上海-W40", "card_image": "原始数据/冬日ingeneral场景/上海-中产/Group 17146.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "库迪", "purchase_place": "其他", "desc": "那天库迪好像出新品了，正好买一杯岚岚", "id": "中产无娃-哈尔滨-D32", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/街饮-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "瑞幸", "purchase_place": "电商", "desc": "冬天能喝一些喜欢的热咖啡", "id": "中产无娃-哈尔滨-D34", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/街饮-3.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "咖啡", "temp": "热", "brand": "costa", "purchase_place": "超市/便利店", "desc": "出去玩之前便利店买了几瓶热咖啡 提神驱寒冷", "id": "中产无娃-哈尔滨-D35", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/街饮-4.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "2. 看一场冬日落雪\n📍地点：公园、老街、江边\n👫和谁：喜欢的人、家人\n❄️在做什么：漫步雪地、踩雪听声、拍雪景、看漫天飞雪", "id": "中产无娃-哈尔滨-W03", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 7053.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "5. 冬日落日散步\n📍地点：河边步道、城市天台、郊外小路\n👤和谁：独处、爱人\n🌅在做什么：追赶冬日温柔落...", "id": "中产无娃-哈尔滨-W10", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 7060.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "喜欢假期，喜欢海边，因为夏天在海边吹着风，心情放松生活变慢，很好", "id": "中产无娃-哈尔滨-W17", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 17228.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "初冬的时候有一些时候天气会很好会喜欢散散步。", "id": "中产无娃-哈尔滨-W22", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 17233.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天的索菲亚教堂才是最美的，尤其是下雪的时候。", "id": "中产无娃-哈尔滨-W25", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 17236.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "下雪天叫上三两好友出去打雪仗 在雪地里撒野 尽情疯 尽情闹 雪是属于我们浪漫", "id": "中产无娃-哈尔滨-W30", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 17241.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "带着老婆去滑雪，滑下来的时候真的很爽，虽然冬天很冷但还是开心的。", "id": "中产无娃-哈尔滨-W32", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 17243.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "满足老婆心愿，去看了冰封黄玫瑰，给她照了很多照片，又看到了落日很美。", "id": "中产无娃-哈尔滨-W35", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 17246.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和女朋友在松花江边漫步", "id": "中产无娃-哈尔滨-W37", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-中产/Group 17248.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "其他", "subtype": "可可饮", "temp": "热", "brand": "书店手冲", "purchase_place": "其他", "desc": "热巧克力", "id": "中产无娃-广州-D01", "card_image": "原始数据/饮品卡/中产无娃-广州/其他-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "自制", "purchase_place": "不是自己购买的", "desc": "红糖红枣奶茶", "id": "中产无娃-广州-D04", "card_image": "原始数据/饮品卡/中产无娃-广州/其他-4.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "凉茶", "purchase_place": "超市/便利店", "desc": "带狗狗去野炊，自带了凉茶热饮", "id": "中产无娃-广州-D05", "card_image": "原始数据/饮品卡/中产无娃-广州/其他-5.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "咖啡店手冲", "purchase_place": "其他", "desc": "黑巧拿铁", "id": "中产无娃-广州-D30", "card_image": "原始数据/饮品卡/中产无娃-广州/街饮-2.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "街饮", "subtype": "可可饮", "temp": "热", "brand": "奈雪的茶", "purchase_place": "其他", "desc": "热的可可奶茶很浓郁，甜而不腻", "id": "中产无娃-广州-D32", "card_image": "原始数据/饮品卡/中产无娃-广州/街饮-4.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "其他", "purchase_place": "其他", "desc": "在油菜花田喝着琥珀奶茶，超级有意思，冷风吹来，带着琥珀和奶香很有感觉", "id": "中产无娃-广州-D33", "card_image": "原始数据/饮品卡/中产无娃-广州/街饮-5.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "其他", "subtype": "咖啡", "temp": "热", "brand": "无品牌", "purchase_place": "其他", "desc": "热咖啡", "id": "中产无娃-广州-D36", "card_image": "原始数据/饮品卡/中产无娃-广州/街饮-8.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在街边的小公园里，和朱友一起，穿得厉厉的慢悠悠散步", "id": "中产无娃-广州-W09", "card_image": "原始数据/冬日ingeneral场景/广州-中产/Group 17190.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "我和家人在昆明的海边旅游，冬天的海风就是让人清醒。它吹散了所有的矫情和迷芒。", "id": "中产无娃-广州-W12", "card_image": "原始数据/冬日ingeneral场景/广州-中产/Group 17193.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "我和家人去湿地公园散步，这片火红的树林，是秋天向冬天过渡的标志。它美丽，却也带着一丝告别…", "id": "中产无娃-广州-W14", "card_image": "原始数据/冬日ingeneral场景/广州-中产/Group 17195.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "跟老婆去云南腾冲泡温泉", "id": "中产无娃-广州-W16", "card_image": "原始数据/冬日ingeneral场景/广州-中产/Group 17197.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "带老婆去一次长途旅行", "id": "中产无娃-广州-W18", "card_image": "原始数据/冬日ingeneral场景/广州-中产/Group 17199.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "跟老婆去露营，烤火，围炉煮茶，放空自己", "id": "中产无娃-广州-W20", "card_image": "原始数据/冬日ingeneral场景/广州-中产/Group 17201.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "带着家人去近郊的步道散步，踩着干爽的落叶，吹着微凉却不刺骨的风。路上说说笑笑，看远处的天…", "id": "中产无娃-广州-W24", "card_image": "原始数据/冬日ingeneral场景/广州-中产/Group 17205.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "带上狗狗一起去遗弯，看看外面的世界，感觉非常快乐满足", "id": "中产无娃-广州-W35", "card_image": "原始数据/冬日ingeneral场景/广州-中产/Group 17216.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "茉莉奶白", "purchase_place": "其他", "desc": "当时在广州街头散步，那天有点风，然后刚好路过一个茉莉奶白奶茶店，就买了一杯热饮", "id": "中产无娃-成都-D28", "card_image": "原始数据/饮品卡/中产无娃-成都/街饮-8.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天和朋友一起去旅游观光，享受冬天的愉快气息，感受大自然的氛围", "id": "中产无娃-成都-W06", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 16450.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "会和家人一起去往西岭雪山，远离城市喧嚣，奔赴漫天白雪的山野。会一起滑雪玩耍，深吸山间清冽新鲜的空气，自在又惬意。", "id": "中产无娃-成都-W10", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17150.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "十一月份放秋假时候带孩子去爬了青城山。", "id": "中产无娃-成都-W13", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17153.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天带孩子去川大校园里一起捡红豆", "id": "中产无娃-成都-W15", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17155.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天，与三五好友一起约着去郊游，享受一下生活", "id": "中产无娃-成都-W18", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17158.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬日，去享受一下美丽的雪景，感受一下大自然的奇妙景观", "id": "中产无娃-成都-W20", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17160.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和朋友一起去爬山，强身健体", "id": "中产无娃-成都-W22", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17162.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "一起去雪山看雪浪漫的美景，感受冬天的美好", "id": "中产无娃-成都-W23", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17163.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和孩子一起堆雪人，打雪仗", "id": "中产无娃-成都-W24", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17164.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和朋友一起去户外露营，感受周末", "id": "中产无娃-成都-W25", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17165.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "每年冬天都会去文殊院拜拜，昨年也不例外", "id": "中产无娃-成都-W32", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17172.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "露营和孩子一起晒太阳", "id": "中产无娃-成都-W37", "card_image": "原始数据/冬日ingeneral场景/成都-中产/Group 17178.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "咖啡", "temp": "", "brand": "Costa", "purchase_place": "超市/便利店", "desc": "我喝了costa咖啡，因为几乎没有热量，而咖啡可以抗疲劳，不容易犯困", "id": "中产无娃-成都-组pilot-D04", "card_image": "原始数据/饮品卡/中产无娃-成都-组pilot/街饮饮品.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "能给自己温暖的同时，还能解渴，缓解口感补充体力。", "id": "中产有娃-上海-D05", "card_image": "原始数据/饮品卡/中产有娃-上海/瓶装饮品.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "咖啡", "temp": "热", "brand": "雀巢", "purchase_place": "超市/便利店", "desc": "远程带娃需要提神，为方便带的咖啡；或者热好带上班也很经济实惠", "id": "中产有娃-广州-D02", "card_image": "原始数据/饮品卡/中产有娃-广州/瓶装饮品-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "咖啡", "temp": "热", "brand": "星巴克", "purchase_place": "超市/便利店", "desc": "是和朋友外出野餐的日子，因为要特种兵一天，所以早早在便利店买了瓶热的星巴克提神", "id": "中产有娃-广州-D03", "card_image": "原始数据/饮品卡/中产有娃-广州/瓶装饮品-2.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "维他", "purchase_place": "超市/便利店", "desc": "和小孩一起去公园，这个维他奶方便买到，又暖又健康。", "id": "中产有娃-广州-D06", "card_image": "原始数据/饮品卡/中产有娃-广州/瓶装饮品-5.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "喝上很累，喝点热茶提神暖身。", "id": "中产有娃-广州-D07", "card_image": "原始数据/饮品卡/中产有娃-广州/瓶装饮品-6.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "电商", "desc": "喜欢茶热奶茶搭配红糖珍珠，既有饱腹感又能喝上奶茶", "id": "中产有娃-广州-D19", "card_image": "原始数据/饮品卡/中产有娃-广州/街饮-4.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "温泉绝对是冬天必不可少的，外冷内热的感受，很酸爽，幸福感满满", "id": "中产有娃-广州-W02", "card_image": "原始数据/冬日ingeneral场景/广州-有娃/Group 17308.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天最喜欢有阳光的时候出去露营，d晒着冬日的暖阳，煮杯咖啡，很惬意", "id": "中产有娃-广州-W03", "card_image": "原始数据/冬日ingeneral场景/广州-有娃/Group 17309.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "带上老公儿子美美地泡个温泉。", "id": "中产有娃-广州-WS02", "card_image": "原始数据/冬日ingeneral场景/广州-有娃-暖饮机补充/Untitled-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "其他", "subtype": "酒", "temp": "", "brand": "双击输入", "purchase_place": "超市/便利店", "desc": "白葡萄酒", "id": "中产有娃-广州-组pilot-D01", "card_image": "原始数据/饮品卡/中产有娃-广州-组pilot/其他饮品.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "可可饮", "temp": "", "brand": "阿华田", "purchase_place": "超市/便利店", "desc": "冰天雪地，想喝暖暖的巧克力", "id": "中产有娃-广州-组pilot-D02", "card_image": "原始数据/饮品卡/中产有娃-广州-组pilot/瓶装饮品.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "", "brand": "爷爷不泡茶", "purchase_place": "电商", "desc": "奶茶", "id": "中产有娃-广州-组pilot-D04", "card_image": "原始数据/饮品卡/中产有娃-广州-组pilot/街饮饮品.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "山姆", "purchase_place": "超市/便利店", "desc": "这款是山姆的椰子水，很好喝", "id": "中产有娃-广州-组暖饮机补充-D03", "card_image": "原始数据/饮品卡/中产有娃-广州-组暖饮机补充/瓶装饮品-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "热暖饮", "purchase_place": "不是自己购买的", "desc": "吃甜点配着热茶特别惬意", "id": "中产有娃-广州-组暖饮机补充-D07", "card_image": "原始数据/饮品卡/中产有娃-广州-组暖饮机补充/街饮-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "自贩机/智能柜", "desc": "喝点甜的更容易补充能量", "id": "中产有娃-成都-D01", "card_image": "原始数据/饮品卡/中产有娃-成都/其他-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "库迪", "purchase_place": "其他", "desc": "闭翘偌尔喝点咖啡", "id": "中产有娃-成都-D02", "card_image": "原始数据/饮品卡/中产有娃-成都/其他-2.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "盒马", "purchase_place": "超市/便利店", "desc": "喝起了什么？很解渴", "id": "中产有娃-成都-D04", "card_image": "原始数据/饮品卡/中产有娃-成都/其他.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "蜜雪冰城", "purchase_place": "超市/便利店", "desc": "吃炸串，旁边有蜜雪冰城买了杯茉莉奶绿", "id": "中产有娃-成都-D08", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-12.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "包装水", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "冬天跟家里人一起去玩的时候，买了热的矿泉水，天气出去玩喝热水", "id": "中产有娃-成都-D13", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-17.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "咖啡", "temp": "热", "brand": "雀巢", "purchase_place": "超市/便利店", "desc": "瓶装的咖啡以热味道有点变，虽然冬天喝热咖啡更适合，但是瓶装咖啡其实的不适合加热温度太高", "id": "中产有娃-成都-D15", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-19.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "东方树叶带方便", "id": "中产有娃-成都-D25", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "霸王茶姬", "purchase_place": "其他", "desc": "热饮拿在手上暖暖的很贴心", "id": "中产有娃-成都-D28", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品-3.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "蜜雪冰城", "purchase_place": "其他", "desc": "散步的时候，冬日拿在手上暖暖的，不冷手", "id": "中产有娃-成都-D36", "card_image": "原始数据/饮品卡/中产有娃-成都/街饮-5.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "茶百道", "purchase_place": "其他", "desc": "茉莉奶绿", "id": "中产有娃-成都-D38", "card_image": "原始数据/饮品卡/中产有娃-成都/街饮-7.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "其他", "desc": "喜欢三倍厚抹茶奶盖麻薯加抹茶冻，三重叠加，越喝越浓", "id": "学生-上海-D36", "card_image": "原始数据/饮品卡/学生-上海/街饮-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "瑞幸咖啡", "purchase_place": "其他", "desc": "逛街时来杯瑞幸，提神又解乏走路都更有精神。咖啡口感香醇，搭配逛街休闲，气氛感刚刚好。", "id": "学生-上海-D38", "card_image": "原始数据/饮品卡/学生-上海/街饮-3.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "这个活动是我去韩国济州岛旅游的时候，正好碰到韩国在下雪，所以我那天穿着我非常喜欢的蓝色帽子和蓝色围巾，在一个很火的景点拍了一张照", "id": "学生-上海-W02", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 7002.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "寒假去和朋友玩\n朋友 还有景", "id": "学生-上海-W12", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16935.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬日爬山\n年后保留节目", "id": "学生-上海-W14", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16937.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天和朋友一起去外面旅游看海，闻着海风的气息，感受大自然", "id": "学生-上海-W22", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16945.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "下雪了，和朋友去玩雪，一起打雪仗和堆雪人，是美好的记忆", "id": "学生-上海-W25", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16948.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "滑雪场雪道，和好友并肩，体验冬日飞驰的快乐。", "id": "学生-上海-W27", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16950.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "春节期间和家人自驾去福建玩，拍到的风景", "id": "学生-上海-W35", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16958.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "户外滑雪我也喜欢，踩着雪板滑下来的时候，风在耳边吹，冷飕飕的但又特别爽，自由潇洒", "id": "学生-上海-W37", "card_image": "原始数据/冬日ingeneral场景/上海-学生/Group 16960.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "一起去亚布力滑雪", "id": "学生-哈尔滨-W02", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17065.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "旅行 去看热气球", "id": "学生-哈尔滨-W04", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17067.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在哈尔滨友谊路散步", "id": "学生-哈尔滨-W11", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17075.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "学校组织春游，我们一起出发，带来很多可口的食物一起分享", "id": "学生-哈尔滨-W32", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17098.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "这张照片是我和我姐姐爬山爬到半山腰的时候拍的，那是冬天里最“热”的记忆", "id": "学生-哈尔滨-W39", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17105.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "这个冬天我去伊春的一个滑雪场滑雪，这是我今年第一次滑雪。那边环境非常好，山很高。有人从最...", "id": "学生-哈尔滨-W40", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-学生/Group 17106.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "玉米汁", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "在东北集市上买的玉米汁", "id": "学生-广州-D33", "card_image": "原始数据/饮品卡/学生-广州/街饮-3.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "螺蛳粉奶茶", "purchase_place": "其他", "desc": "螺蛳粉奶茶，因为网上最近特别火这种热饮，刚好路过的时候闻着特别香就想试试", "id": "学生-广州-D39", "card_image": "原始数据/饮品卡/学生-广州/街饮-9.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "阿妈的酥油茶", "purchase_place": "其他", "desc": "喝的酥油茶", "id": "学生-广州-D40", "card_image": "原始数据/饮品卡/学生-广州/街饮.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天和男朋友去了向往很久的云南旅游，云南像期待的那般美，是去过最爱的地方，我想我会再去一...", "id": "学生-广州-W01", "card_image": "原始数据/冬日ingeneral场景/广州-学生/Group 17020.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和男朋友一起爬上了玉龙雪山，去过最冷的地方，很壮观很美，抢票也在最后一下候补上了我们都很...", "id": "学生-广州-W04", "card_image": "原始数据/冬日ingeneral场景/广州-学生/Group 17023.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "天冷晨练，和同学一起，痛并快乐", "id": "学生-广州-W10", "card_image": "原始数据/冬日ingeneral场景/广州-学生/Group 17029.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "娃哈哈", "purchase_place": "超市/便利店", "desc": "营养快线，因为零食比较油腻，喝了这个可以解腻", "id": "学生-成都-D03", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "超市/便利店", "desc": "热的阿萨姆奶茶方便购买，方便携带，露营有气氛感", "id": "学生-成都-D06", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-12.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "岚蓝湾", "purchase_place": "超市/便利店", "desc": "逛街累了奶茶清甜解渴", "id": "学生-成都-D30", "card_image": "原始数据/饮品卡/学生-成都/街饮-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "锦城茶作", "purchase_place": "其他", "desc": "走在路上，拿着奶茶可以出片，而奶茶可以做热饮，在冬天很方便，奶茶选择也很多", "id": "学生-成都-D34", "card_image": "原始数据/饮品卡/学生-成都/街饮-4.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和家人回老家摘橘子，巨大的一个橘子", "id": "学生-成都-W01", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 16980.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "天气很好的时候和朋友兜风", "id": "学生-成都-W03", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 16982.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天和家人一起泡温泉", "id": "学生-成都-W09", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 16988.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "傍晚走在操场上，凉风吹在脸上，整个人都变得松弛安静。", "id": "学生-成都-W12", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 16991.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "放寒假对我来说很重要，可以去旅游，一般是跟我的对象或者是朋友一起去。", "id": "学生-成都-W24", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 17003.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天可以去滑雪，感觉是我每年冬天必打卡的事情。", "id": "学生-成都-W25", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 17004.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "学生", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "旅游，去九寨沟旅游，感受祖国的大好河山，欣赏美景", "id": "学生-成都-W34", "card_image": "原始数据/冬日ingeneral场景/成都-学生/Group 17013.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "", "brand": "盒马", "purchase_place": "超市/便利店", "desc": "请优先选择，如果为自用请写外包装", "id": "白领-上海-D03", "card_image": "原始数据/饮品卡/白领-上海/瓶装饮品-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得利", "purchase_place": "电商", "desc": "山上非常的寒冷，需要有一个“暖手袋”，热的茶饮料既可以当暖手袋，又可以口渴的时候解渴", "id": "白领-上海-D23", "card_image": "原始数据/饮品卡/白领-上海/瓶装饮品-9.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "元气森林好自在", "purchase_place": "超市/便利店", "desc": "在便利店买元气森林好自在的红枣柚子水，喝起来温润的红枣香气以及柚子的甜可以暖身体排除寒冷...", "id": "白领-上海-D30", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-6.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "洪都", "purchase_place": "电商", "desc": "买了一杯奶茶和朋友一起逛街的时候喝", "id": "白领-上海-D37", "card_image": "原始数据/饮品卡/白领-上海/街饮-12.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "其他", "subtype": "咖啡", "temp": "热", "brand": "书店吧台制作", "purchase_place": "其他", "desc": "蓝莓咖啡特调，果酱和果肉不会很甜，和咖啡的味道非常和谐", "id": "白领-上海-D39", "card_image": "原始数据/饮品卡/白领-上海/街饮-2.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "其他", "desc": "选了一这款黑糖珍珠奶茶，奶盖的味道特别浓郁，满嘴留香", "id": "白领-上海-D41", "card_image": "原始数据/饮品卡/白领-上海/街饮-4.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "霸王茶姬", "purchase_place": "其他", "desc": "和姐妹逛街基本都会选择这种奶茶现做的，就像是习惯一样，比起有口感。", "id": "白领-上海-D43", "card_image": "原始数据/饮品卡/白领-上海/街饮-6.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "霸王茶姬", "purchase_place": "其他", "desc": "霸王茶姬，时尚的包装加上纯正的茶口感配上小食，非常适合逛街打卡", "id": "白领-上海-D45", "card_image": "原始数据/饮品卡/白领-上海/街饮-8.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "十二月底的圣诞假期会出去旅游，避开高峰，体验感很好。", "id": "白领-上海-W03", "card_image": "原始数据/冬日ingeneral场景/上海-白领/Group 7018.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "我喜欢在冬天结冰了以后去室外和朋友一起溜冰，让我感觉刺激和放松", "id": "白领-上海-W11", "card_image": "原始数据/冬日ingeneral场景/上海-白领/Group 10285.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "去巴厘岛潜水", "id": "白领-上海-W17", "card_image": "原始数据/冬日ingeneral场景/上海-白领/Group 10292.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和朋友一起滑冰，这是属于冬天的独有运动，非常刺激有趣", "id": "白领-上海-W24", "card_image": "原始数据/冬日ingeneral场景/上海-白领/Group 10299.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天的时候会和家人一起去滑雪场滑雪，体验滑雪的快乐。", "id": "白领-上海-W33", "card_image": "原始数据/冬日ingeneral场景/上海-白领/Group 17259.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和家里人一块去爬佘山，海拔不高，山上还有博物馆和教堂可以逛，可以感受冬日的山的风景。", "id": "白领-上海-WS03", "card_image": "原始数据/冬日ingeneral场景/上海-白领-暖饮机补充/Untitled-2.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "三得利的暖橙", "id": "白领-上海-组pilot-D05", "card_image": "原始数据/饮品卡/白领-上海-组pilot/瓶装饮品-3.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "功能饮料", "temp": "热", "brand": "蒙牛", "purchase_place": "超市/便利店", "desc": "解渴，适合运动", "id": "白领-上海-组暖饮机补充-D06", "card_image": "原始数据/饮品卡/白领-上海-组暖饮机补充/瓶装饮品.png"}, {"theme": "冬日动趣", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "瑞幸", "purchase_place": "其他", "desc": "瑞幸的抹茶丝绒拿铁", "id": "白领-上海-组暖饮机补充-D08", "card_image": "原始数据/饮品卡/白领-上海-组暖饮机补充/街饮-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "包装水", "temp": "热", "brand": "农夫山泉", "purchase_place": "自贩机/智能柜", "desc": "一般当我觉得一天的糖分已经摄入足够的时候 就会买一瓶热饮桶里的矿泉水", "id": "白领-哈尔滨-D06", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-10.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "功能饮料", "temp": "热", "brand": "脉动", "purchase_place": "超市/便利店", "desc": "喝烈运动的时候喝脉动可以有效的补充流失的水分和电解质还能补充能量 恢复的更快", "id": "白领-哈尔滨-D07", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-11.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "功能饮料", "temp": "热", "brand": "脉动", "purchase_place": "自贩机/智能柜", "desc": "在登山路上买了一瓶脉动 既能解渴又能补充能量", "id": "白领-哈尔滨-D09", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-13.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "元气森林", "purchase_place": "超市/便利店", "desc": "出门玩室外也比较冷，需要带热的饮品，但是是不方便带保温杯所以选择能保养身体的红豆薏米...", "id": "白领-哈尔滨-D12", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-16.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "元气自在水...", "purchase_place": "超市/便利店", "desc": "当时很冷，进便利店就看到这个了", "id": "白领-哈尔滨-D22", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-6.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "碳酸饮料", "temp": "热", "brand": "可口可乐", "purchase_place": "其他", "desc": "一般我都会选择姜味的可乐 不仅可以驱寒还蛮好喝的", "id": "白领-哈尔滨-D25", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-9.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "瑞幸", "purchase_place": "不是自己购买的", "desc": "逛街和朋友一起买咖啡喝", "id": "白领-哈尔滨-D42", "card_image": "原始数据/饮品卡/白领-哈尔滨/街饮-3.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "沏上阿姨", "purchase_place": "其他", "desc": "在外面逛街的时候我会买一杯热的奶茶 这样不仅可以捂手还能边走边喝", "id": "白领-哈尔滨-D44", "card_image": "原始数据/饮品卡/白领-哈尔滨/街饮-5.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "街饮", "subtype": "有糖茶", "temp": "热", "brand": "邻里", "purchase_place": "其他", "desc": "最近邻里的茶饮很流行，还赠送小鸭子，收藏起来很有意思。", "id": "白领-哈尔滨-D47", "card_image": "原始数据/饮品卡/白领-哈尔滨/街饮-8.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "泸上阿姨", "purchase_place": "其他", "desc": "开车出门，路过奶茶店就会选一杯热乎乎的奶茶，甜甜的，暖暖的。", "id": "白领-哈尔滨-D48", "card_image": "原始数据/饮品卡/白领-哈尔滨/街饮-9.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "蜜雪冰城", "purchase_place": "电商", "desc": "珍珠奶茶是逛街的一个必选项目，女孩子都很喜欢在冬天逛街的时候拿一杯珍珠奶茶也会感...", "id": "白领-哈尔滨-D49", "card_image": "原始数据/饮品卡/白领-哈尔滨/街饮.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "虽然在北方，但还是很喜欢雪，有一些户外的可以看雪人的地方都会积极参加去看看的和朋友", "id": "白领-哈尔滨-W08", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-白领/Group 10342.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和对象去玩雪", "id": "白领-哈尔滨-W13", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-白领/Group 10347.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和朋友一起去滑雪，丰富户外活动，夕阳余晖，岁月静好。", "id": "白领-哈尔滨-W19", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-白领/Group 10353.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "入冬以来下了一场非常大的雪，和小侄女去公园堆雪人，用雪具制造了一个爱心哈哈！", "id": "白领-哈尔滨-W23", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-白领/Group 17289.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "反季旅行去了大连，和家里人，冬天的海边人真的很少，风很大！去海边的梦想实现了！", "id": "白领-哈尔滨-W24", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-白领/Group 17290.png"}, {"theme": "冬日动趣", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天下雪了 当然要去亚布力来一场轰轰烈烈的“大摔跤”", "id": "白领-哈尔滨-W27", "card_image": "原始数据/冬日ingeneral场景/哈尔滨-白领/Group 17293.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "古茗", "purchase_place": "电商", "desc": "下山后去附近里吃饭，点了一杯热饮奶茶。", "id": "白领-广州-D05", "card_image": "原始数据/饮品卡/白领-广州/其他-5.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "白领", "category": "瓶装饮品", "subtype": "可可饮", "temp": "热", "brand": "阿华田", "purchase_place": "超市/便利店", "desc": "来一杯阿华田热饮，在户外的冷风中，温暖身体！", "id": "白领-广州-D12", "card_image": "原始数据/饮品卡/白领-广州/瓶装饮品-2.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "白领", "category": "瓶装饮品", "subtype": "玉米汁", "temp": "热", "brand": "奈雪的茶", "purchase_place": "超市/便利店", "desc": "因为看到这款饮品写着零添加而且瓶子包装非常可爱，刚好也想喝暖饮暖身子", "id": "白领-广州-D33", "card_image": "原始数据/饮品卡/白领-广州/街饮-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "其他", "desc": "热奶茶，一般我会选择带牛奶的热奶茶，这一口暖意是冬天的专属。", "id": "白领-广州-D40", "card_image": "原始数据/饮品卡/白领-广州/街饮-3.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "其他", "desc": "水牛奶", "id": "白领-广州-D41", "card_image": "原始数据/饮品卡/白领-广州/街饮-4.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "白领", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "星巴克", "purchase_place": "其他", "desc": "点了一杯星巴克的热焦糖玛奇朵", "id": "白领-广州-D43", "card_image": "原始数据/饮品卡/白领-广州/街饮-6.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "白领", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "瑞幸", "purchase_place": "其他", "desc": "逛街的时候碰见瑞幸出了新品就想尝试一下，而刚好是早上可以提神。", "id": "白领-广州-D47", "card_image": "原始数据/饮品卡/白领-广州/街饮.png"}, {"theme": "冬日动趣", "sub": "", "city": "广州", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "在郊外山顶，和亲友结伴爬山，登高远眺整座城市，安静享受风景。", "id": "白领-广州-W18", "card_image": "原始数据/冬日ingeneral场景/广州-白领/Group 10332.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "寿全斋", "purchase_place": "超市/便利店", "desc": "温泉水温高，容易体内受寒，红糖姜茶驱寒身，泡完温泉刚好中和湿气，浑身更舒服，暖呼...", "id": "白领-成都-D01", "card_image": "原始数据/饮品卡/白领-成都/其他-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "奶茶", "temp": "", "brand": "统一", "purchase_place": "超市/便利店", "desc": "喝的阿萨姆奶茶，喝起来口感很丝滑，补充体力，并且甜甜的，很幸福", "id": "白领-成都-D14", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-2.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "蜂解", "purchase_place": "超市/便利店", "desc": "早上天冷运动出汗，风吹容易着凉，热蜂蜜n水补水润喉，不刺激情肠，很舒服暖身体", "id": "白领-成都-D17", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-22.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "包装水", "temp": "热", "brand": "冰露", "purchase_place": "超市/便利店", "desc": "每次外出旅行时的必备淡水，可以及时补充身体流失的水分，又不会有异味。", "id": "白领-成都-D20", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-25.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "有糖茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "放假回家途中长又枯燥，清甜的茶香果清爽解乏，既能温润不腻，既能解渴又能舒缓旅途...", "id": "白领-成都-D23", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-28.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "功能饮料", "temp": "热", "brand": "脉动", "purchase_place": "超市/便利店", "desc": "和朋友出门徒步体力消耗大，脉动属于维生素低糖饮料，清爽解渴还能补充水分和维生素。", "id": "白领-成都-D24", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-29.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "电商", "desc": "小奶茶牛奶茶，因为喜欢喝有点带甜味的，偶尔买点小奶茶牛奶茶解渴", "id": "白领-成都-D27", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-5.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "冬日户外气温较低，边走边逛容易口干微凉，暖柚喝起来解渴解腻，逛累了喝特别舒服", "id": "白领-成都-D43", "card_image": "原始数据/饮品卡/白领-成都/街饮-4.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "泸上阿姨", "purchase_place": "其他", "desc": "滑雪结束后浑身又冷又累，和朋友一起点一杯奶茶再适合不过。温热的奶茶香甜醇厚，既能驱寒...", "id": "白领-成都-D46", "card_image": "原始数据/饮品卡/白领-成都/街饮-7.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "街饮", "subtype": "草本养生", "temp": "热", "brand": "金燕耳", "purchase_place": "其他", "desc": "喜欢喝热的银耳汤，让冬天暖暖的", "id": "白领-成都-D47", "card_image": "原始数据/饮品卡/白领-成都/街饮.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "外出去公园里散步，呼吸清晨的冷空气，晒着太阳，整个人觉得很通透清爽。", "id": "白领-成都-W08", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 7043.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "冬天和朋友在户外露营，围炉煮茶非常有意境，因为周围非常安静，也不嘈杂。围炉很热和，又可以...", "id": "白领-成都-W12", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 10301.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "和朋友在一起，在滑雪场一起滑雪，体验冬季特有的滑雪运动，带来刺激又带来了激情", "id": "白领-成都-W13", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 10302.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "看雪。作为南方朋友对雪的热爱不必多说，必须要去雪山看看雪景，体验一下大雪纷飞、漫山雪景的...", "id": "白领-成都-W24", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 10313.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "这是去年十二月和家里人一起去雪山玩耍 老爸不信邪还非要平地滑雪 后续肯定就是摔了个狗吃屎...", "id": "白领-成都-W30", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 10319.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "背着包，踩着冬日的暖阳，和好友们一起，用脚步丈量山野的浪漫。", "id": "白领-成都-W32", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 17263.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "", "subtype": "", "temp": "", "brand": "", "purchase_place": "", "desc": "把冬天的浪漫，留在雪板划过的每一道弧线里，和朋友的笑声里。", "id": "白领-成都-W33", "card_image": "原始数据/冬日ingeneral场景/成都-白领/Group 17264.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "自制饮品", "subtype": "无糖茶", "temp": "", "brand": "无品牌", "purchase_place": "不是自己购买的", "desc": "喝的现泡的热茶，茶可以让我们保持晚清醒也能暖身", "id": "白领-成都-组pilot-D01", "card_image": "原始数据/饮品卡/白领-成都-组pilot/其他饮品-1.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "包装水", "temp": "", "brand": "百岁山", "purchase_place": "自贩机/智能柜", "desc": "觉得泉水能给身体补充失的水分，喝了不会口渴---", "id": "白领-成都-组pilot-D04", "card_image": "原始数据/饮品卡/白领-成都-组pilot/瓶装饮品-2.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "", "brand": "海南椰汁", "purchase_place": "超市/便利店", "desc": "运动完后，喝椰汁可以给身体补充营养，缓解身体疲劳", "id": "白领-成都-组pilot-D05", "card_image": "原始数据/饮品卡/白领-成都-组pilot/瓶装饮品-3.png"}, {"theme": "冬日动趣", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "我们当时在骑车环海的时候，感觉有些口渴，想喝些解渴的饮料", "id": "白领-成都-组pilot-D07", "card_image": "原始数据/饮品卡/白领-成都-组pilot/瓶装饮品-5.png"}]};</script>
+<script>
+const ALL_CARDS = window.WO_DATA.cards;
+const SUB_ORDER = ['全部'];
+const CITY_ORDER = ['上海', '哈尔滨', '成都', '广州'];
+const PERSONA_ORDER = ['学生', '白领', '中产无娃', '中产有娃'];
+const CATEGORY_ORDER = ['自制饮品', '瓶装饮品', '街饮', '其他'];
+const PLACE_ORDER = ['超市/便利店', '电商', '其他', '自贩机/智能柜', '不是自己购买的'];
+
+let currentSub = '全部';
+
+function filterCards() {
+  if (currentSub === '全部') return ALL_CARDS;
+  if (currentSub === '未分类') return ALL_CARDS.filter(c => !c.sub);
+  return ALL_CARDS.filter(c => c.sub === currentSub);
+}
+
+function countBy(cards, fn) {
+  const m = new Map();
+  for (const c of cards) {
+    const v = fn(c);
+    if (!v) continue;
+    m.set(v, (m.get(v)||0) + 1);
+  }
+  return m;
+}
+
+function renderBars(el, items, total, opts = {}) {
+  el.innerHTML = '';
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-note">无数据</div>';
+    return;
+  }
+  const max = Math.max(...items.map(x=>x[1]));
+  for (const [label, n] of items) {
+    const pct = total > 0 ? (n/total*100).toFixed(0) : 0;
+    const w = max > 0 ? (n/max*100).toFixed(1) : 0;
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-label">${label}</div>
+      <div class="bar-track"><div class="bar-fill ${opts.cls||''}" style="width:${w}%"></div></div>
+      <div class="bar-num"><b>${n}</b> <span class="pct">${pct}%</span></div>
+    `;
+    if (opts.pool && opts.field) {
+      row.classList.add('clickable');
+      row.onclick = () => showGallery(
+        `${opts.title || ''} · ${label}`,
+        opts.pool.filter(c => c[opts.field] === label)
+      );
+    }
+    el.appendChild(row);
+  }
+}
+
+function orderedItems(map, order) {
+  const out = [];
+  const seen = new Set();
+  for (const k of order) {
+    if (map.has(k)) { out.push([k, map.get(k)]); seen.add(k); }
+  }
+  // append any remaining keys (sorted desc by count)
+  const rest = [...map.entries()].filter(([k]) => !seen.has(k)).sort((a,b)=>b[1]-a[1]);
+  return out.concat(rest);
+}
+
+function topItems(map, n=8) {
+  return [...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0, n);
+}
+
+// subtype × category 矩阵：列顺序 瓶装饮品 → 自制饮品 → 街饮 → 其他 → 合计
+const MATRIX_COLS = ['瓶装饮品', '自制饮品', '街饮', '其他'];
+// 同一组品类不做颜色区分，统一中性色（瓶装饮品另有列底强调）
+const COL_DOTS = {
+  '瓶装饮品': '#C9BFB0',
+  '自制饮品': '#C9BFB0',
+  '街饮':     '#C9BFB0',
+  '其他':     '#C9BFB0',
+};
+// percentage → heat bucket class
+function heatClass(pct) {
+  if (pct <= 0) return '';
+  if (pct < 8)  return 'h1';
+  if (pct < 18) return 'h2';
+  if (pct < 30) return 'h3';
+  return 'h4';
+}
+function renderSubtypeMatrix(drinkCards) {
+  const el = document.getElementById('subtypeMatrix');
+  const cellMap = new Map();    // sub → {cat → n}
+  const colTotal = new Map();
+  const rowTotal = new Map();
+  let grand = 0;
+  for (const c of drinkCards) {
+    const cat = c.category || '';
+    const sub = c.subtype || '(空)';
+    if (!MATRIX_COLS.includes(cat)) continue;
+    if (!cellMap.has(sub)) cellMap.set(sub, {});
+    cellMap.get(sub)[cat] = (cellMap.get(sub)[cat] || 0) + 1;
+    colTotal.set(cat, (colTotal.get(cat) || 0) + 1);
+    rowTotal.set(sub, (rowTotal.get(sub) || 0) + 1);
+    grand++;
+  }
+  const rows = [...rowTotal.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+
+  // header
+  let html = '<thead><tr><th class="sub-th">子品类</th>';
+  for (const cat of MATRIX_COLS) {
+    const cls = cat === '瓶装饮品' ? 'bottle-col' : '';
+    const ct = colTotal.get(cat) || 0;
+    const dot = COL_DOTS[cat] || '#999';
+    html += `<th class="${cls}"><span class="col-dot" style="background:${dot}"></span>${cat}<span class="col-total">n = ${ct}</span></th>`;
+  }
+  html += `<th class="total-col"><span class="col-dot" style="background:#222"></span>合计<span class="col-total">n = ${grand}</span></th></tr></thead><tbody>`;
+
+  for (const sub of rows) {
+    html += `<tr><td class="sub-cell">${sub}</td>`;
+    const cells = cellMap.get(sub) || {};
+    for (const cat of MATRIX_COLS) {
+      const n = cells[cat] || 0;
+      const ct = colTotal.get(cat) || 0;
+      const base = cat === '瓶装饮品' ? 'bottle-col' : '';
+      if (n === 0) {
+        html += `<td class="${base} cell-zero heat-cell">—</td>`;
+      } else {
+        const pct = ct > 0 ? Math.round(n/ct*100) : 0;
+        const heat = heatClass(pct);
+        html += `<td class="${base} heat-cell clickable ${heat}" data-sub="${sub}" data-cat="${cat}"><span class="cell-n">${n}</span><span class="cell-pct">${pct}%</span></td>`;
+      }
+    }
+    const rt = rowTotal.get(sub) || 0;
+    const pct = grand > 0 ? Math.round(rt/grand*100) : 0;
+    const heat = heatClass(pct);
+    html += `<td class="total-col heat-cell clickable ${heat}" data-sub="${sub}"><span class="cell-n">${rt}</span><span class="cell-pct">${pct}%</span></td>`;
+    html += '</tr>';
+  }
+  html += '</tbody><tfoot><tr><td class="sub-cell">合计</td>';
+  for (const cat of MATRIX_COLS) {
+    const cls = cat === '瓶装饮品' ? 'bottle-col' : '';
+    html += `<td class="${cls}">${colTotal.get(cat) || 0}</td>`;
+  }
+  html += `<td class="total-col">${grand}</td></tr></tfoot>`;
+  el.innerHTML = html;
+
+  // 矩阵格子点击 → 展开对应子品类(×品类)的饮品卡原图
+  el.querySelectorAll('td.heat-cell.clickable[data-sub]').forEach(td => {
+    td.onclick = () => {
+      const sub = td.dataset.sub;
+      const cat = td.dataset.cat;   // 合计列无 data-cat
+      const sel = cat
+        ? drinkCards.filter(c => (c.subtype || '(空)') === sub && c.category === cat)
+        : drinkCards.filter(c => (c.subtype || '(空)') === sub);
+      showGallery(`子品类 ${sub} · ${cat || '合计'}`, sel);
+    };
+  });
+}
+
+function renderBrandChips(el, brandMap, metaEl, pool, title) {
+  el.innerHTML = '';
+  const total = brandMap.size;
+  const sorted = [...brandMap.entries()].sort((a,b)=>b[1]-a[1]);
+  if (metaEl) metaEl.textContent = `${total} 个品牌 · ${sorted.reduce((s,x)=>s+x[1],0)} 次`;
+  if (!sorted.length) {
+    el.innerHTML = '<div class="empty-note">无品牌数据</div>';
+    return;
+  }
+  for (const [b, n] of sorted) {
+    const chip = document.createElement('span');
+    chip.className = 'brand-chip';
+    chip.innerHTML = `<b>${b}</b><span class="n">·${n}</span>`;
+    if (pool) {
+      chip.classList.add('clickable');
+      chip.onclick = () => showGallery(`${title || '品牌'} · ${b}`, pool.filter(c => c.brand === b));
+    }
+    el.appendChild(chip);
+  }
+}
+
+function renderAll() {
+  const cards = filterCards();
+  const total = cards.length;
+  const _tn=document.getElementById('totalNum'); if(_tn)_tn.textContent=total;
+
+  // 城市
+  renderBars(
+    document.getElementById('cityBars'),
+    orderedItems(countBy(cards, c=>c.city), CITY_ORDER),
+    total, {cls: 'alt', pool: cards, field: 'city', title: '城市'}
+  );
+  // persona
+  renderBars(
+    document.getElementById('personaBars'),
+    orderedItems(countBy(cards, c=>c.persona), PERSONA_ORDER),
+    total, {cls: 'alt', pool: cards, field: 'persona', title: 'Group'}
+  );
+
+  // 饮品（有饮品的卡）
+  const drinkCards = cards.filter(c => c.category);
+
+  renderBars(
+    document.getElementById('drinkCategoryBars'),
+    orderedItems(countBy(drinkCards, c=>c.category), CATEGORY_ORDER),
+    drinkCards.length, {pool: drinkCards, field: 'category', title: '品类'}
+  );
+  renderSubtypeMatrix(drinkCards);
+  renderBrandChips(
+    document.getElementById('drinkBrandChips'),
+    countBy(drinkCards, c=>c.brand),
+    document.getElementById('drinkBrandMeta'),
+    drinkCards, '品牌'
+  );
+  renderBars(
+    document.getElementById('drinkPlaceBars'),
+    orderedItems(countBy(drinkCards, c=>c.purchase_place), PLACE_ORDER),
+    drinkCards.length, {cls: 'green', pool: drinkCards, field: 'purchase_place', title: '购买地点'}
+  );
+
+  // 瓶饮（category = 瓶装饮品）
+  const bottleCards = drinkCards.filter(c => c.category === '瓶装饮品');
+  const bottlePct = drinkCards.length > 0 ? (bottleCards.length/drinkCards.length*100) : 0;
+  document.getElementById('bottlePct').textContent = bottlePct.toFixed(0) + '%';
+  document.getElementById('bottleCount').textContent = bottleCards.length;
+  document.getElementById('drinkCount').textContent = drinkCards.length;
+  document.getElementById('bottleFrac').textContent = `${bottlePct.toFixed(0)}% （${bottleCards.length} / ${drinkCards.length}）`;
+
+  renderBars(
+    document.getElementById('bottleSubtypeBars'),
+    [...countBy(bottleCards, c=>c.subtype).entries()].sort((a,b)=>b[1]-a[1]),
+    bottleCards.length, {cls: 'alt', pool: bottleCards, field: 'subtype', title: '瓶饮 · 品类'}
+  );
+  renderBrandChips(
+    document.getElementById('bottleBrandChips'),
+    countBy(bottleCards, c=>c.brand),
+    document.getElementById('bottleBrandMeta'),
+    bottleCards, '瓶饮 · 品牌'
+  );
+  renderBars(
+    document.getElementById('bottlePlaceBars'),
+    orderedItems(countBy(bottleCards, c=>c.purchase_place), PLACE_ORDER),
+    bottleCards.length, {cls: 'green', pool: bottleCards, field: 'purchase_place', title: '瓶饮 · 购买地点'}
+  );
+}
+
+// === 底部饮品卡原图画廊 ===
+function showGallery(title, cards) {
+  const g = document.getElementById('gallery');
+  const withImg = cards.filter(c => c.card_image);
+  document.getElementById('galTitle').textContent = title;
+  document.getElementById('galCount').textContent =
+    `${cards.length} 张` + (withImg.length < cards.length ? `（${withImg.length} 张有原图）` : '');
+  const grid = document.getElementById('galGrid');
+  grid.innerHTML = '';
+  if (!cards.length) {
+    grid.innerHTML = '<div class="empty-note">该项下没有卡片</div>';
+  }
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const cold = t => t === '冰' || t === '常温';
+  for (const c of cards) {
+    const div = document.createElement('div');
+    div.className = 'gcard';
+    // 徽标：与 dashboard-drinks-v2.html 同款（编号/品类/子品类/温度/品牌/城市·人群）
+    const badges = [];
+    if (c.id) badges.push(`<span class="gbadge cardid">#${esc(c.id)}</span>`);
+    if (c.category) badges.push(`<span class="gbadge cat">${esc(c.category)}</span>`);
+    if (c.subtype) badges.push(`<span class="gbadge subtype">${esc(c.subtype)}</span>`);
+    if (c.temp) badges.push(`<span class="gbadge temp${cold(c.temp) ? ' cold' : ''}">${esc(c.temp)}</span>`);
+    if (c.brand) badges.push(`<span class="gbadge brand">${esc(c.brand)}</span>`);
+    badges.push(`<span class="gbadge src">${esc(c.city || '')}${c.persona ? '·' + esc(c.persona) : ''}</span>`);
+    const desc = c.desc || '';
+    const body = `<div class="gbody"><div class="gbadges">${badges.join('')}</div>` +
+      (desc ? `<div class="gdesc" title="${esc(desc)}">${esc(desc)}</div>` : '') + `</div>`;
+    if (c.card_image) {
+      const src = encodeURI(c.card_image);
+      div.innerHTML = `<img class="gimg" loading="lazy" src="${src}" alt="">${body}`;
+      div.querySelector('.gimg').onclick = () => zoom(src);
+    } else {
+      div.innerHTML = `<div class="gimg noimg">无原图</div>${body}`;
+    }
+    grid.appendChild(div);
+  }
+  g.classList.add('open');
+  g.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+function closeGallery() { document.getElementById('gallery').classList.remove('open'); }
+function zoom(src) {
+  document.getElementById('lbImg').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lbImg').src = '';
+}
+
+function renderSubChips() {
+  const el = document.getElementById('subChips');
+  const counts = new Map();
+  for (const c of ALL_CARDS) {
+    const key = c.sub || '未分类';
+    counts.set(key, (counts.get(key)||0) + 1);
+  }
+  const items = [['全部', ALL_CARDS.length]].concat(
+    SUB_ORDER.filter(k => k !== '全部' && counts.has(k)).map(k => [k, counts.get(k)])
+  );
+  el.innerHTML = '';
+  for (const [name, n] of items) {
+    const chip = document.createElement('div');
+    chip.className = 'sub-chip' + (name === currentSub ? ' active' : '');
+    chip.innerHTML = `${name} <span class="count">${n}</span>`;
+    chip.onclick = () => { currentSub = name; closeGallery(); renderSubChips(); renderAll(); };
+    el.appendChild(chip);
+  }
+}
+
+renderSubChips();
+renderAll();
+</script>
+</body>
+</html>
