@@ -297,6 +297,7 @@
     align-items: start;
   }
   .gcard {
+    position: relative;
     background: var(--card); border: 1px solid #EAE3D7; border-radius: 12px; overflow: hidden;
     display: flex; flex-direction: column; transition: box-shadow .15s, transform .15s;
   }
@@ -319,6 +320,9 @@
   .gbadge.brand { background: #F0EAB4; color: var(--ink-2); }
   .gbadge.src { background: #EFE7D8; color: var(--ink-3); }
   .gbadge.cardid { background: var(--ink); color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .cardid-ovl { position: absolute; top: 6px; left: 6px; background: rgba(43,38,33,.82); color: #fff;
+    font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 5px; font-variant-numeric: tabular-nums;
+    letter-spacing: .02em; z-index: 2; pointer-events: none; }
   .gcard .gdesc {
     font-size: 11.5px; color: var(--ink-3); line-height: 1.5;
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
@@ -706,7 +710,6 @@ function showGallery(title, cards) {
     div.className = 'gcard';
     // 徽标：与 dashboard-drinks-v2.html 同款（编号/品类/子品类/温度/品牌/城市·人群）
     const badges = [];
-    if (c.id) badges.push(`<span class="gbadge cardid">#${esc(c.id)}</span>`);
     if (c.category) badges.push(`<span class="gbadge cat">${esc(c.category)}</span>`);
     if (c.subtype) badges.push(`<span class="gbadge subtype">${esc(c.subtype)}</span>`);
     if (c.temp) badges.push(`<span class="gbadge temp${cold(c.temp) ? ' cold' : ''}">${esc(c.temp)}</span>`);
@@ -715,12 +718,13 @@ function showGallery(title, cards) {
     const desc = c.desc || '';
     const body = `<div class="gbody"><div class="gbadges">${badges.join('')}</div>` +
       (desc ? `<div class="gdesc" title="${esc(desc)}">${esc(desc)}</div>` : '') + `</div>`;
+    const idOvl = c.id ? `<span class="cardid-ovl">#${esc(c.id)}</span>` : '';
     if (c.card_image) {
       const src = encodeURI(c.card_image);
-      div.innerHTML = `<img class="gimg" loading="lazy" src="${src}" alt="">${body}`;
+      div.innerHTML = `${idOvl}<img class="gimg" loading="lazy" src="${src}" alt="">${body}`;
       div.querySelector('.gimg').onclick = () => zoom(src);
     } else {
-      div.innerHTML = `<div class="gimg noimg">无原图</div>${body}`;
+      div.innerHTML = `${idOvl}<div class="gimg noimg">无原图</div>${body}`;
     }
     grid.appendChild(div);
   }
