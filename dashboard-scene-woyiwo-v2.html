@@ -322,7 +322,8 @@
   .gbadge.cardid { background: var(--ink); color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
   .cardid-ovl { position: absolute; top: 6px; left: 6px; background: rgba(43,38,33,.82); color: #fff;
     font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 5px; font-variant-numeric: tabular-nums;
-    letter-spacing: .02em; z-index: 2; pointer-events: none; }
+    letter-spacing: .02em; z-index: 2; user-select: all; -webkit-user-select: all; cursor: text; }
+  .cardid-ovl::before { content: "#"; opacity: .65; user-select: none; -webkit-user-select: none; }
   .gcard .gdesc {
     font-size: 11.5px; color: var(--ink-3); line-height: 1.5;
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
@@ -334,21 +335,52 @@
   }
   .lightbox.open { display: flex; }
   .lightbox img { max-width: 92%; max-height: 92%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+  /* V2 横向 100% 堆叠：本场景城市/人群构成。bar 下两排标注：饮品卡数 + 百分比，左侧行标题 */
+  .hstack { display: flex; flex-direction: column; gap: 7px; padding: 4px 2px; }
+  .hstack-row { display: flex; align-items: flex-start; gap: 8px; }
+  /* 左侧行标题列：与 bar / 绝对值行 / 百分比行 一一对齐 */
+  .hstack-rowlabels { flex: 0 0 66px; width: 66px; display: flex; flex-direction: column; gap: 3px; }
+  .hstack-rowlabels .rl { display: flex; align-items: center; justify-content: flex-end;
+    text-align: right; line-height: 1.1; }
+  .hstack-rowlabels .rl.bar-rl { height: 30px; font-size: 13px; font-weight: 800; color: var(--ink); }
+  .hstack-rowlabels .rl.abs-rl { height: 16px; font-size: 9.5px; font-weight: 400; color: var(--ink-4); }
+  .hstack-rowlabels .rl.pct-rl { height: 16px; font-size: 9.5px; font-weight: 400; color: var(--ink-4); }
+  .hstack-barwrap { flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .hstack-track { display: flex; height: 30px; border-radius: 6px; overflow: hidden; background: #F1ECE3; }
+  .hstack-seg { min-width: 0; }
+  .hstack-seg.clickable { cursor: pointer; }
+  .hstack-seg.clickable:hover { filter: brightness(1.1); outline: 2px solid #fff; outline-offset: -2px; }
+  .hstack-empty { font-size: 10px; color: var(--ink-4); padding-left: 6px; align-self: center; }
+  /* bar 下两排：绝对值 / 百分比，每个 cell 与上方色段同宽、居中对齐 */
+  .hstack-annot { display: flex; height: 16px; }
+  .hstack-annot .ann { min-width: 0; overflow: hidden; white-space: nowrap; text-align: center;
+    line-height: 16px; font-size: 10.5px; font-variant-numeric: tabular-nums; padding: 0 1px; }
+  .hstack-annot.abs .ann { color: var(--ink-3); font-weight: 400; }
+  .hstack-annot.pct .ann { color: var(--ink-3); font-weight: 400; }
+  .hstack-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 11px;
+    padding-top: 9px; border-top: 1px dashed var(--rule-2); }
+  .hstack-legend .lg { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-2); }
+  .hstack-legend .sw { width: 12px; height: 12px; border-radius: 3px; flex: 0 0 auto; }
+  /* 可折叠分区：sub-title 点击展开/收起（默认收起） */
+  .sub-title.fold-h { cursor: pointer; user-select: none; }
+  .sub-title.fold-h .caret { display: inline-block; margin-left: 6px; color: var(--ink-4);
+    font-size: 10px; transition: transform .15s; }
+  .sub-title.fold-h.open .caret { transform: rotate(90deg); }
 </style>
 </head>
 <body>
 
 <div class="nav-bar">
-  <a class="nav-link" href="dashboard-drinks-v2.html">🥤 饮品卡 V2 · 总</a>
-  <a class="nav-link" href="dashboard-scene-dongri-tongqin-v2.html">冬日通勤</a>
-  <a class="nav-link" href="dashboard-scene-nanshangjianan-v2.html">偶尔难上加难</a>
-  <a class="nav-link" href="dashboard-scene-courenao-v2.html">凑热闹</a>
-  <a class="nav-link" href="dashboard-scene-huanqing-v2.html">欢庆相聚</a>
-  <a class="nav-link" href="dashboard-scene-zijiren-v2.html">自己人时刻</a>
-  <a class="nav-link" href="dashboard-scene-dongri-dongqu-v2.html">冬日动趣</a>
-  <a class="nav-link active" href="dashboard-scene-woyiwo-v2.html">窝一窝</a>
-  <a class="nav-link" href="dashboard-scene-gongzuo-xuexi-v2.html">日常工作学习</a>
-  <a class="nav-link" href="dashboard-scene-fandian-v2.html">日常饭点</a>
+  <a class="nav-link" href="dashboard-drinks-v2.html?v=202605271848">🥤 饮品卡 V2 · 总</a>
+  <a class="nav-link" href="dashboard-scene-dongri-tongqin-v2.html?v=202605271848">冬日通勤</a>
+  <a class="nav-link" href="dashboard-scene-nanshangjianan-v2.html?v=202605271848">偶尔难上加难</a>
+  <a class="nav-link" href="dashboard-scene-courenao-v2.html?v=202605271848">凑热闹</a>
+  <a class="nav-link" href="dashboard-scene-huanqing-v2.html?v=202605271848">欢庆相聚</a>
+  <a class="nav-link" href="dashboard-scene-zijiren-v2.html?v=202605271848">自己人时刻</a>
+  <a class="nav-link" href="dashboard-scene-dongri-dongqu-v2.html?v=202605271848">冬日动趣</a>
+  <a class="nav-link active" href="dashboard-scene-woyiwo-v2.html?v=202605271848">窝一窝</a>
+  <a class="nav-link" href="dashboard-scene-gongzuo-xuexi-v2.html?v=202605271848">日常工作学习</a>
+  <a class="nav-link" href="dashboard-scene-fandian-v2.html?v=202605271848">日常饭点</a>
 </div>
 
 <div class="top-bar">
@@ -364,11 +396,11 @@
 <!-- 第一行：城市 + group -->
 <div class="stat-row">
   <div class="panel head-peri">
-    <div class="panel-title">城市 <span class="sub">分布</span></div>
+    <div class="panel-title">城市分布 <span class="sub">本场景饮品卡按城市构成（条下两排：饮品卡数 + 百分比·点段看原图）</span></div>
     <div class="bars" id="cityBars"></div>
   </div>
   <div class="panel head-ink">
-    <div class="panel-title">Group <span class="sub">人群</span></div>
+    <div class="panel-title">人群分布 <span class="sub">本场景饮品卡按人群构成（条下两排：饮品卡数 + 百分比·点段看原图）</span></div>
     <div class="bars" id="personaBars"></div>
   </div>
 </div>
@@ -401,10 +433,10 @@
       </div>
     </div>
 
-    <div class="sub-title">品牌 <span class="meta" id="drinkBrandMeta"></span></div>
+    <div class="sub-title fold-h">品牌 <span class="meta" id="drinkBrandMeta"></span></div>
     <div class="brand-chips" id="drinkBrandChips"></div>
 
-    <div class="sub-title">购买地点</div>
+    <div class="sub-title fold-h">购买地点</div>
     <div class="bars" id="drinkPlaceBars"></div>
   </div>
 
@@ -430,7 +462,7 @@
     <div class="sub-title">瓶饮 · 品牌 <span class="meta" id="bottleBrandMeta"></span></div>
     <div class="brand-chips" id="bottleBrandChips"></div>
 
-    <div class="sub-title">瓶饮 · 购买地点</div>
+    <div class="sub-title fold-h">瓶饮 · 购买地点</div>
     <div class="bars" id="bottlePlaceBars"></div>
   </div>
 </div>
@@ -447,7 +479,8 @@
 
 <div class="lightbox" id="lightbox" onclick="closeLightbox()"><img id="lbImg" src="" alt=""></div>
 
-<script>window.WO_DATA = {"cards": [{"theme": "窝一窝", "sub": "睡前仪式", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "伊利", "purchase_place": "电商", "desc": "睡前热牛奶，可以更好的帮助睡眠。", "id": "中产无娃-上海-D12", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-18.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "OATLY", "purchase_place": "超市/便利店", "desc": "感觉加热以后的燕麦的质地会更加浓稠，热热的很暖胃，也有点饱腹感，作为夜宵比较健康。", "id": "中产无娃-上海-D22", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-27.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "三得利", "purchase_place": "电商", "desc": "因为是放松休闲的作用，所以一般会选小甜水，但是这款果茶又不会太甜也不至于太罪恶", "id": "中产无娃-上海-D24", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-4.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "悦鲜活", "purchase_place": "电商", "desc": "睡前喝牛奶方便入睡，我一般会自己把瓶子放在热水里热一下，这样喝起来也不会伤胃", "id": "中产无娃-上海-D25", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-5.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "维他奶", "purchase_place": "超市/便利店", "desc": "周末居家追剧的时候，给自己可拿铁，用维他奶和Moccona咖啡结合", "id": "中产无娃-上海-D33", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "同仁堂和NAC...", "purchase_place": "其他", "desc": "生可可粉搭配中式药材", "id": "中产无娃-上海-D35", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "不同品牌", "purchase_place": "电商", "desc": "会根据心情选择红茶、绿茶、白茶，不一定都是每次喝一样的/", "id": "中产无娃-上海-D37", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "植物蛋白", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "豆浆机预定好的时间，在睡前可以马上喝到，不会花费太多精力", "id": "中产无娃-上海-D38", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-7.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "美可卓", "purchase_place": "电商", "desc": "睡前我都会冲泡一杯牛奶 有助于睡眠", "id": "中产无娃-哈尔滨-D05", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/其他-5.png"}, {"theme": "窝一窝", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "元气森林", "purchase_place": "超市/便利店", "desc": "这款饮品非常清爽，加热之后风味更浓，喝完解渴。", "id": "中产无娃-哈尔滨-D13", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/瓶装饮品-3.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "有糖茶", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "自制柠檬红茶材料简单方便", "id": "中产无娃-哈尔滨-D23", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "有糖茶", "temp": "热", "brand": "自制饮品", "purchase_place": "其他", "desc": "在家自制枸杞红茶", "id": "中产无娃-哈尔滨-D24", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-3.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "同仁堂", "purchase_place": "电商", "desc": "居家休息时我就会冲泡一杯玫瑰花茶 美容养颜", "id": "中产无娃-哈尔滨-D26", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-5.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "斯琴妹子", "purchase_place": "超市/便利店", "desc": "冲泡一杯烤奶皮奶茶，奶香四溢，十分美妙", "id": "中产无娃-哈尔滨-D27", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "SOSO", "purchase_place": "不是自己购买的", "desc": "深夜的热茶更加养胃", "id": "中产无娃-哈尔滨-D28", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "平时爱喝茶会在家自己煮茶", "id": "中产无娃-哈尔滨-D31", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "三得利", "purchase_place": "不是自己购买的", "desc": "按摩完配上热的桃胶，真的整个人人都神清气爽", "id": "中产无娃-广州-D17", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-10.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "自制咖啡", "purchase_place": "其他", "desc": "自制的咖啡，第一次尝试，没有踩雷，非常棒。", "id": "中产无娃-广州-D18", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-11.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "天冷喝一杯玫瑰桂花奶，能暖身驱寒。花香奶香舒缓心情，在家喝着放松又惬意...", "id": "中产无娃-广州-D21", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "日春", "purchase_place": "电商", "desc": "轻轻抿一口，热水滑过喉咙，带着微微的暖意，仿佛把冬日的冰冷都融化在了这小小的杯盏里", "id": "中产无娃-广州-D23", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "德运奶粉", "purchase_place": "电商", "desc": "自己冲调的牛奶", "id": "中产无娃-广州-D27", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "农夫山泉打奶茶低糖，配料是真牛奶和原叶茶，没有乱七八糟的添加剂。", "id": "中产无娃-成都-D03", "card_image": "原始数据/饮品卡/中产无娃-成都/瓶装饮品-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "菊乐", "purchase_place": "超市/便利店", "desc": "自己打了热的牛奶草莓奶昔，草莓是超市买的，牛奶是菊乐的小瓶奶", "id": "中产无娃-成都-D20", "card_image": "原始数据/饮品卡/中产无娃-成都/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "中产无娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "霸王茶姬", "purchase_place": "其他", "desc": "冬天打游戏本来手就冷，身上也冷，这个时候喜欢点杯霸王茶姬的伯牙绝弦", "id": "中产无娃-成都-D27", "card_image": "原始数据/饮品卡/中产无娃-成都/街饮-7.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "", "brand": "元气森林", "purchase_place": "超市/便利店", "desc": "味道不错，没有糖，不会睡不着", "id": "中产无娃-成都-组pilot-D01", "card_image": "原始数据/饮品卡/中产无娃-成都-组pilot/其他饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产有娃", "category": "自制饮品", "subtype": "可可饮", "temp": "热", "brand": "花田萃", "purchase_place": "电商", "desc": "自己在家里拿水杯冲，自已调整浓度，一条杯。", "id": "中产有娃-上海-D08", "card_image": "原始数据/饮品卡/中产有娃-上海/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产有娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "海艺旗", "purchase_place": "超市/便利店", "desc": "自己泡的: 原味茶", "id": "中产有娃-哈尔滨-D14", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "可可饮", "temp": "热", "brand": "维他", "purchase_place": "超市/便利店", "desc": "维他最经典的巧克力豆奶", "id": "中产有娃-广州-D08", "card_image": "原始数据/饮品卡/中产有娃-广州/瓶装饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "自己泡的养生茶，感觉很舒服", "id": "中产有娃-成都-D23", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-8.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "树夏", "purchase_place": "其他", "desc": "在家无聊随便喝点", "id": "中产有娃-成都-D27", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "自制", "purchase_place": "电商", "desc": "冬天喝咖啡会先把牛奶和椰奶加热然后再调配，如果外卖不如先做咖啡好喝享受制作过程", "id": "中产有娃-成都-D29", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "", "purchase_place": "电商", "desc": "喝一杯减脂茶感觉全身轻松", "id": "中产有娃-成都-D31", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "街饮", "subtype": "可可饮", "temp": "热", "brand": "瑞幸/一点点", "purchase_place": "其他", "desc": "会喝瑞幸的热可可，或者一点点的阿华田，抱着杯子边喝边看剧，暖乎乎的很放松，而且胃也暖和多了", "id": "学生-上海-D20", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-27.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "电商", "desc": "阿萨姆奶茶，裹着毯子x追剧，一口下去是暖平平的茶香奶味，感觉非常放松", "id": "学生-上海-D27", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-33.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "哇哈哈", "purchase_place": "超市/便利店", "desc": "AD钙奶酸甜好喝，口感顺滑，喝着很过瘾。既能补营养，又是小时候的味道，很怀念。", "id": "学生-上海-D30", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-6.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "学生", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "优乐美", "purchase_place": "超市/便利店", "desc": "麦香味奶茶", "id": "学生-广州-D24", "card_image": "原始数据/饮品卡/学生-广州/自制饮品-5.png"}, {"theme": "窝一窝", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "爱马仕国王奶茶", "purchase_place": "电商", "desc": "休息的时候点的泰国奶茶", "id": "学生-广州-D31", "card_image": "原始数据/饮品卡/学生-广州/街饮-14.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "自制饮品", "subtype": "果汁", "temp": "热", "brand": "", "purchase_place": "超市/便利店", "desc": "手比较冷，自冲了一杯橙汁来喝，既能喝点有味道的饮品，也能暖手", "id": "学生-成都-D25", "card_image": "原始数据/饮品卡/学生-成都/自制饮品-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "自制饮品", "subtype": "可可饮", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "好喝", "id": "学生-成都-D27", "card_image": "原始数据/饮品卡/学生-成都/自制饮品-3.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "清爽解渴", "id": "学生-成都-D29", "card_image": "原始数据/饮品卡/学生-成都/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "茶百道", "purchase_place": "其他", "desc": "做完大扫除，给自己点了一杯热奶茶，准备跨在沙发上", "id": "学生-成都-D33", "card_image": "原始数据/饮品卡/学生-成都/街饮-3.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "其他", "subtype": "奶茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "我看到有特色的西藏奶茶，特地去品尝了一下，感觉很有特色，甜甜的口味。", "id": "白领-上海-D02", "card_image": "原始数据/饮品卡/白领-上海/其他.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "可可饮", "temp": "热", "brand": "罗森", "purchase_place": "电商", "desc": "因为它捂着暖手，喝起来的浓郁的可可很治愈并能让我放松，让追剧的时间更加舒适...", "id": "白领-上海-D08", "card_image": "原始数据/饮品卡/白领-上海/瓶装饮品-14.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "酒", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "水果+红酒", "id": "白领-上海-D25", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "植物蛋白", "temp": "热", "brand": "龙王", "purchase_place": "电商", "desc": "喝了自己冲泡的豆浆，让我感觉非常满足，有成就感，微甜不腻", "id": "白领-上海-D26", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "", "purchase_place": "电商", "desc": "各种咖啡豆的手冲咖啡", "id": "白领-上海-D27", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-3.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "自制", "purchase_place": "不是自己购买的", "desc": "红糖姜茶", "id": "白领-上海-D28", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "自制", "purchase_place": "电商", "desc": "有段时间沉迷抹茶，所以买了打抹茶的器具在家尝试自己做抹茶", "id": "白领-上海-D33", "card_image": "原始数据/饮品卡/白领-上海/自制饮品.png"}, {"theme": "窝一窝", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "咖啡店制作", "purchase_place": "其他", "desc": "姜黄玫瑰咖啡，很适合冬天的一个饮品，咖啡里面带着一些热气和玫瑰的香气", "id": "白领-上海-D34", "card_image": "原始数据/饮品卡/白领-上海/街饮-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "可可饮", "temp": "热", "brand": "星巴克", "purchase_place": "其他", "desc": "选了星巴克的经典热巧克力，感觉暖暖的甜甜的很幸福，但是有点过甜了", "id": "白领-上海-D42", "card_image": "原始数据/饮品卡/白领-上海/街饮-5.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "酒", "temp": "热", "brand": "RIO", "purchase_place": "超市/便利店", "desc": "打游戏的时候我比较喜欢在旁边放一杯热的酒饮 既可以提升手温 还能保持大脑活跃", "id": "白领-哈尔滨-D01", "card_image": "原始数据/饮品卡/白领-哈尔滨/其他-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "宏宝莱", "purchase_place": "超市/便利店", "desc": "容量不多不至于上头所以可以解渴", "id": "白领-哈尔滨-D14", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-18.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "好自在…", "purchase_place": "超市/便利店", "desc": "喝子不舒服，感觉对喝子好", "id": "白领-哈尔滨-D23", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "白领", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "瑞幸", "purchase_place": "电商", "desc": "那时候我就带了一杯热饮咖啡静静的坐在那里看书，挺宁静静气的。", "id": "白领-广州-D06", "card_image": "原始数据/饮品卡/白领-广州/其他-6.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "热茶，作为地方习惯，一年四季都会喝热茶。", "id": "白领-广州-D24", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "可可饮", "temp": "热", "brand": "摩岛", "purchase_place": "电商", "desc": "看剧时自己泡了一杯可可饮，挺甜的还润口。", "id": "白领-广州-D28", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "", "brand": "自制", "purchase_place": "其他", "desc": "在家自制的奶茶，一个人打游戏的时候喝的", "id": "白领-广州-D32", "card_image": "原始数据/饮品卡/白领-广州/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "豆本豆", "purchase_place": "超市/便利店", "desc": "洗完澡配一杯温热豆奶，简单单纯，就是冬天很舒服的晚间小放松---", "id": "白领-成都-D07", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-13.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "宅家不想和太甜的饮品，无糖茉莉花茶清解腻，用家的配套专属热饮机正好加热，方便又...", "id": "白领-成都-D10", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-16.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "特仑苏", "purchase_place": "超市/便利店", "desc": "睡前不合适甜饮，特仑苏牛奶口感醇厚，能舒缓情绪，帮助安神入睡", "id": "白领-成都-D11", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-17.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺旺", "purchase_place": "超市/便利店", "desc": "追剧配牛奶，安心又惬意", "id": "白领-成都-D13", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-19.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "伊利", "purchase_place": "超市/便利店", "desc": "午后晒太阳本来就很惬意，热牛奶和舒缓，安神放松，整个个人很松弛", "id": "白领-成都-D16", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-21.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "", "brand": "特仑苏", "purchase_place": "超市/便利店", "desc": "去口口便利店买了一盒热牛奶，喝的时候全身暖暖的，既补充了能量，又感觉到了暖意", "id": "白领-成都-D32", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "香飘飘", "purchase_place": "电商", "desc": "自制奶茶可以按自己想要的k风味搭配，可以制作出多种不同的口味，可以激发创造欲。", "id": "白领-成都-D38", "card_image": "原始数据/饮品卡/白领-成都/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "有糖茶", "temp": "热", "brand": "茶π", "purchase_place": "自贩机/智能柜", "desc": "雨天温冷，手捧着热饮，身上瞬间回暖，啜里香甜甜的，阴冷的天气也变得舒服", "id": "白领-成都-D41", "card_image": "原始数据/饮品卡/白领-成都/街饮-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "霸王茶姬", "purchase_place": "其他", "desc": "喝的霸王茶姬桂花香，茶味清香，奶味浓郁", "id": "白领-成都-D48", "card_image": "原始数据/饮品卡/白领-成都/街饮饮品-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "请优先选择您拍摄的照片，如果找不到自己拍摄的，可以用图", "id": "白领-成都-组pilot-D09", "card_image": "原始数据/饮品卡/白领-成都-组pilot/瓶装饮品.png"}]};</script>
+<script>window.WO_DATA = {"cards": [{"theme": "窝一窝", "sub": "睡前仪式", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "伊利", "purchase_place": "电商", "desc": "睡前热牛奶，可以更好的帮助睡眠。", "id": "中产无娃-上海-D12", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-18.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产无娃", "category": "街饮", "subtype": "植物蛋白", "temp": "热", "brand": "OATLY", "purchase_place": "超市/便利店", "desc": "感觉加热以后的燕麦的质地会更加浓稠，热热的很暖胃，也有点饱腹感，作为夜宵比较健康。", "id": "中产无娃-上海-D22", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-27.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "三得利", "purchase_place": "电商", "desc": "因为是放松休闲的作用，所以一般会选小甜水，但是这款果茶又不会太甜也不至于太罪恶", "id": "中产无娃-上海-D24", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-4.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "悦鲜活", "purchase_place": "电商", "desc": "睡前喝牛奶方便入睡，我一般会自己把瓶子放在热水里热一下，这样喝起来也不会伤胃", "id": "中产无娃-上海-D25", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-5.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "维他奶", "purchase_place": "超市/便利店", "desc": "周末居家追剧的时候，给自己可拿铁，用维他奶和Moccona咖啡结合", "id": "中产无娃-上海-D33", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "同仁堂和NAC...", "purchase_place": "其他", "desc": "生可可粉搭配中式药材", "id": "中产无娃-上海-D35", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "不同品牌", "purchase_place": "电商", "desc": "会根据心情选择红茶、绿茶、白茶，不一定都是每次喝一样的/", "id": "中产无娃-上海-D37", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "上海", "persona": "中产无娃", "category": "自制饮品", "subtype": "植物蛋白", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "豆浆机预定好的时间，在睡前可以马上喝到，不会花费太多精力", "id": "中产无娃-上海-D38", "card_image": "原始数据/饮品卡/中产无娃-上海/自制饮品-7.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "美可卓", "purchase_place": "电商", "desc": "睡前我都会冲泡一杯牛奶 有助于睡眠", "id": "中产无娃-哈尔滨-D05", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/其他-5.png"}, {"theme": "窝一窝", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "元气森林", "purchase_place": "超市/便利店", "desc": "这款饮品非常清爽，加热之后风味更浓，喝完解渴。", "id": "中产无娃-哈尔滨-D13", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/瓶装饮品-3.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "有糖茶", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "自制柠檬红茶材料简单方便", "id": "中产无娃-哈尔滨-D23", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "有糖茶", "temp": "热", "brand": "自制饮品", "purchase_place": "其他", "desc": "在家自制枸杞红茶", "id": "中产无娃-哈尔滨-D24", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-3.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "同仁堂", "purchase_place": "电商", "desc": "居家休息时我就会冲泡一杯玫瑰花茶 美容养颜", "id": "中产无娃-哈尔滨-D26", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-5.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "斯琴妹子", "purchase_place": "超市/便利店", "desc": "冲泡一杯烤奶皮奶茶，奶香四溢，十分美妙", "id": "中产无娃-哈尔滨-D27", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "SOSO", "purchase_place": "不是自己购买的", "desc": "深夜的热茶更加养胃", "id": "中产无娃-哈尔滨-D28", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "平时爱喝茶会在家自己煮茶", "id": "中产无娃-哈尔滨-D31", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "三得利", "purchase_place": "不是自己购买的", "desc": "按摩完配上热的桃胶，真的整个人人都神清气爽", "id": "中产无娃-广州-D17", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-10.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "自制咖啡", "purchase_place": "其他", "desc": "自制的咖啡，第一次尝试，没有踩雷，非常棒。", "id": "中产无娃-广州-D18", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-11.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "天冷喝一杯玫瑰桂花奶，能暖身驱寒。花香奶香舒缓心情，在家喝着放松又惬意...", "id": "中产无娃-广州-D21", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "日春", "purchase_place": "电商", "desc": "轻轻抿一口，热水滑过喉咙，带着微微的暖意，仿佛把冬日的冰冷都融化在了这小小的杯盏里", "id": "中产无娃-广州-D23", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "德运奶粉", "purchase_place": "电商", "desc": "自己冲调的牛奶", "id": "中产无娃-广州-D27", "card_image": "原始数据/饮品卡/中产无娃-广州/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "自制饮品", "subtype": "", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "猪肉汤味", "id": "中产无娃-成都-D01", "card_image": "原始数据/饮品卡/中产无娃-成都/其他-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "农夫山泉打奶茶低糖，配料是真牛奶和原叶茶，没有乱七八糟的添加剂。", "id": "中产无娃-成都-D03", "card_image": "原始数据/饮品卡/中产无娃-成都/瓶装饮品-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "菊乐", "purchase_place": "超市/便利店", "desc": "自己打了热的牛奶草莓奶昔，草莓是超市买的，牛奶是菊乐的小瓶奶", "id": "中产无娃-成都-D20", "card_image": "原始数据/饮品卡/中产无娃-成都/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "中产无娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "霸王茶姬", "purchase_place": "其他", "desc": "冬天打游戏本来手就冷，身上也冷，这个时候喜欢点杯霸王茶姬的伯牙绝弦", "id": "中产无娃-成都-D27", "card_image": "原始数据/饮品卡/中产无娃-成都/街饮-7.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "", "brand": "元气森林", "purchase_place": "超市/便利店", "desc": "味道不错，没有糖，不会睡不着", "id": "中产无娃-成都-组pilot-D01", "card_image": "原始数据/饮品卡/中产无娃-成都-组pilot/其他饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "中产有娃", "category": "自制饮品", "subtype": "可可饮", "temp": "热", "brand": "花田萃", "purchase_place": "电商", "desc": "自己在家里拿水杯冲，自已调整浓度，一条杯。", "id": "中产有娃-上海-D08", "card_image": "原始数据/饮品卡/中产有娃-上海/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "中产有娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "海艺旗", "purchase_place": "超市/便利店", "desc": "自己泡的: 原味茶", "id": "中产有娃-哈尔滨-D14", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "可可饮", "temp": "热", "brand": "维他", "purchase_place": "超市/便利店", "desc": "维他最经典的巧克力豆奶", "id": "中产有娃-广州-D08", "card_image": "原始数据/饮品卡/中产有娃-广州/瓶装饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "自己泡的养生茶，感觉很舒服", "id": "中产有娃-成都-D23", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-8.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "树夏", "purchase_place": "其他", "desc": "在家无聊随便喝点", "id": "中产有娃-成都-D27", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "自制", "purchase_place": "电商", "desc": "冬天喝咖啡会先把牛奶和椰奶加热然后再调配，如果外卖不如先做咖啡好喝享受制作过程", "id": "中产有娃-成都-D29", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "中产有娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "", "purchase_place": "电商", "desc": "喝一杯减脂茶感觉全身轻松", "id": "中产有娃-成都-D31", "card_image": "原始数据/饮品卡/中产有娃-成都/自制饮品.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "街饮", "subtype": "可可饮", "temp": "热", "brand": "瑞幸/一点点", "purchase_place": "其他", "desc": "会喝瑞幸的热可可，或者一点点的阿华田，抱着杯子边喝边看剧，暖乎乎的很放松，而且胃也暖和多了", "id": "学生-上海-D20", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-27.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "电商", "desc": "阿萨姆奶茶，裹着毯子x追剧，一口下去是暖平平的茶香奶味，感觉非常放松", "id": "学生-上海-D27", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-33.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "哇哈哈", "purchase_place": "超市/便利店", "desc": "AD钙奶酸甜好喝，口感顺滑，喝着很过瘾。既能补营养，又是小时候的味道，很怀念。", "id": "学生-上海-D30", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-6.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "学生", "category": "其他", "subtype": "可可饮", "temp": "热", "brand": "蓝山特", "purchase_place": "电商", "desc": "浓郁的巧克力味道，正好解腻又不会冷掉。", "id": "学生-哈尔滨-D02", "card_image": "原始数据/饮品卡/学生-哈尔滨/其他-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "包装水", "temp": "热", "brand": "健龙", "purchase_place": "超市/便利店", "desc": "暖暖的气泡水很好喝", "id": "学生-哈尔滨-D23", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-8.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "学生", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "优乐美", "purchase_place": "超市/便利店", "desc": "麦香味奶茶", "id": "学生-广州-D24", "card_image": "原始数据/饮品卡/学生-广州/自制饮品-5.png"}, {"theme": "窝一窝", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "爱马仕国王奶茶", "purchase_place": "电商", "desc": "休息的时候点的泰国奶茶", "id": "学生-广州-D31", "card_image": "原始数据/饮品卡/学生-广州/街饮-14.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "自制饮品", "subtype": "果汁", "temp": "热", "brand": "", "purchase_place": "超市/便利店", "desc": "手比较冷，自冲了一杯橙汁来喝，既能喝点有味道的饮品，也能暖手", "id": "学生-成都-D25", "card_image": "原始数据/饮品卡/学生-成都/自制饮品-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "自制饮品", "subtype": "可可饮", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "好喝", "id": "学生-成都-D27", "card_image": "原始数据/饮品卡/学生-成都/自制饮品-3.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "学生", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "清爽解渴", "id": "学生-成都-D29", "card_image": "原始数据/饮品卡/学生-成都/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "茶百道", "purchase_place": "其他", "desc": "做完大扫除，给自己点了一杯热奶茶，准备跨在沙发上", "id": "学生-成都-D33", "card_image": "原始数据/饮品卡/学生-成都/街饮-3.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "其他", "subtype": "奶茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "我看到有特色的西藏奶茶，特地去品尝了一下，感觉很有特色，甜甜的口味。", "id": "白领-上海-D02", "card_image": "原始数据/饮品卡/白领-上海/其他.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "可可饮", "temp": "热", "brand": "罗森", "purchase_place": "电商", "desc": "因为它捂着暖手，喝起来的浓郁的可可很治愈并能让我放松，让追剧的时间更加舒适...", "id": "白领-上海-D08", "card_image": "原始数据/饮品卡/白领-上海/瓶装饮品-14.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "元气森林", "purchase_place": "电商", "desc": "纤茶--五黑茶，对身体好，主要对长头发好，哈哈", "id": "白领-上海-D20", "card_image": "原始数据/饮品卡/白领-上海/瓶装饮品-6.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "酒", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "水果+红酒", "id": "白领-上海-D25", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-1.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "植物蛋白", "temp": "热", "brand": "龙王", "purchase_place": "电商", "desc": "喝了自己冲泡的豆浆，让我感觉非常满足，有成就感，微甜不腻", "id": "白领-上海-D26", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "咖啡", "temp": "热", "brand": "", "purchase_place": "电商", "desc": "各种咖啡豆的手冲咖啡", "id": "白领-上海-D27", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-3.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "自制", "purchase_place": "不是自己购买的", "desc": "红糖姜茶", "id": "白领-上海-D28", "card_image": "原始数据/饮品卡/白领-上海/自制饮品-4.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "自制", "purchase_place": "电商", "desc": "有段时间沉迷抹茶，所以买了打抹茶的器具在家尝试自己做抹茶", "id": "白领-上海-D33", "card_image": "原始数据/饮品卡/白领-上海/自制饮品.png"}, {"theme": "窝一窝", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "咖啡店制作", "purchase_place": "其他", "desc": "姜黄玫瑰咖啡，很适合冬天的一个饮品，咖啡里面带着一些热气和玫瑰的香气", "id": "白领-上海-D34", "card_image": "原始数据/饮品卡/白领-上海/街饮-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "可可饮", "temp": "热", "brand": "星巴克", "purchase_place": "其他", "desc": "选了星巴克的经典热巧克力，感觉暖暖的甜甜的很幸福，但是有点过甜了", "id": "白领-上海-D42", "card_image": "原始数据/饮品卡/白领-上海/街饮-5.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "酒", "temp": "热", "brand": "RIO", "purchase_place": "超市/便利店", "desc": "打游戏的时候我比较喜欢在旁边放一杯热的酒饮 既可以提升手温 还能保持大脑活跃", "id": "白领-哈尔滨-D01", "card_image": "原始数据/饮品卡/白领-哈尔滨/其他-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "宏宝莱", "purchase_place": "超市/便利店", "desc": "容量不多不至于上头所以可以解渴", "id": "白领-哈尔滨-D14", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-18.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "好自在…", "purchase_place": "超市/便利店", "desc": "喝子不舒服，感觉对喝子好", "id": "白领-哈尔滨-D23", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-7.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "瑞幸", "purchase_place": "电商", "desc": "那时候我就带了一杯热饮咖啡静静的坐在那里看书，挺宁静静气的。", "id": "白领-广州-D06", "card_image": "原始数据/饮品卡/白领-广州/其他-6.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "热茶，作为地方习惯，一年四季都会喝热茶。", "id": "白领-广州-D24", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-2.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "可可饮", "temp": "热", "brand": "摩岛", "purchase_place": "电商", "desc": "看剧时自己泡了一杯可可饮，挺甜的还润口。", "id": "白领-广州-D28", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "", "brand": "自制", "purchase_place": "其他", "desc": "在家自制的奶茶，一个人打游戏的时候喝的", "id": "白领-广州-D32", "card_image": "原始数据/饮品卡/白领-广州/自制饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "豆本豆", "purchase_place": "超市/便利店", "desc": "洗完澡配一杯温热豆奶，简单单纯，就是冬天很舒服的晚间小放松---", "id": "白领-成都-D07", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-13.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "宅家不想和太甜的饮品，无糖茉莉花茶清解腻，用家的配套专属热饮机正好加热，方便又...", "id": "白领-成都-D10", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-16.png"}, {"theme": "窝一窝", "sub": "睡前仪式", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "特仑苏", "purchase_place": "超市/便利店", "desc": "睡前不合适甜饮，特仑苏牛奶口感醇厚，能舒缓情绪，帮助安神入睡", "id": "白领-成都-D11", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-17.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺旺", "purchase_place": "超市/便利店", "desc": "追剧配牛奶，安心又惬意", "id": "白领-成都-D13", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-19.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "伊利", "purchase_place": "超市/便利店", "desc": "午后晒太阳本来就很惬意，热牛奶和舒缓，安神放松，整个个人很松弛", "id": "白领-成都-D16", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-21.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "牛奶", "temp": "", "brand": "特仑苏", "purchase_place": "超市/便利店", "desc": "去口口便利店买了一盒热牛奶，喝的时候全身暖暖的，既补充了能量，又感觉到了暖意", "id": "白领-成都-D32", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "香飘飘", "purchase_place": "电商", "desc": "自制奶茶可以按自己想要的k风味搭配，可以制作出多种不同的口味，可以激发创造欲。", "id": "白领-成都-D38", "card_image": "原始数据/饮品卡/白领-成都/自制饮品-6.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "有糖茶", "temp": "热", "brand": "茶π", "purchase_place": "自贩机/智能柜", "desc": "雨天温冷，手捧着热饮，身上瞬间回暖，啜里香甜甜的，阴冷的天气也变得舒服", "id": "白领-成都-D41", "card_image": "原始数据/饮品卡/白领-成都/街饮-2.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "霸王茶姬", "purchase_place": "其他", "desc": "喝的霸王茶姬桂花香，茶味清香，奶味浓郁", "id": "白领-成都-D48", "card_image": "原始数据/饮品卡/白领-成都/街饮饮品-1.png"}, {"theme": "窝一窝", "sub": "游戏追剧", "city": "成都", "persona": "白领", "category": "其他", "subtype": "", "temp": "", "brand": "", "purchase_place": "不是自己购买的", "desc": "晚上打游戏之前喝的一碗热汤，能让精神更加集中，更好操作", "id": "白领-成都-组pilot-D02", "card_image": "原始数据/饮品卡/白领-成都-组pilot/其他饮品.png"}, {"theme": "窝一窝", "sub": "宁静独处", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "请优先选择您拍摄的照片，如果找不到自己拍摄的，可以用图", "id": "白领-成都-组pilot-D09", "card_image": "原始数据/饮品卡/白领-成都-组pilot/瓶装饮品.png"}]};
+window.ACTIVE_THEME = "窝一窝";</script>
 <script>
 const ALL_CARDS = window.WO_DATA.cards;
 const SUB_ORDER = ['全部', '宁静独处', '游戏追剧', '睡前仪式', '未分类'];
@@ -474,6 +507,90 @@ function countBy(cards, fn) {
   return m;
 }
 
+// 场景出现顺序 + 显示改名（同首页 SCENE_BAR_ORDER）。[真实theme, 显示名]
+const SCENE_BAR_ORDER = [
+  ['冬日动趣','冻一冻'],['窝一窝','窝一窝'],['自己人时刻','自己人时刻'],
+  ['偶尔难上加难','至寒时刻'],['欢庆相聚','围一桌'],['凑热闹','凑热闹'],
+  ['冬日通勤','冬日通勤'],['日常工作学习','日常工作学习'],['日常饭点','日常饭点'],
+];
+// 人群分组：中产有娃/无娃合并为「中产」，sub 标注「有娃」绝对值（同首页）
+const PERSONA_GROUPS = [
+  {label:'学生', test:c=>c.persona==='学生'},
+  {label:'白领', test:c=>c.persona==='白领'},
+  {label:'中产', test:c=>c.persona.indexOf('中产')===0, sub:{label:'有娃', test:c=>c.persona==='中产有娃'}},
+];
+const DISTRO_CITY_ORDER = ['上海','广州','成都','哈尔滨'];
+const PALETTE = ['#7D7BF8','#7CB342','#D27538','#5E5A80','#5FD27B','#A85A28','#E8A33D','#D7BFE9','#FABABB'];
+function txtOn(hex){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return (0.299*r+0.587*g+0.114*b)>170?'#3A332B':'#fff';}
+
+// 横向 100% 堆叠：bars=[{label,key,cards}]，按 segs 在该行卡片中的占比横向铺开。
+// 色块只显示颜色；bar 下方两排标注（与色块同宽对齐）：上排=饮品卡数(绝对值)、下排=百分比。
+// 左侧行标题列：场景名(对齐 bar) / 饮品卡数 / 百分比。末尾追加图例。点段→底部画廊。
+function renderHStack(el, bars, segs, opts){
+  opts = opts || {};
+  el.className = 'hstack';
+  el.innerHTML = '';
+  for (const bar of bars) {
+    const counts = segs.map(s => bar.cards.filter(s.test).length);
+    const tot = counts.reduce((a,b)=>a+b, 0);
+    const row = document.createElement('div'); row.className = 'hstack-row';
+    // 左侧三行标题
+    const labs = document.createElement('div'); labs.className = 'hstack-rowlabels';
+    labs.innerHTML = `<div class="rl bar-rl">${bar.label}</div>`
+      + `<div class="rl pct-rl">百分比</div><div class="rl abs-rl">饮品卡数</div>`;
+    row.appendChild(labs);
+    const wrap = document.createElement('div'); wrap.className = 'hstack-barwrap';
+    const track = document.createElement('div'); track.className = 'hstack-track';
+    const absRow = document.createElement('div'); absRow.className = 'hstack-annot abs';
+    const pctRow = document.createElement('div'); pctRow.className = 'hstack-annot pct';
+    if (tot === 0) track.innerHTML = '<span class="hstack-empty">无</span>';
+    segs.forEach((s, i) => {
+      const n = counts[i]; if (n === 0) return;
+      const pct = tot > 0 ? n / tot * 100 : 0;
+      let subStr = '';
+      if (s.sub) { const k = bar.cards.filter(c => s.test(c) && s.sub.test(c)).length; subStr = `（${s.sub.label}${k}）`; }
+      const pctStr = pct.toFixed(pct < 10 ? 1 : 0) + '%';
+      // 色块（仅颜色）
+      const seg = document.createElement('div'); seg.className = 'hstack-seg';
+      seg.style.width = pct + '%'; seg.style.background = s.color;
+      seg.title = `${bar.label} · ${s.label}：${n} 张${subStr}（${pct.toFixed(1)}%）`;
+      // 下方两排：绝对值、百分比（与色块同宽）
+      const aAbs = document.createElement('div'); aAbs.className = 'ann';
+      aAbs.style.width = pct + '%'; aAbs.innerHTML = `${n}${subStr}`; aAbs.title = `${s.label}：${n}${subStr}`;
+      const aPct = document.createElement('div'); aPct.className = 'ann';
+      aPct.style.width = pct + '%'; aPct.textContent = pctStr; aPct.title = `${s.label}：${pctStr}`;
+      if (opts.pool) {
+        const pred = c => c.theme === bar.key && s.test(c);
+        const show = () => showGallery(`${bar.label} · ${s.label}`, opts.pool.filter(pred));
+        seg.classList.add('clickable'); seg.onclick = show;
+      }
+      track.appendChild(seg); absRow.appendChild(aAbs); pctRow.appendChild(aPct);
+    });
+    wrap.appendChild(track); wrap.appendChild(pctRow); wrap.appendChild(absRow);
+    row.appendChild(wrap);
+    el.appendChild(row);
+  }
+  const legend = document.createElement('div'); legend.className = 'hstack-legend';
+  for (const s of segs) {
+    const lg = document.createElement('span'); lg.className = 'lg';
+    lg.innerHTML = `<span class="sw" style="background:${s.color}"></span>${s.label}`;
+    legend.appendChild(lg);
+  }
+  el.appendChild(legend);
+}
+
+// 城市/人群两块：只画本场景一行横向堆叠（构成占比）。口径=本场景饮品卡，与子主题筛选无关。
+function renderDistro(){
+  const cards = window.WO_DATA.cards;
+  const sd = SCENE_BAR_ORDER.find(x => x[0] === window.ACTIVE_THEME);
+  const label = sd ? sd[1] : window.ACTIVE_THEME;
+  const citySegs = DISTRO_CITY_ORDER.map((ci,i)=>({label:ci, color:PALETTE[i%PALETTE.length], test:c=>c.city===ci}));
+  const personaSegs = PERSONA_GROUPS.map((g,i)=>({label:g.label, color:PALETTE[i%PALETTE.length], test:g.test, sub:g.sub}));
+  const bar = [{label, key: window.ACTIVE_THEME, cards}];
+  renderHStack(document.getElementById('cityBars'), bar, citySegs, {pool: cards});
+  renderHStack(document.getElementById('personaBars'), bar, personaSegs, {pool: cards});
+}
 function renderBars(el, items, total, opts = {}) {
   el.innerHTML = '';
   if (!items.length) {
@@ -630,18 +747,8 @@ function renderAll() {
   const total = cards.length;
   const _tn=document.getElementById('totalNum'); if(_tn)_tn.textContent=total;
 
-  // 城市
-  renderBars(
-    document.getElementById('cityBars'),
-    orderedItems(countBy(cards, c=>c.city), CITY_ORDER),
-    total, {cls: 'alt', pool: cards, field: 'city', title: '城市'}
-  );
-  // persona
-  renderBars(
-    document.getElementById('personaBars'),
-    orderedItems(countBy(cards, c=>c.persona), PERSONA_ORDER),
-    total, {cls: 'alt', pool: cards, field: 'persona', title: 'Group'}
-  );
+  // 城市/人群：全 9 场景横向 100% 堆叠对比（本场景高亮），口径与子主题筛选无关，只渲一次
+  if (!window._distroDone) { window._distroDone = true; renderDistro(); }
 
   // 饮品（有饮品的卡）
   const drinkCards = cards.filter(c => c.category);
@@ -717,7 +824,7 @@ function showGallery(title, cards) {
     const desc = c.desc || '';
     const body = `<div class="gbody"><div class="gbadges">${badges.join('')}</div>` +
       (desc ? `<div class="gdesc" title="${esc(desc)}">${esc(desc)}</div>` : '') + `</div>`;
-    const idOvl = c.id ? `<span class="cardid-ovl">#${esc(c.id)}</span>` : '';
+    const idOvl = c.id ? `<span class="cardid-ovl" onclick="event.stopPropagation()">${esc(c.id)}</span>` : '';
     if (c.card_image) {
       const src = encodeURI(c.card_image);
       div.innerHTML = `${idOvl}<img class="gimg" loading="lazy" src="${src}" alt="">${body}`;
@@ -760,8 +867,23 @@ function renderSubChips() {
   }
 }
 
+function setupFolds(){
+  document.querySelectorAll('.sub-title.fold-h').forEach(function(h){
+    if(h.dataset.fold) return; h.dataset.fold='1';
+    var c=h.nextElementSibling; if(!c) return;
+    c.dataset.disp=getComputedStyle(c).display||'block';
+    c.style.display='none';
+    h.insertAdjacentHTML('beforeend',' <span class="caret">\u25B8</span>');
+    h.addEventListener('click',function(){
+      var open=c.style.display==='none';
+      c.style.display=open?c.dataset.disp:'none';
+      h.classList.toggle('open',open);
+    });
+  });
+}
 renderSubChips();
 renderAll();
+setupFolds();
 </script>
 </body>
 </html>

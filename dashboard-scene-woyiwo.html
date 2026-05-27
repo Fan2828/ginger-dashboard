@@ -322,7 +322,8 @@
   .gbadge.cardid { background: var(--ink); color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
   .cardid-ovl { position: absolute; top: 6px; left: 6px; background: rgba(43,38,33,.82); color: #fff;
     font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 5px; font-variant-numeric: tabular-nums;
-    letter-spacing: .02em; z-index: 2; pointer-events: none; }
+    letter-spacing: .02em; z-index: 2; user-select: all; -webkit-user-select: all; cursor: text; }
+  .cardid-ovl::before { content: "#"; opacity: .65; user-select: none; -webkit-user-select: none; }
   .gcard .gdesc {
     font-size: 11.5px; color: var(--ink-3); line-height: 1.5;
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
@@ -711,7 +712,7 @@ function showGallery(title, cards) {
     const desc = c.desc || '';
     const body = `<div class="gbody"><div class="gbadges">${badges.join('')}</div>` +
       (desc ? `<div class="gdesc" title="${esc(desc)}">${esc(desc)}</div>` : '') + `</div>`;
-    const idOvl = c.id ? `<span class="cardid-ovl">#${esc(c.id)}</span>` : '';
+    const idOvl = c.id ? `<span class="cardid-ovl" onclick="event.stopPropagation()">${esc(c.id)}</span>` : '';
     if (c.card_image) {
       const src = encodeURI(c.card_image);
       div.innerHTML = `${idOvl}<img class="gimg" loading="lazy" src="${src}" alt="">${body}`;
