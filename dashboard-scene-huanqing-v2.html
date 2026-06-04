@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>欢庆相聚 · 场景看板 V2</title>
+<title>围一桌 · 场景看板 V2</title>
 <style>
   /* === palette (from 2026-05-19-场景01-冬日通勤-v10.svg) === */
   :root {
@@ -343,10 +343,15 @@
   .hstack-rowlabels .rl { display: flex; align-items: center; justify-content: flex-end;
     text-align: right; line-height: 1.1; }
   .hstack-rowlabels .rl.bar-rl { height: 30px; font-size: 13px; font-weight: 800; color: var(--ink); }
-  .hstack-rowlabels .rl.abs-rl { height: 16px; font-size: 9.5px; font-weight: 400; color: var(--ink-4); }
-  .hstack-rowlabels .rl.pct-rl { height: 16px; font-size: 9.5px; font-weight: 400; color: var(--ink-4); }
+  /* 「百分比」「饮品卡数」两个表头标签 = 与段下方具体数值同字号同色 */
+  .hstack-rowlabels .rl.abs-rl { height: 16px; font-size: 10.5px; font-weight: 400; color: var(--ink-3); }
+  .hstack-rowlabels .rl.pct-rl { height: 16px; font-size: 10.5px; font-weight: 400; color: var(--ink-3); }
   .hstack-barwrap { flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .hstack-track { display: flex; height: 30px; border-radius: 6px; overflow: hidden; background: #F1ECE3; }
+  /* 柱长∝数量模式：track 仅占比例宽度，右侧跟一个品类总数标注 */
+  .hstack-trackline { display: flex; align-items: center; gap: 8px; }
+  .hstack-cattot { white-space: nowrap; font-size: 13px; font-weight: 800; color: var(--ink); flex: 0 0 auto; }
+  .hstack-cattot .p { margin-left: 4px; font-size: 11px; font-weight: 600; color: var(--ink-4); }
   .hstack-seg { min-width: 0; }
   .hstack-seg.clickable { cursor: pointer; }
   .hstack-seg.clickable:hover { filter: brightness(1.1); outline: 2px solid #fff; outline-offset: -2px; }
@@ -357,10 +362,26 @@
     line-height: 16px; font-size: 10.5px; font-variant-numeric: tabular-nums; padding: 0 1px; }
   .hstack-annot.abs .ann { color: var(--ink-3); font-weight: 400; }
   .hstack-annot.pct .ann { color: var(--ink-3); font-weight: 400; }
+  /* 「小项」分区：放在可视化图区之外，占比过小的子品类按品类分行列出 */
+  .hstack-smallext { margin-top: 14px; padding-top: 11px; border-top: 1px dashed var(--rule-2); }
+  .hstack-smallext .se-title { font-size: 11px; color: var(--ink-4); font-weight: 600; margin-bottom: 8px; }
+  .hstack-smallext .se-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 14px; margin-bottom: 7px; }
+  .hstack-smallext .se-cat { font-size: 12.5px; font-weight: 800; color: var(--ink); flex: 0 0 76px; }
+  .hstack-smallext .bl { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; }
+  .hstack-smallext .bl .sw { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 auto; }
+  .hstack-smallext .bl b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .hstack-smallext .bl .p { color: var(--ink-4); }
+  .hstack-smallext .bl.clickable { cursor: pointer; }
+  .hstack-smallext .bl.clickable:hover { color: var(--brown-1); }
   .hstack-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 11px;
     padding-top: 9px; border-top: 1px dashed var(--rule-2); }
   .hstack-legend .lg { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-2); }
   .hstack-legend .sw { width: 12px; height: 12px; border-radius: 3px; flex: 0 0 auto; }
+  /* 品类×子品类堆叠柱：左侧品类名 + 右侧品类总数可点 → 看该品类全部原图 */
+  .hstack-rowlabels .rl.bar-rl.clickable { cursor: pointer; }
+  .hstack-rowlabels .rl.bar-rl.clickable:hover { color: var(--brown-1); text-decoration: underline; }
+  .hstack-cattot.clickable { cursor: pointer; }
+  .hstack-cattot.clickable:hover { filter: brightness(1.15); text-decoration: underline; }
   /* 可折叠分区：sub-title 点击展开/收起（默认收起） */
   .sub-title.fold-h { cursor: pointer; user-select: none; }
   .sub-title.fold-h .caret { display: inline-block; margin-left: 6px; color: var(--ink-4);
@@ -371,20 +392,20 @@
 <body>
 
 <div class="nav-bar">
-  <a class="nav-link" href="dashboard-drinks-v2.html?v=202605271848">🥤 饮品卡 V2 · 总</a>
-  <a class="nav-link" href="dashboard-scene-dongri-tongqin-v2.html?v=202605271848">冬日通勤</a>
-  <a class="nav-link" href="dashboard-scene-nanshangjianan-v2.html?v=202605271848">偶尔难上加难</a>
-  <a class="nav-link" href="dashboard-scene-courenao-v2.html?v=202605271848">凑热闹</a>
-  <a class="nav-link active" href="dashboard-scene-huanqing-v2.html?v=202605271848">欢庆相聚</a>
-  <a class="nav-link" href="dashboard-scene-zijiren-v2.html?v=202605271848">自己人时刻</a>
-  <a class="nav-link" href="dashboard-scene-dongri-dongqu-v2.html?v=202605271848">冬日动趣</a>
-  <a class="nav-link" href="dashboard-scene-woyiwo-v2.html?v=202605271848">窝一窝</a>
-  <a class="nav-link" href="dashboard-scene-gongzuo-xuexi-v2.html?v=202605271848">日常工作学习</a>
-  <a class="nav-link" href="dashboard-scene-fandian-v2.html?v=202605271848">日常饭点</a>
+  <a class="nav-link" href="dashboard-drinks-v2.html?v=202606041055">🥤 饮品卡 V2 · 总</a>
+  <a class="nav-link" href="dashboard-scene-dongri-dongqu-v2.html?v=202606041055">冻一冻</a>
+  <a class="nav-link" href="dashboard-scene-woyiwo-v2.html?v=202606041055">窝一窝</a>
+  <a class="nav-link" href="dashboard-scene-zijiren-v2.html?v=202606041055">自己人时刻</a>
+  <a class="nav-link" href="dashboard-scene-nanshangjianan-v2.html?v=202606041055">至寒时刻</a>
+  <a class="nav-link active" href="dashboard-scene-huanqing-v2.html?v=202606041055">围一桌</a>
+  <a class="nav-link" href="dashboard-scene-courenao-v2.html?v=202606041055">凑热闹</a>
+  <a class="nav-link" href="dashboard-scene-dongri-tongqin-v2.html?v=202606041055">冬日通勤</a>
+  <a class="nav-link" href="dashboard-scene-gongzuo-xuexi-v2.html?v=202606041055">日常工作学习</a>
+  <a class="nav-link" href="dashboard-scene-fandian-v2.html?v=202606041055">日常饭点</a>
 </div>
 
 <div class="top-bar">
-  <span class="h1-tag">4. 欢庆相聚</span>
+  <span class="h1-tag">5. 围一桌</span>
   <h1>主题看板</h1>
 </div>
 <div class="hint">"瓶饮"栏只统计 category = 瓶装饮品 的卡。数据源：card_summary.csv。</div>
@@ -405,6 +426,12 @@
   </div>
 </div>
 
+<!-- 整页宽：品类 × 子品类 堆叠柱（柱长∝数量） -->
+<div class="panel" style="margin-bottom:16px;">
+  <div class="panel-title">品类 × 子品类<span class="sub">每根柱 = 品类形态（柱长 ∝ 该品类数量，右侧标总数·占总比例），柱内每段 = 子品类（段长 ∝ 子品类数量）· 点品类名/总数看该品类全部、点段看该子品类原图</span></div>
+  <div class="hstack" id="subtypeStack"></div>
+</div>
+
 <!-- 第二行：饮品 / 瓶饮 两栏 -->
 <div class="col-2">
   <!-- 左栏：饮品数/总 -->
@@ -414,10 +441,8 @@
       <span class="sub">所有有饮品的卡</span>
     </div>
 
-    <div class="sub-title">品类 <span class="meta">（大类）</span></div>
-    <div class="bars" id="drinkCategoryBars"></div>
 
-    <div class="sub-title">子品类 × 品类 <span class="meta">单元格 = n · 占该列%，颜色深浅按列内占比</span></div>
+    <div class="sub-title">子品类 × 品类（明细矩阵）<span class="meta">单元格 = n · 占该列%，颜色深浅按列内占比</span></div>
     <div class="matrix-wrap">
       <table class="matrix" id="subtypeMatrix"></table>
       <div class="matrix-legend">
@@ -479,8 +504,8 @@
 
 <div class="lightbox" id="lightbox" onclick="closeLightbox()"><img id="lbImg" src="" alt=""></div>
 
-<script>window.WO_DATA = {"cards": [{"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "有糖茶", "temp": "热", "brand": "丰之润", "purchase_place": "电商", "desc": "年夜饭吃了较多油腻必须来一杯苹果肉桂红茶", "id": "中产无娃-哈尔滨-D29", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-8.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "", "purchase_place": "不是自己购买的", "desc": "和亲戚在茶楼一边吃饭一边等待烟花，泡上了一壶热的热茶，整个人都暖和起来", "id": "中产无娃-广州-D03", "card_image": "原始数据/饮品卡/中产无娃-广州/其他-3.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "请优先选择您喜欢的饮品，如果找不到自己拍的，可以贩卖图", "id": "中产无娃-广州-D06", "card_image": "原始数据/饮品卡/中产无娃-广州/其他.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "二得利", "purchase_place": "超市/便利店", "desc": "自在水，因为火锅很燥，需要和茶饮解腻", "id": "中产无娃-广州-D10", "card_image": "原始数据/饮品卡/中产无娃-广州/瓶装饮品-4.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "咖啡", "temp": "热", "brand": "雀巢", "purchase_place": "自贩机/智能柜", "desc": "瓶装雀巢提神", "id": "中产无娃-广州-D34", "card_image": "原始数据/饮品卡/中产无娃-广州/街饮-6.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "当时饭店里可以热豆奶，热豆奶可以在外面就餐时，解渴解辣", "id": "中产无娃-成都-D12", "card_image": "原始数据/饮品卡/中产无娃-成都/瓶装饮品-8.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "自制，买的生...", "purchase_place": "其他", "desc": "和好朋友一起过生日那天，我们几个手残跟着视频菜手做了姜汁撞奶，简单用心的热饮，在那个冬日温热香甜，很有仪式感。围坐在一起聊天说笑，捧着也很暖...", "id": "中产无娃-成都-D15", "card_image": "原始数据/饮品卡/中产无娃-成都/自制饮品-1.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺仔", "purchase_place": "超市/便利店", "desc": "跨年的时候，和朋友一起喝旺仔牛奶，本来红红火火的特别有气氛。看着就喜欢，希望大家新年旺旺，寓意也很好。", "id": "中产无娃-成都-D16", "card_image": "原始数据/饮品卡/中产无娃-成都/自制饮品-2.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "中产无娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "其他", "desc": "有时候在外面吃的很辣了，就喜欢点一杯喜欢茶的黑珍珠真牛奶解辣", "id": "中产无娃-成都-D26", "card_image": "原始数据/饮品卡/中产无娃-成都/街饮-6.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "东方树叶、今典", "purchase_place": "超市/便利店", "desc": "在便利店直接买热的东方树叶茉莉花茶，喝掉一半再倒入热牛奶。完美高配版茉莉奶绿～", "id": "中产无娃-成都-D29", "card_image": "原始数据/饮品卡/中产无娃-成都/街饮.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "我喝了东方树叶普洱茶，比较解腻", "id": "中产无娃-成都-组pilot-D02", "card_image": "原始数据/饮品卡/中产无娃-成都-组pilot/瓶装饮品.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "光明", "purchase_place": "超市/便利店", "desc": "热的牛奶，不仅可以解辣，还可以减少火锅对胃肠道的刺激，比比较健康。", "id": "中产有娃-上海-D04", "card_image": "原始数据/饮品卡/中产有娃-上海/瓶装饮品-4.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "喝的是三得利的乌龙茶，这个茶是无糖的老人小孩都适合进消化，大包装家庭喝合适", "id": "中产有娃-哈尔滨-D05", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/瓶装饮品-1.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "超市/便利店", "desc": "火锅配着奶茶，真是美味搭子", "id": "中产有娃-哈尔滨-D07", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/瓶装饮品-3.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "中产有娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "蒙牛", "purchase_place": "超市/便利店", "desc": "微波炉热奶快捷高效，自制一般都是在家用微波炉做，老婆不舒服的时候可以喝，孩子饿了也...", "id": "中产有娃-哈尔滨-D11", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/自制饮品-1.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "中产有娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "煮点无花果海底椰雪梨水，降火又滋润，非常健康。", "id": "中产有娃-广州-D15", "card_image": "原始数据/饮品卡/中产有娃-广州/自制饮品.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "卡朋西餐厅", "purchase_place": "其他", "desc": "去卡朋基本必点他们家的珍珠奶茶，夏天喝冷的冬天就喝热的，珍珠很好喝", "id": "中产有娃-广州-D17", "card_image": "原始数据/饮品卡/中产有娃-广州/街饮-2.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "中产有娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "manner", "purchase_place": "电商", "desc": "新春manner的杯子有特别的logo，点了杯热香榧拿铁，和女儿给家里添加春节装饰", "id": "中产有娃-广州-D18", "card_image": "原始数据/饮品卡/中产有娃-广州/街饮-3.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "中产有娃", "category": "街饮", "subtype": "植物蛋白", "temp": "热", "brand": "维他", "purchase_place": "超市/便利店", "desc": "吃火锅配杯豆奶，刚好解腻，也暖暖身子。", "id": "中产有娃-广州-D23", "card_image": "原始数据/饮品卡/中产有娃-广州/街饮-8.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺仔", "purchase_place": "不是自己购买的", "desc": "牛奶味", "id": "中产有娃-广州-组暖饮机补充-D01", "card_image": "原始数据/饮品卡/中产有娃-广州-组暖饮机补充/其他-1.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "康师傅", "purchase_place": "其他", "desc": "柚子茶比较解腻，冬天也比较暖胃", "id": "中产有娃-成都-D05", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-1.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "不是自己购买的", "desc": "唯怡豆奶热饮，因为烧烤比较辣，可以缓解辣味油腻等", "id": "中产有娃-成都-D09", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-13.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺仔", "purchase_place": "超市/便利店", "desc": "牛奶原味", "id": "中产有娃-成都-D17", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-20.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "我喝的是东方树叶茉莉花茶，这款茶饮店家有热的保温的，而且c喝下去解腻且0卡糖，很适合我...", "id": "学生-上海-D11", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-19.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "康师傅", "purchase_place": "其他", "desc": "康师傅酸梅汤，在火锅店吃辣锅，冰喝了肚里会不舒服，就会点一瓶热的酸梅汤（有时店里会送）", "id": "学生-上海-D18", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-25.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "王老吉", "purchase_place": "超市/便利店", "desc": "因为桌上的菜吃的容易上火，王老吉口感清爽，可以降火，让用餐体验更舒适。", "id": "学生-上海-D32", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-8.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "", "brand": "布丁奶茶", "purchase_place": "其他", "desc": "我们找了一家附近的网红店，奶茶配上火锅，这个奶茶上面是布丁可可", "id": "学生-上海-组pilot-D07", "card_image": "原始数据/饮品卡/学生-上海-组pilot/街饮饮品-3.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "其他", "subtype": "咖啡", "temp": "热", "brand": "711", "purchase_place": "超市/便利店", "desc": "和许久未见的朋友见面他们想吃火锅，顺便给我带来了711的咖啡", "id": "学生-哈尔滨-D04", "card_image": "原始数据/饮品卡/学生-哈尔滨/其他-3.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "果汁", "temp": "热", "brand": "幸运咖", "purchase_place": "超市/便利店", "desc": "吃面配果汁很好不错", "id": "学生-哈尔滨-D08", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-10.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "蒙牛", "purchase_place": "超市/便利店", "desc": "草莓味牛奶，因为我特别爱喝这个草莓牛奶，去吃饭的过程中好看到这个牛奶", "id": "学生-哈尔滨-D09", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-11.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得力", "purchase_place": "超市/便利店", "desc": "狠辣 很油腻喝这个可以解腻", "id": "学生-哈尔滨-D17", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-2.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺仔", "purchase_place": "超市/便利店", "desc": "热牛奶特别好喝而且解腻", "id": "学生-哈尔滨-D24", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-9.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "蜜雪冰城", "purchase_place": "电商", "desc": "搭配奶茶", "id": "学生-哈尔滨-D30", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品-3.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "自制饮品", "subtype": "果汁", "temp": "热", "brand": "比格", "purchase_place": "不是自己购买的", "desc": "自助餐厅有不同的饮料品类，我们把感官混合到一起", "id": "学生-哈尔滨-D36", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品-9.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "NFC", "purchase_place": "不是自己购买的", "desc": "喝起来自身子很暖", "id": "学生-哈尔滨-D37", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "果汁", "temp": "热", "brand": "酸梅汤", "purchase_place": "其他", "desc": "火锅配热酸梅汤很利口", "id": "学生-哈尔滨-D40", "card_image": "原始数据/饮品卡/学生-哈尔滨/街饮-3.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "植物蛋白", "temp": "热", "brand": "711", "purchase_place": "超市/便利店", "desc": "711五红饮，因为朋友推荐，它口感丰富", "id": "学生-哈尔滨-D41", "card_image": "原始数据/饮品卡/学生-哈尔滨/街饮-4.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "蜜雪冰城", "purchase_place": "其他", "desc": "葡萄酸奶，因为我特别喜欢喝酸奶", "id": "学生-哈尔滨-D42", "card_image": "原始数据/饮品卡/学生-哈尔滨/街饮-5.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "一点点", "purchase_place": "其他", "desc": "是新出的口味，想尝试下", "id": "学生-哈尔滨-D43", "card_image": "原始数据/饮品卡/学生-哈尔滨/街饮-6.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "暖暖的喝着很舒服", "id": "学生-哈尔滨-D45", "card_image": "原始数据/饮品卡/学生-哈尔滨/街饮.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "学生", "category": "其他", "subtype": "咖啡", "temp": "热", "brand": "咖啡", "purchase_place": "其他", "desc": "热咖啡", "id": "学生-广州-D18", "card_image": "原始数据/饮品卡/学生-广州/瓶装饮品-9.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "学生", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "姐姐自制的海底椰饮品", "id": "学生-广州-D22", "card_image": "原始数据/饮品卡/学生-广州/自制饮品-3.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "阿萨姆", "purchase_place": "超市/便利店", "desc": "那时候放纵日，在店附近买的热饮阿萨姆", "id": "学生-广州-D32", "card_image": "原始数据/饮品卡/学生-广州/街饮-2.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "控油无负担健康", "id": "学生-成都-D02", "card_image": "原始数据/饮品卡/学生-成都/其他.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "唯怡豆奶解渴解腻，而且唯怡是我们成都专属饮料，从小喝到大", "id": "学生-成都-D05", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-11.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "超市/便利店", "desc": "在冬天聚餐喝唯怡是最佳的选择，味道好又可以搭配食物", "id": "学生-成都-D12", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-18.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "好喝畅销", "id": "学生-成都-D16", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-21.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "蜜雪冰城", "purchase_place": "其他", "desc": "因为它捂着暖手，喝起来的茶香很甜润，经典珍珠的g弹让口感更加强韧，跨年喝温暖又有气氛...", "id": "白领-上海-D04", "card_image": "原始数据/饮品卡/白领-上海/瓶装饮品-10.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "有糖茶", "temp": "热", "brand": "康师傅", "purchase_place": "电商", "desc": "因为它喝起来茶香很清新很解腻，喝着很暖身，并且清甜的花香很适合热闹温馨的聚餐气氛。", "id": "白领-上海-D07", "card_image": "原始数据/饮品卡/白领-上海/瓶装饮品-13.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "茶决决", "purchase_place": "电商", "desc": "吃火锅的时候喝了可以解渴解辣", "id": "白领-上海-D36", "card_image": "原始数据/饮品卡/白领-上海/街饮-11.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "茶决决", "purchase_place": "电商", "desc": "吃火锅的时候喝了可以解渴解辣", "id": "白领-上海-D38", "card_image": "原始数据/饮品卡/白领-上海/街饮-13.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "白领", "category": "其他", "subtype": "", "temp": "", "brand": "热水", "purchase_place": "不是自己购买的", "desc": "饮水机热水，让多喝热水", "id": "白领-上海-组pilot-D01", "card_image": "原始数据/饮品卡/白领-上海-组pilot/其他饮品-1.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "果茶饮料，茶味清爽的时候解腻。火锅烫得好舒服", "id": "白领-上海-组pilot-D02", "card_image": "原始数据/饮品卡/白领-上海-组pilot/其他饮品.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "", "brand": "河北京德露露", "purchase_place": "超市/便利店", "desc": "喝了露露杏仁露", "id": "白领-上海-组pilot-D04", "card_image": "原始数据/饮品卡/白领-上海-组pilot/瓶装饮品-2.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "喝蜜香柠檬，暖暖的，果味和茶味融合的很好", "id": "白领-上海-组pilot-D07", "card_image": "原始数据/饮品卡/白领-上海-组pilot/瓶装饮品.png"}, {"theme": "欢庆相聚", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "", "brand": "有气草本", "purchase_place": "其他", "desc": "黑米决明子", "id": "白领-上海-组暖饮机补充-D01", "card_image": "原始数据/饮品卡/白领-上海-组暖饮机补充/瓶装饮品-1.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "蜜雪", "purchase_place": "其他", "desc": "便宜还暖和可以送上门", "id": "白领-哈尔滨-D05", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-1.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "美汁源", "purchase_place": "其他", "desc": "吃烧烤喝橙汁可以很好地解渴还可以解腻", "id": "白领-哈尔滨-D08", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-12.png"}, {"theme": "欢庆相聚", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "果子熟了", "purchase_place": "其他", "desc": "和烤肉很配，解渴！", "id": "白领-哈尔滨-D21", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-5.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "白领", "category": "其他", "subtype": "草本养生", "temp": "热", "brand": "海底捞", "purchase_place": "其他", "desc": "喝了热的菊花茶", "id": "白领-广州-D07", "card_image": "原始数据/饮品卡/白领-广州/其他.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "立顿", "purchase_place": "超市/便利店", "desc": "自制热奶茶", "id": "白领-广州-D27", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-5.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "伊利纯牛奶", "purchase_place": "其他", "desc": "家里当然是DIY热甜饮，暖身+养生", "id": "白领-广州-D31", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-9.png"}, {"theme": "欢庆相聚", "sub": "", "city": "广州", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "冬天就很适合吃边吃边喝热茶解腻。", "id": "白领-广州-组pilot-D05", "card_image": "原始数据/饮品卡/白领-广州-组pilot/瓶装饮品.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "永辉", "purchase_place": "超市/便利店", "desc": "桃子汁 聚会神器 超级好喝 而且小朋友也很喜欢", "id": "白领-成都-D04", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-10.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "超市/便利店", "desc": "瓶装热饮不用等，乳茶配火锅比甜奶茶更解腻", "id": "白领-成都-D08", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-14.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "天喔茶庄", "purchase_place": "超市/便利店", "desc": "羊肉汤偏滋补，这款热饮温润不燥热，全家都能喝，很适合家庭饭桌", "id": "白领-成都-D09", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-15.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "王老吉", "purchase_place": "超市/便利店", "desc": "团建菜品油腻，口味也比较重，温热的王老吉口感很好，既能解腻又能润喉", "id": "白领-成都-D15", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-20.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "王老吉", "purchase_place": "超市/便利店", "desc": "吃火锅热气又辛辣，搭配王老吉刚好可以清热降火，解辣解腻。", "id": "白领-成都-D21", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-26.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "外星人", "purchase_place": "自贩机/智能柜", "desc": "选择柚子口味维生素B水清爽又解腻。", "id": "白领-成都-D22", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-27.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "维恤", "purchase_place": "自贩机/智能柜", "desc": "喝的维恤豆奶，因为烤肉比较腻，吃这个可以解腻", "id": "白领-成都-D25", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-3.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "超市/便利店", "desc": "唯怡豆奶 烧烤比较油腻 而且可以缓解啤酒的酒精", "id": "白领-成都-D31", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-9.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "冬至天气冷，热饮暖手又暖心，搭配饺子很解腻，一家人围坐在一起和热饮氛围特别好", "id": "白领-成都-D37", "card_image": "原始数据/饮品卡/白领-成都/自制饮品-5.png"}, {"theme": "欢庆相聚", "sub": "", "city": "成都", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "", "brand": "珍珠奶茶", "purchase_place": "电商", "desc": "大家在喝喝喝一些口渴，想喝点饮料，点了外卖", "id": "白领-成都-组pilot-D12", "card_image": "原始数据/饮品卡/白领-成都-组pilot/街饮饮品-3.png"}]};
-window.ACTIVE_THEME = "欢庆相聚";</script>
+<script>window.WO_DATA = {"cards": [{"theme": "围一桌", "sub": "", "city": "广州", "persona": "白领", "category": "其他", "subtype": "草本养生", "temp": "热", "brand": "海底捞", "purchase_place": "其他", "desc": "喝了热的菊花茶", "id": "白领-广州-D01", "card_image": "原始数据/饮品卡/白领-广州/其他-1.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "光明", "purchase_place": "电商", "desc": "为了跨年晚会，准备了特别多的零食，包括吃的喝的，这个口味从来没喝过，感觉桃子味很好...", "id": "中产无娃-上海-D27", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-7.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "自制陈皮茶", "id": "中产无娃-哈尔滨-D21", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-1.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "有糖茶", "temp": "热", "brand": "丰之润", "purchase_place": "电商", "desc": "年夜饭吃了较多油腻必须来一杯苹果肉桂红茶", "id": "中产无娃-哈尔滨-D29", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-8.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "", "brand": "榕树", "purchase_place": "超市/便利店", "desc": "果汁 很搭配", "id": "中产无娃-哈尔滨-组pilot-D06", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨-组pilot/自制饮品.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "", "purchase_place": "不是自己购买的", "desc": "和亲戚在茶楼一边吃饭一边等待烟花，泡上了一壶热的热茶，整个人都暖和起来", "id": "中产无娃-广州-D03", "card_image": "原始数据/饮品卡/中产无娃-广州/其他-3.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "中产无娃", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "请优先选择您喜欢的饮品，如果找不到自己拍的，可以贩卖图", "id": "中产无娃-广州-D06", "card_image": "原始数据/饮品卡/中产无娃-广州/其他.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "二得利", "purchase_place": "超市/便利店", "desc": "自在水，因为火锅很燥，需要和茶饮解腻", "id": "中产无娃-广州-D10", "card_image": "原始数据/饮品卡/中产无娃-广州/瓶装饮品-4.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "当时饭店里可以热豆奶，热豆奶可以在外面就餐时，解渴解辣", "id": "中产无娃-成都-D12", "card_image": "原始数据/饮品卡/中产无娃-成都/瓶装饮品-8.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "中产无娃", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "自制，买的生...", "purchase_place": "其他", "desc": "和好朋友一起过生日那天，我们几个手残跟着视频菜手做了姜汁撞奶，简单用心的热饮，在那个冬日温热香甜，很有仪式感。围坐在一起聊天说笑，捧着也很暖...", "id": "中产无娃-成都-D15", "card_image": "原始数据/饮品卡/中产无娃-成都/自制饮品-1.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺仔", "purchase_place": "超市/便利店", "desc": "跨年的时候，和朋友一起喝旺仔牛奶，本来红红火火的特别有气氛。看着就喜欢，希望大家新年旺旺，寓意也很好。", "id": "中产无娃-成都-D16", "card_image": "原始数据/饮品卡/中产无娃-成都/自制饮品-2.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "中产无娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "其他", "desc": "有时候在外面吃的很辣了，就喜欢点一杯喜欢茶的黑珍珠真牛奶解辣", "id": "中产无娃-成都-D26", "card_image": "原始数据/饮品卡/中产无娃-成都/街饮-6.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "东方树叶、今典", "purchase_place": "超市/便利店", "desc": "在便利店直接买热的东方树叶茉莉花茶，喝掉一半再倒入热牛奶。完美高配版茉莉奶绿～", "id": "中产无娃-成都-D29", "card_image": "原始数据/饮品卡/中产无娃-成都/街饮.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "我喝了东方树叶普洱茶，比较解腻", "id": "中产无娃-成都-组pilot-D02", "card_image": "原始数据/饮品卡/中产无娃-成都-组pilot/瓶装饮品.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "光明", "purchase_place": "超市/便利店", "desc": "热的牛奶，不仅可以解辣，还可以减少火锅对胃肠道的刺激，比比较健康。", "id": "中产有娃-上海-D04", "card_image": "原始数据/饮品卡/中产有娃-上海/瓶装饮品-4.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "喝的是三得利的乌龙茶，这个茶是无糖的老人小孩都适合进消化，大包装家庭喝合适", "id": "中产有娃-哈尔滨-D05", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/瓶装饮品-1.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "超市/便利店", "desc": "火锅配着奶茶，真是美味搭子", "id": "中产有娃-哈尔滨-D07", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/瓶装饮品-3.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "中产有娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "煮点无花果海底椰雪梨水，降火又滋润，非常健康。", "id": "中产有娃-广州-D15", "card_image": "原始数据/饮品卡/中产有娃-广州/自制饮品.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "中产有娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "卡朋西餐厅", "purchase_place": "其他", "desc": "去卡朋基本必点他们家的珍珠奶茶，夏天喝冷的冬天就喝热的，珍珠很好喝", "id": "中产有娃-广州-D17", "card_image": "原始数据/饮品卡/中产有娃-广州/街饮-2.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "中产有娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "manner", "purchase_place": "电商", "desc": "新春manner的杯子有特别的logo，点了杯热香榧拿铁，和女儿给家里添加春节装饰", "id": "中产有娃-广州-D18", "card_image": "原始数据/饮品卡/中产有娃-广州/街饮-3.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "中产有娃", "category": "街饮", "subtype": "植物蛋白", "temp": "热", "brand": "维他", "purchase_place": "超市/便利店", "desc": "吃火锅配杯豆奶，刚好解腻，也暖暖身子。", "id": "中产有娃-广州-D23", "card_image": "原始数据/饮品卡/中产有娃-广州/街饮-8.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺仔", "purchase_place": "不是自己购买的", "desc": "牛奶味", "id": "中产有娃-广州-组暖饮机补充-D01", "card_image": "原始数据/饮品卡/中产有娃-广州-组暖饮机补充/其他-1.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "康师傅", "purchase_place": "其他", "desc": "柚子茶比较解腻，冬天也比较暖胃", "id": "中产有娃-成都-D05", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-1.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "不是自己购买的", "desc": "唯怡豆奶热饮，因为烧烤比较辣，可以缓解辣味油腻等", "id": "中产有娃-成都-D09", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-13.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺仔", "purchase_place": "超市/便利店", "desc": "牛奶原味", "id": "中产有娃-成都-D17", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-20.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "我喝的是东方树叶茉莉花茶，这款茶饮店家有热的保温的，而且c喝下去解腻且0卡糖，很适合我...", "id": "学生-上海-D11", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-19.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "康师傅", "purchase_place": "其他", "desc": "康师傅酸梅汤，在火锅店吃辣锅，冰喝了肚里会不舒服，就会点一瓶热的酸梅汤（有时店里会送）", "id": "学生-上海-D18", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-25.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "学生", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "王老吉", "purchase_place": "超市/便利店", "desc": "因为桌上的菜吃的容易上火，王老吉口感清爽，可以降火，让用餐体验更舒适。", "id": "学生-上海-D32", "card_image": "原始数据/饮品卡/学生-上海/瓶装饮品-8.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "", "brand": "布丁奶茶", "purchase_place": "其他", "desc": "我们找了一家附近的网红店，奶茶配上火锅，这个奶茶上面是布丁可可", "id": "学生-上海-组pilot-D07", "card_image": "原始数据/饮品卡/学生-上海-组pilot/街饮饮品-3.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "其他", "subtype": "咖啡", "temp": "热", "brand": "711", "purchase_place": "超市/便利店", "desc": "和许久未见的朋友见面他们想吃火锅，顺便给我带来了711的咖啡", "id": "学生-哈尔滨-D04", "card_image": "原始数据/饮品卡/学生-哈尔滨/其他-3.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "蒙牛", "purchase_place": "超市/便利店", "desc": "草莓味牛奶，因为我特别爱喝这个草莓牛奶，去吃饭的过程中好看到这个牛奶", "id": "学生-哈尔滨-D09", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-11.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得力", "purchase_place": "超市/便利店", "desc": "狠辣 很油腻喝这个可以解腻", "id": "学生-哈尔滨-D17", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-2.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "旺仔", "purchase_place": "超市/便利店", "desc": "热牛奶特别好喝而且解腻", "id": "学生-哈尔滨-D24", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-9.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "蜜雪冰城", "purchase_place": "电商", "desc": "搭配奶茶", "id": "学生-哈尔滨-D30", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品-3.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "自制饮品", "subtype": "果汁", "temp": "热", "brand": "比格", "purchase_place": "不是自己购买的", "desc": "自助餐厅有不同的饮料品类，我们把感官混合到一起", "id": "学生-哈尔滨-D36", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品-9.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "NFC", "purchase_place": "不是自己购买的", "desc": "喝起来自身子很暖", "id": "学生-哈尔滨-D37", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "果汁", "temp": "热", "brand": "酸梅汤", "purchase_place": "其他", "desc": "火锅配热酸梅汤很利口", "id": "学生-哈尔滨-D40", "card_image": "原始数据/饮品卡/学生-哈尔滨/街饮-3.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "植物蛋白", "temp": "热", "brand": "711", "purchase_place": "超市/便利店", "desc": "711五红饮，因为朋友推荐，它口感丰富", "id": "学生-哈尔滨-D41", "card_image": "原始数据/饮品卡/学生-哈尔滨/街饮-4.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "学生", "category": "瓶装饮品", "subtype": "可可饮", "temp": "热", "brand": "维他", "purchase_place": "超市/便利店", "desc": "维他奶巧克力味，这个味道比较经典，而且豆奶的奶味配着一口鸡肉很好香", "id": "学生-广州-D07", "card_image": "原始数据/饮品卡/学生-广州/瓶装饮品-12.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "学生", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "电商", "desc": "喜欢的奶小萱，这个奶茶有淡淡的茉莉香味，喝起来很舒服", "id": "学生-广州-D08", "card_image": "原始数据/饮品卡/学生-广州/瓶装饮品-13.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "学生", "category": "其他", "subtype": "咖啡", "temp": "热", "brand": "咖啡", "purchase_place": "其他", "desc": "热咖啡", "id": "学生-广州-D18", "card_image": "原始数据/饮品卡/学生-广州/瓶装饮品-9.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "学生", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "姐姐自制的海底椰饮品", "id": "学生-广州-D22", "card_image": "原始数据/饮品卡/学生-广州/自制饮品-3.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "阿萨姆", "purchase_place": "超市/便利店", "desc": "那时候放纵日，在店附近买的热饮阿萨姆", "id": "学生-广州-D32", "card_image": "原始数据/饮品卡/学生-广州/街饮-2.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "控油无负担健康", "id": "学生-成都-D02", "card_image": "原始数据/饮品卡/学生-成都/其他.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "唯怡豆奶解渴解腻，而且唯怡是我们成都专属饮料，从小喝到大", "id": "学生-成都-D05", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-11.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "超市/便利店", "desc": "在冬天聚餐喝唯怡是最佳的选择，味道好又可以搭配食物", "id": "学生-成都-D12", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-18.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "好喝畅销", "id": "学生-成都-D16", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-21.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "有糖茶", "temp": "热", "brand": "康师傅", "purchase_place": "电商", "desc": "因为它喝起来茶香很清新很解腻，喝着很暖身，并且清甜的花香很适合热闹温馨的聚餐气氛。", "id": "白领-上海-D07", "card_image": "原始数据/饮品卡/白领-上海/瓶装饮品-13.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "茶决决", "purchase_place": "电商", "desc": "吃火锅的时候喝了可以解渴解辣", "id": "白领-上海-D36", "card_image": "原始数据/饮品卡/白领-上海/街饮-11.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "茶决决", "purchase_place": "电商", "desc": "吃火锅的时候喝了可以解渴解辣", "id": "白领-上海-D38", "card_image": "原始数据/饮品卡/白领-上海/街饮-13.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "白领", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "杂牌", "purchase_place": "其他", "desc": "一些现煮茶饮", "id": "白领-上海-D46", "card_image": "原始数据/饮品卡/白领-上海/街饮-9.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "白领", "category": "其他", "subtype": "", "temp": "", "brand": "热水", "purchase_place": "不是自己购买的", "desc": "饮水机热水，让多喝热水", "id": "白领-上海-组pilot-D01", "card_image": "原始数据/饮品卡/白领-上海-组pilot/其他饮品-1.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "果茶饮料，茶味清爽的时候解腻。火锅烫得好舒服", "id": "白领-上海-组pilot-D02", "card_image": "原始数据/饮品卡/白领-上海-组pilot/其他饮品.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "", "brand": "河北京德露露", "purchase_place": "超市/便利店", "desc": "喝了露露杏仁露", "id": "白领-上海-组pilot-D04", "card_image": "原始数据/饮品卡/白领-上海-组pilot/瓶装饮品-2.png"}, {"theme": "围一桌", "sub": "", "city": "上海", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "", "brand": "有气草本", "purchase_place": "其他", "desc": "黑米决明子", "id": "白领-上海-组暖饮机补充-D01", "card_image": "原始数据/饮品卡/白领-上海-组暖饮机补充/瓶装饮品-1.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "美汁源", "purchase_place": "其他", "desc": "吃烧烤喝橙汁可以很好地解渴还可以解腻", "id": "白领-哈尔滨-D08", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-12.png"}, {"theme": "围一桌", "sub": "", "city": "哈尔滨", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "果子熟了", "purchase_place": "其他", "desc": "和烤肉很配，解渴！", "id": "白领-哈尔滨-D21", "card_image": "原始数据/饮品卡/白领-哈尔滨/瓶装饮品-5.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "白领", "category": "其他", "subtype": "草本养生", "temp": "热", "brand": "海底捞", "purchase_place": "其他", "desc": "喝了热的菊花茶", "id": "白领-广州-D07", "card_image": "原始数据/饮品卡/白领-广州/其他.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "立顿", "purchase_place": "超市/便利店", "desc": "自制热奶茶", "id": "白领-广州-D27", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-5.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "白领", "category": "自制饮品", "subtype": "牛奶", "temp": "热", "brand": "伊利纯牛奶", "purchase_place": "其他", "desc": "家里当然是DIY热甜饮，暖身+养生", "id": "白领-广州-D31", "card_image": "原始数据/饮品卡/白领-广州/自制饮品-9.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "冬天就很适合吃边吃边喝热茶解腻。", "id": "白领-广州-组pilot-D05", "card_image": "原始数据/饮品卡/白领-广州-组pilot/瓶装饮品.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "自制饮品", "subtype": "无糖茶", "temp": "热", "brand": "苦荞", "purchase_place": "其他", "desc": "苦荞茶 因为家里人不能喝酒所以只能以茶代酒", "id": "白领-成都-D02", "card_image": "原始数据/饮品卡/白领-成都/其他.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "永辉", "purchase_place": "超市/便利店", "desc": "桃子汁 聚会神器 超级好喝 而且小朋友也很喜欢", "id": "白领-成都-D04", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-10.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "超市/便利店", "desc": "瓶装热饮不用等，乳茶配火锅比甜奶茶更解腻", "id": "白领-成都-D08", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-14.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "天喔茶庄", "purchase_place": "超市/便利店", "desc": "羊肉汤偏滋补，这款热饮温润不燥热，全家都能喝，很适合家庭饭桌", "id": "白领-成都-D09", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-15.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "王老吉", "purchase_place": "超市/便利店", "desc": "团建菜品油腻，口味也比较重，温热的王老吉口感很好，既能解腻又能润喉", "id": "白领-成都-D15", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-20.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "超市/便利店", "desc": "坐在路边吃饭，喝温热的阿萨姆奶茶能暖手暖胃，口感温润", "id": "白领-成都-D18", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-23.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "王老吉", "purchase_place": "超市/便利店", "desc": "吃火锅热气又辛辣，搭配王老吉刚好可以清热降火，解辣解腻。", "id": "白领-成都-D21", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-26.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "外星人", "purchase_place": "自贩机/智能柜", "desc": "选择柚子口味维生素B水清爽又解腻。", "id": "白领-成都-D22", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-27.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "维恤", "purchase_place": "自贩机/智能柜", "desc": "喝的维恤豆奶，因为烤肉比较腻，吃这个可以解腻", "id": "白领-成都-D25", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-3.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯一", "purchase_place": "其他", "desc": "唯一豆奶，成都火锅官配，可以解辣，又好喝可加热；", "id": "白领-成都-D29", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-7.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "超市/便利店", "desc": "唯怡豆奶 烧烤比较油腻 而且可以缓解啤酒的酒精", "id": "白领-成都-D31", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-9.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "自制", "purchase_place": "其他", "desc": "冬至天气冷，热饮暖手又暖心，搭配饺子很解腻，一家人围坐在一起和热饮氛围特别好", "id": "白领-成都-D37", "card_image": "原始数据/饮品卡/白领-成都/自制饮品-5.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "", "brand": "奈雪的茶", "purchase_place": "其他", "desc": "奶茶", "id": "白领-成都-组pilot-D11", "card_image": "原始数据/饮品卡/白领-成都-组pilot/街饮饮品-2.png"}, {"theme": "围一桌", "sub": "", "city": "成都", "persona": "白领", "category": "街饮", "subtype": "奶茶", "temp": "", "brand": "珍珠奶茶", "purchase_place": "电商", "desc": "大家在喝喝喝一些口渴，想喝点饮料，点了外卖", "id": "白领-成都-组pilot-D12", "card_image": "原始数据/饮品卡/白领-成都-组pilot/街饮饮品-3.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "学生", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "超市/便利店", "desc": "阿萨姆", "id": "学生-广州-D12", "card_image": "原始数据/饮品卡/学生-广州/瓶装饮品-3.png"}, {"theme": "围一桌", "sub": "", "city": "广州", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得利", "purchase_place": "自贩机/智能柜", "desc": "三得利的茶给人一种平静的感觉，入口清淡不腻（无糖）", "id": "学生-广州-D14", "card_image": "原始数据/饮品卡/学生-广州/瓶装饮品-5.png"}]};
+window.ACTIVE_THEME = "围一桌";</script>
 <script>
 const ALL_CARDS = window.WO_DATA.cards;
 const SUB_ORDER = ['全部'];
@@ -509,8 +534,8 @@ function countBy(cards, fn) {
 
 // 场景出现顺序 + 显示改名（同首页 SCENE_BAR_ORDER）。[真实theme, 显示名]
 const SCENE_BAR_ORDER = [
-  ['冬日动趣','冻一冻'],['窝一窝','窝一窝'],['自己人时刻','自己人时刻'],
-  ['偶尔难上加难','至寒时刻'],['欢庆相聚','围一桌'],['凑热闹','凑热闹'],
+  ['冻一冻','冻一冻'],['窝一窝','窝一窝'],['自己人时刻','自己人时刻'],
+  ['至寒时刻','至寒时刻'],['围一桌','围一桌'],['凑热闹','凑热闹'],
   ['冬日通勤','冬日通勤'],['日常工作学习','日常工作学习'],['日常饭点','日常饭点'],
 ];
 // 人群分组：中产有娃/无娃合并为「中产」，sub 标注「有娃」绝对值（同首页）
@@ -521,6 +546,9 @@ const PERSONA_GROUPS = [
 ];
 const DISTRO_CITY_ORDER = ['上海','广州','成都','哈尔滨'];
 const PALETTE = ['#7D7BF8','#7CB342','#D27538','#5E5A80','#5FD27B','#A85A28','#E8A33D','#D7BFE9','#FABABB'];
+// 子品类堆叠柱用：同一子品类在所有品类柱里保持同色，故需更多区分色
+const SUB_PALETTE = ['#7D7BF8','#7CB342','#D27538','#5E5A80','#5FD27B','#A85A28','#E8A33D','#D7BFE9','#FABABB','#4FA3C7','#C7506E','#8AB833','#B07CC6','#6FB7B7','#9AA0A6','#C9A227'];
+const MATRIX_COLS_STACK = ['瓶装饮品','街饮','自制饮品','其他'];
 function txtOn(hex){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
   return (0.299*r+0.587*g+0.114*b)>170?'#3A332B':'#fff';}
 
@@ -531,20 +559,39 @@ function renderHStack(el, bars, segs, opts){
   opts = opts || {};
   el.className = 'hstack';
   el.innerHTML = '';
+  // 柱长∝数量模式：以最长柱为基准，各柱按其总量等比缩放；并算各柱占总量比例。
+  // 最长柱封顶 BAR_MAX_PCT（<100），右侧预留固定空当给「总数·占比」标注，避免最长柱的标注被裁掉。
+  const BAR_MAX_PCT = 90, INLINE_MIN = 3.2;  // 段宽≥全条 3.2% 才在下方直接标注，更窄的收进「小项」
+  let maxTot = 1, grandTot = 0;
+  const smallGroups = [];  // 各柱里占比过小、未直接标注的段，集中到图区外的「小项」分区
+  if (opts.proportional) {
+    const tots = bars.map(b => segs.reduce((a,s)=>a + b.cards.filter(s.test).length, 0));
+    maxTot = Math.max(1, ...tots);
+    grandTot = tots.reduce((a,b)=>a+b, 0) || 1;
+  }
   for (const bar of bars) {
     const counts = segs.map(s => bar.cards.filter(s.test).length);
     const tot = counts.reduce((a,b)=>a+b, 0);
+    const scaleW = opts.proportional ? (tot / maxTot * BAR_MAX_PCT) : 100;
     const row = document.createElement('div'); row.className = 'hstack-row';
     // 左侧三行标题
     const labs = document.createElement('div'); labs.className = 'hstack-rowlabels';
     labs.innerHTML = `<div class="rl bar-rl">${bar.label}</div>`
       + `<div class="rl pct-rl">百分比</div><div class="rl abs-rl">饮品卡数</div>`;
+    // 整柱（品类）名可点 → 看该品类全部原图（不限子品类）
+    if (opts.pool && opts.barLabelClick) {
+      const barPred = opts.barPred ? opts.barPred(bar) : (c => c.theme === bar.key);
+      const blEl = labs.querySelector('.bar-rl'); blEl.classList.add('clickable');
+      blEl.title = `${bar.label}：全部 ${tot} 张`;
+      blEl.onclick = () => showGallery(`${bar.label} · 全部`, opts.pool.filter(barPred));
+    }
     row.appendChild(labs);
     const wrap = document.createElement('div'); wrap.className = 'hstack-barwrap';
     const track = document.createElement('div'); track.className = 'hstack-track';
     const absRow = document.createElement('div'); absRow.className = 'hstack-annot abs';
     const pctRow = document.createElement('div'); pctRow.className = 'hstack-annot pct';
     if (tot === 0) track.innerHTML = '<span class="hstack-empty">无</span>';
+    const small = [];  // 太窄塞不下的段：收集起来放到图区外的「小项」分区
     segs.forEach((s, i) => {
       const n = counts[i]; if (n === 0) return;
       const pct = tot > 0 ? n / tot * 100 : 0;
@@ -555,29 +602,75 @@ function renderHStack(el, bars, segs, opts){
       const seg = document.createElement('div'); seg.className = 'hstack-seg';
       seg.style.width = pct + '%'; seg.style.background = s.color;
       seg.title = `${bar.label} · ${s.label}：${n} 张${subStr}（${pct.toFixed(1)}%）`;
-      // 下方两排：绝对值、百分比（与色块同宽）
-      const aAbs = document.createElement('div'); aAbs.className = 'ann';
-      aAbs.style.width = pct + '%'; aAbs.innerHTML = `${n}${subStr}`; aAbs.title = `${s.label}：${n}${subStr}`;
-      const aPct = document.createElement('div'); aPct.className = 'ann';
-      aPct.style.width = pct + '%'; aPct.textContent = pctStr; aPct.title = `${s.label}：${pctStr}`;
       if (opts.pool) {
-        const pred = c => c.theme === bar.key && s.test(c);
+        const pred = opts.pred ? opts.pred(bar, s) : (c => c.theme === bar.key && s.test(c));
         const show = () => showGallery(`${bar.label} · ${s.label}`, opts.pool.filter(pred));
         seg.classList.add('clickable'); seg.onclick = show;
       }
-      track.appendChild(seg); absRow.appendChild(aAbs); pctRow.appendChild(aPct);
+      track.appendChild(seg);
+      // 下方两排：与段同宽对齐；够宽（占全条≥INLINE_MIN%）才写文字，否则空着、收进小项清单
+      const eff = (opts.proportional ? scaleW : 100) * pct / 100;
+      const aAbs = document.createElement('div'); aAbs.className = 'ann'; aAbs.style.width = pct + '%'; aAbs.title = `${s.label}：${n}${subStr}`;
+      const aPct = document.createElement('div'); aPct.className = 'ann'; aPct.style.width = pct + '%'; aPct.title = `${s.label}：${pctStr}`;
+      if (!opts.barLegend || eff >= INLINE_MIN) { aAbs.innerHTML = `${n}${subStr}`; aPct.textContent = pctStr; }
+      else { small.push({ s, n, subStr, pctStr }); }
+      absRow.appendChild(aAbs); pctRow.appendChild(aPct);
     });
-    wrap.appendChild(track); wrap.appendChild(pctRow); wrap.appendChild(absRow);
+    if (opts.proportional) {
+      // track 只占比例宽度 → 柱长∝该品类数量；右侧标注该品类总数 + 占总比例
+      track.style.width = scaleW + '%'; track.style.flex = '0 1 ' + scaleW + '%';
+      absRow.style.width = scaleW + '%'; pctRow.style.width = scaleW + '%';
+      const line = document.createElement('div'); line.className = 'hstack-trackline';
+      line.appendChild(track);
+      const gpct = Math.round(tot / grandTot * 100);
+      const ct = document.createElement('span'); ct.className = 'hstack-cattot';
+      ct.innerHTML = `${tot}<span class="p">${gpct}%</span>`;
+      if (opts.pool && opts.barLabelClick) {
+        const barPred = opts.barPred ? opts.barPred(bar) : (c => c.theme === bar.key);
+        ct.classList.add('clickable'); ct.title = `${bar.label}：全部 ${tot} 张`;
+        ct.onclick = () => showGallery(`${bar.label} · 全部`, opts.pool.filter(barPred));
+      }
+      line.appendChild(ct);
+      wrap.appendChild(line);
+    } else {
+      track.style.width = '100%';
+      wrap.appendChild(track);
+    }
+    wrap.appendChild(pctRow); wrap.appendChild(absRow);
     row.appendChild(wrap);
     el.appendChild(row);
+    if (opts.barLegend && small.length) smallGroups.push({ bar, items: small });
   }
-  const legend = document.createElement('div'); legend.className = 'hstack-legend';
-  for (const s of segs) {
-    const lg = document.createElement('span'); lg.className = 'lg';
-    lg.innerHTML = `<span class="sw" style="background:${s.color}"></span>${s.label}`;
-    legend.appendChild(lg);
+  {
+    const legend = document.createElement('div'); legend.className = 'hstack-legend';
+    for (const s of segs) {
+      const lg = document.createElement('span'); lg.className = 'lg';
+      lg.innerHTML = `<span class="sw" style="background:${s.color}"></span>${s.label}`;
+      legend.appendChild(lg);
+    }
+    el.appendChild(legend);
   }
-  el.appendChild(legend);
+  // 「小项」分区：放在可视化图区外（el 之后的兄弟节点），按品类分行列出占比过小的子品类
+  const host = el.parentNode; const prevExt = host && host.querySelector(':scope > .hstack-smallext'); if (prevExt) prevExt.remove();
+  if (host && smallGroups.length) {
+    const ext = document.createElement('div'); ext.className = 'hstack-smallext';
+    ext.innerHTML = '<div class="se-title">小项（占比过小，未在条上直接标注）</div>';
+    smallGroups.forEach(g => {
+      const r = document.createElement('div'); r.className = 'se-row';
+      const c = document.createElement('span'); c.className = 'se-cat'; c.textContent = g.bar.label; r.appendChild(c);
+      g.items.forEach(({ s, n, subStr, pctStr }) => {
+        const item = document.createElement('span'); item.className = 'bl';
+        item.innerHTML = `<span class="sw" style="background:${s.color}"></span>${s.label} <b>${n}${subStr}</b> <span class="p">${pctStr}</span>`;
+        if (opts.pool) {
+          const pred = opts.pred ? opts.pred(g.bar, s) : (c2 => c2.theme === g.bar.key && s.test(c2));
+          item.classList.add('clickable'); item.onclick = () => showGallery(`${g.bar.label} · ${s.label}`, opts.pool.filter(pred));
+        }
+        r.appendChild(item);
+      });
+      ext.appendChild(r);
+    });
+    el.insertAdjacentElement('afterend', ext);
+  }
 }
 
 // 城市/人群两块：只画本场景一行横向堆叠（构成占比）。口径=本场景饮品卡，与子主题筛选无关。
@@ -590,6 +683,25 @@ function renderDistro(){
   const bar = [{label, key: window.ACTIVE_THEME, cards}];
   renderHStack(document.getElementById('cityBars'), bar, citySegs, {pool: cards});
   renderHStack(document.getElementById('personaBars'), bar, personaSegs, {pool: cards});
+}
+
+// 品类 × 子品类 横向堆叠（柱长∝数量）：每根柱=一种品类形态，柱长∝该品类卡片数（最长柱=100%基准），
+// 柱内每段=子品类、段长∝该子品类卡片数；同一子品类在所有柱里同色（按全局总量排序定色）。
+// 兼并了原「品类（大类）」横条图——柱长已表达品类数量，右侧标注该品类总数+占总比例。
+function renderSubtypeStack(drinkCards){
+  const el = document.getElementById('subtypeStack');
+  if (!el) return;
+  const cards = drinkCards.filter(c => MATRIX_COLS_STACK.includes(c.category));
+  const gtot = new Map();
+  for (const c of cards) { const sub = c.subtype || '其他'; gtot.set(sub, (gtot.get(sub)||0)+1); }
+  const subOrder = [...gtot.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  const segs = subOrder.map((sub,i)=>({label:sub, color:SUB_PALETTE[i%SUB_PALETTE.length], test:c=>(c.subtype||'其他')===sub}));
+  const bars = MATRIX_COLS_STACK
+    .map(cat => ({label:cat, key:cat, cards:cards.filter(c=>c.category===cat)}))
+    .filter(b => b.cards.length);
+  renderHStack(el, bars, segs, {proportional:true, barLegend:true, pool: cards,
+    pred:(bar,s)=>c=>c.category===bar.key && (c.subtype||'其他')===s.label,
+    barLabelClick:true, barPred:(bar)=>c=>c.category===bar.key});
 }
 function renderBars(el, items, total, opts = {}) {
   el.innerHTML = '';
@@ -659,7 +771,7 @@ function renderSubtypeMatrix(drinkCards) {
   let grand = 0;
   for (const c of drinkCards) {
     const cat = c.category || '';
-    const sub = c.subtype || '(空)';
+    const sub = c.subtype || '其他';
     if (!MATRIX_COLS.includes(cat)) continue;
     if (!cellMap.has(sub)) cellMap.set(sub, {});
     cellMap.get(sub)[cat] = (cellMap.get(sub)[cat] || 0) + 1;
@@ -714,8 +826,8 @@ function renderSubtypeMatrix(drinkCards) {
       const sub = td.dataset.sub;
       const cat = td.dataset.cat;   // 合计列无 data-cat
       const sel = cat
-        ? drinkCards.filter(c => (c.subtype || '(空)') === sub && c.category === cat)
-        : drinkCards.filter(c => (c.subtype || '(空)') === sub);
+        ? drinkCards.filter(c => (c.subtype || '其他') === sub && c.category === cat)
+        : drinkCards.filter(c => (c.subtype || '其他') === sub);
       showGallery(`子品类 ${sub} · ${cat || '合计'}`, sel);
     };
   });
@@ -753,12 +865,8 @@ function renderAll() {
   // 饮品（有饮品的卡）
   const drinkCards = cards.filter(c => c.category);
 
-  renderBars(
-    document.getElementById('drinkCategoryBars'),
-    orderedItems(countBy(drinkCards, c=>c.category), CATEGORY_ORDER),
-    drinkCards.length, {pool: drinkCards, field: 'category', title: '品类'}
-  );
   renderSubtypeMatrix(drinkCards);
+  renderSubtypeStack(drinkCards);
   renderBrandChips(
     document.getElementById('drinkBrandChips'),
     countBy(drinkCards, c=>c.brand),
@@ -862,7 +970,7 @@ function renderSubChips() {
     const chip = document.createElement('div');
     chip.className = 'sub-chip' + (name === currentSub ? ' active' : '');
     chip.innerHTML = `${name} <span class="count">${n}</span>`;
-    chip.onclick = () => { currentSub = name; closeGallery(); renderSubChips(); renderAll(); };
+    chip.onclick = () => { currentSub = name; renderSubChips(); renderAll(); showSceneGallery(false); };
     el.appendChild(chip);
   }
 }
@@ -881,9 +989,20 @@ function setupFolds(){
     });
   });
 }
+// 默认在底部展示本场景（当前子主题筛选下）全部饮品卡，scroll=false 时不自动滚动
+function showSceneGallery(scroll){
+  var src=(typeof filterCards==='function')?filterCards():ALL_CARDS;
+  var cards=src.filter(function(c){return c.category;});
+  var title=(typeof currentSub!=='undefined'&&currentSub&&currentSub!=='全部')
+    ?('本场景 · '+currentSub+' 全部饮品卡'):'本场景全部饮品卡';
+  if(scroll){ showGallery(title, cards); return; }
+  var _si=Element.prototype.scrollIntoView; Element.prototype.scrollIntoView=function(){};
+  showGallery(title, cards); Element.prototype.scrollIntoView=_si;
+}
 renderSubChips();
 renderAll();
 setupFolds();
+showSceneGallery(false);
 </script>
 </body>
 </html>

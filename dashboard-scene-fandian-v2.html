@@ -343,10 +343,15 @@
   .hstack-rowlabels .rl { display: flex; align-items: center; justify-content: flex-end;
     text-align: right; line-height: 1.1; }
   .hstack-rowlabels .rl.bar-rl { height: 30px; font-size: 13px; font-weight: 800; color: var(--ink); }
-  .hstack-rowlabels .rl.abs-rl { height: 16px; font-size: 9.5px; font-weight: 400; color: var(--ink-4); }
-  .hstack-rowlabels .rl.pct-rl { height: 16px; font-size: 9.5px; font-weight: 400; color: var(--ink-4); }
+  /* 「百分比」「饮品卡数」两个表头标签 = 与段下方具体数值同字号同色 */
+  .hstack-rowlabels .rl.abs-rl { height: 16px; font-size: 10.5px; font-weight: 400; color: var(--ink-3); }
+  .hstack-rowlabels .rl.pct-rl { height: 16px; font-size: 10.5px; font-weight: 400; color: var(--ink-3); }
   .hstack-barwrap { flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .hstack-track { display: flex; height: 30px; border-radius: 6px; overflow: hidden; background: #F1ECE3; }
+  /* 柱长∝数量模式：track 仅占比例宽度，右侧跟一个品类总数标注 */
+  .hstack-trackline { display: flex; align-items: center; gap: 8px; }
+  .hstack-cattot { white-space: nowrap; font-size: 13px; font-weight: 800; color: var(--ink); flex: 0 0 auto; }
+  .hstack-cattot .p { margin-left: 4px; font-size: 11px; font-weight: 600; color: var(--ink-4); }
   .hstack-seg { min-width: 0; }
   .hstack-seg.clickable { cursor: pointer; }
   .hstack-seg.clickable:hover { filter: brightness(1.1); outline: 2px solid #fff; outline-offset: -2px; }
@@ -357,10 +362,26 @@
     line-height: 16px; font-size: 10.5px; font-variant-numeric: tabular-nums; padding: 0 1px; }
   .hstack-annot.abs .ann { color: var(--ink-3); font-weight: 400; }
   .hstack-annot.pct .ann { color: var(--ink-3); font-weight: 400; }
+  /* 「小项」分区：放在可视化图区之外，占比过小的子品类按品类分行列出 */
+  .hstack-smallext { margin-top: 14px; padding-top: 11px; border-top: 1px dashed var(--rule-2); }
+  .hstack-smallext .se-title { font-size: 11px; color: var(--ink-4); font-weight: 600; margin-bottom: 8px; }
+  .hstack-smallext .se-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 14px; margin-bottom: 7px; }
+  .hstack-smallext .se-cat { font-size: 12.5px; font-weight: 800; color: var(--ink); flex: 0 0 76px; }
+  .hstack-smallext .bl { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; }
+  .hstack-smallext .bl .sw { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 auto; }
+  .hstack-smallext .bl b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .hstack-smallext .bl .p { color: var(--ink-4); }
+  .hstack-smallext .bl.clickable { cursor: pointer; }
+  .hstack-smallext .bl.clickable:hover { color: var(--brown-1); }
   .hstack-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 11px;
     padding-top: 9px; border-top: 1px dashed var(--rule-2); }
   .hstack-legend .lg { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-2); }
   .hstack-legend .sw { width: 12px; height: 12px; border-radius: 3px; flex: 0 0 auto; }
+  /* 品类×子品类堆叠柱：左侧品类名 + 右侧品类总数可点 → 看该品类全部原图 */
+  .hstack-rowlabels .rl.bar-rl.clickable { cursor: pointer; }
+  .hstack-rowlabels .rl.bar-rl.clickable:hover { color: var(--brown-1); text-decoration: underline; }
+  .hstack-cattot.clickable { cursor: pointer; }
+  .hstack-cattot.clickable:hover { filter: brightness(1.15); text-decoration: underline; }
   /* 可折叠分区：sub-title 点击展开/收起（默认收起） */
   .sub-title.fold-h { cursor: pointer; user-select: none; }
   .sub-title.fold-h .caret { display: inline-block; margin-left: 6px; color: var(--ink-4);
@@ -371,20 +392,20 @@
 <body>
 
 <div class="nav-bar">
-  <a class="nav-link" href="dashboard-drinks-v2.html?v=202605271848">🥤 饮品卡 V2 · 总</a>
-  <a class="nav-link" href="dashboard-scene-dongri-tongqin-v2.html?v=202605271848">冬日通勤</a>
-  <a class="nav-link" href="dashboard-scene-nanshangjianan-v2.html?v=202605271848">偶尔难上加难</a>
-  <a class="nav-link" href="dashboard-scene-courenao-v2.html?v=202605271848">凑热闹</a>
-  <a class="nav-link" href="dashboard-scene-huanqing-v2.html?v=202605271848">欢庆相聚</a>
-  <a class="nav-link" href="dashboard-scene-zijiren-v2.html?v=202605271848">自己人时刻</a>
-  <a class="nav-link" href="dashboard-scene-dongri-dongqu-v2.html?v=202605271848">冬日动趣</a>
-  <a class="nav-link" href="dashboard-scene-woyiwo-v2.html?v=202605271848">窝一窝</a>
-  <a class="nav-link" href="dashboard-scene-gongzuo-xuexi-v2.html?v=202605271848">日常工作学习</a>
-  <a class="nav-link active" href="dashboard-scene-fandian-v2.html?v=202605271848">日常饭点</a>
+  <a class="nav-link" href="dashboard-drinks-v2.html?v=202606041055">🥤 饮品卡 V2 · 总</a>
+  <a class="nav-link" href="dashboard-scene-dongri-dongqu-v2.html?v=202606041055">冻一冻</a>
+  <a class="nav-link" href="dashboard-scene-woyiwo-v2.html?v=202606041055">窝一窝</a>
+  <a class="nav-link" href="dashboard-scene-zijiren-v2.html?v=202606041055">自己人时刻</a>
+  <a class="nav-link" href="dashboard-scene-nanshangjianan-v2.html?v=202606041055">至寒时刻</a>
+  <a class="nav-link" href="dashboard-scene-huanqing-v2.html?v=202606041055">围一桌</a>
+  <a class="nav-link" href="dashboard-scene-courenao-v2.html?v=202606041055">凑热闹</a>
+  <a class="nav-link" href="dashboard-scene-dongri-tongqin-v2.html?v=202606041055">冬日通勤</a>
+  <a class="nav-link" href="dashboard-scene-gongzuo-xuexi-v2.html?v=202606041055">日常工作学习</a>
+  <a class="nav-link active" href="dashboard-scene-fandian-v2.html?v=202606041055">日常饭点</a>
 </div>
 
 <div class="top-bar">
-  <span class="h1-tag">10. 日常饭点</span>
+  <span class="h1-tag">9. 日常饭点</span>
   <h1>主题看板</h1>
 </div>
 <div class="hint">"瓶饮"栏只统计 category = 瓶装饮品 的卡。数据源：card_summary.csv。</div>
@@ -405,6 +426,12 @@
   </div>
 </div>
 
+<!-- 整页宽：品类 × 子品类 堆叠柱（柱长∝数量） -->
+<div class="panel" style="margin-bottom:16px;">
+  <div class="panel-title">品类 × 子品类<span class="sub">每根柱 = 品类形态（柱长 ∝ 该品类数量，右侧标总数·占总比例），柱内每段 = 子品类（段长 ∝ 子品类数量）· 点品类名/总数看该品类全部、点段看该子品类原图</span></div>
+  <div class="hstack" id="subtypeStack"></div>
+</div>
+
 <!-- 第二行：饮品 / 瓶饮 两栏 -->
 <div class="col-2">
   <!-- 左栏：饮品数/总 -->
@@ -414,10 +441,8 @@
       <span class="sub">所有有饮品的卡</span>
     </div>
 
-    <div class="sub-title">品类 <span class="meta">（大类）</span></div>
-    <div class="bars" id="drinkCategoryBars"></div>
 
-    <div class="sub-title">子品类 × 品类 <span class="meta">单元格 = n · 占该列%，颜色深浅按列内占比</span></div>
+    <div class="sub-title">子品类 × 品类（明细矩阵）<span class="meta">单元格 = n · 占该列%，颜色深浅按列内占比</span></div>
     <div class="matrix-wrap">
       <table class="matrix" id="subtypeMatrix"></table>
       <div class="matrix-legend">
@@ -479,7 +504,7 @@
 
 <div class="lightbox" id="lightbox" onclick="closeLightbox()"><img id="lbImg" src="" alt=""></div>
 
-<script>window.WO_DATA = {"cards": [{"theme": "日常饭点", "sub": "", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "中午吃的油腻想要解腻，喝泡的茶会觉得液态，乌龙茶比较合适，解腻且提神，喝了没负担感", "id": "中产无娃-上海-D09", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-15.png"}, {"theme": "日常饭点", "sub": "", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "黄振龙", "purchase_place": "超市/便利店", "desc": "黄杏加草本的组合，可以解腻，同时暖暖的也可以保护肚肠道一举两得。", "id": "中产无娃-上海-D21", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-26.png"}, {"theme": "日常饭点", "sub": "", "city": "上海", "persona": "中产无娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "TIMS", "purchase_place": "其他", "desc": "中午习惯吃个简单的TIMS套餐，有喝的也有吃的，很满足，而且TIMS就在公司对面很方便", "id": "中产无娃-上海-D46", "card_image": "原始数据/饮品卡/中产无娃-上海/街饮-3.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "平时上班吃午饭的时候，如果吃的比较油腻，就喜欢喝一瓶东方树叶的红茶解腻", "id": "中产无娃-成都-D13", "card_image": "原始数据/饮品卡/中产无娃-成都/瓶装饮品-9.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "果子熟了", "purchase_place": "超市/便利店", "desc": "吃碗麻辣烫喝着柚子茶，很解腻", "id": "中产有娃-哈尔滨-D12", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/自制饮品-2.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "花生豆奶", "id": "中产有娃-成都-D14", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-18.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "其他", "subtype": "咖啡", "temp": "热", "brand": "雀巢", "purchase_place": "超市/便利店", "desc": "因为要出门所以要保持清醒", "id": "学生-哈尔滨-D06", "card_image": "原始数据/饮品卡/学生-哈尔滨/其他.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "小罐茶", "purchase_place": "超市/便利店", "desc": "因为比较油腻所以喝点解腻的", "id": "学生-哈尔滨-D07", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-1.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "有糖茶", "temp": "热", "brand": "雀巢", "purchase_place": "自贩机/智能柜", "desc": "香香暖暖很美味", "id": "学生-哈尔滨-D14", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-16.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "万合", "purchase_place": "不是自己购买的", "desc": "这是我女朋友给我买的她上学地方的特产", "id": "学生-哈尔滨-D15", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-17.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "康师傅", "purchase_place": "超市/便利店", "desc": "这个很解辣", "id": "学生-哈尔滨-D16", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-18.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "宏宝莱", "purchase_place": "其他", "desc": "花生露，之前总喝其他的热饮，想着尝尝这个，喝起来还不错", "id": "学生-哈尔滨-D18", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-3.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "维他", "purchase_place": "其他", "desc": "麻辣烫很辣解解辣", "id": "学生-哈尔滨-D25", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "香飘飘", "purchase_place": "超市/便利店", "desc": "在超市买的奶茶", "id": "学生-哈尔滨-D28", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品-11.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "奶茶店", "purchase_place": "不是自己购买的", "desc": "吃的麻辣烫太辣了！喝凉的怕坏肚子哈哈", "id": "学生-哈尔滨-D31", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品-4.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "学生", "category": "其他", "subtype": "植物蛋白", "temp": "热", "brand": "早餐店", "purchase_place": "其他", "desc": "豆浆", "id": "学生-广州-D20", "card_image": "原始数据/饮品卡/学生-广州/自制饮品-1.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "学生", "category": "其他", "subtype": "奶茶", "temp": "热", "brand": "自制的", "purchase_place": "其他", "desc": "玫瑰甜味酥油茶", "id": "学生-广州-D25", "card_image": "原始数据/饮品卡/学生-广州/自制饮品.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "黑手制面", "purchase_place": "其他", "desc": "店里有特惠，买了杯美式咖啡", "id": "学生-广州-D29", "card_image": "原始数据/饮品卡/学生-广州/街饮-12.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "电商", "desc": "喜欢茶的柚子普洱，冬天，想喝点暖和的下饭吃", "id": "学生-广州-D35", "card_image": "原始数据/饮品卡/学生-广州/街饮-5.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "蜜雪冰城", "purchase_place": "其他", "desc": "吃完饭觉得嘴巴渴，想喝点饮品来解渴，选择了蜜雪冰城的茉莉奶绿", "id": "学生-成都-D04", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-10.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "包装水", "temp": "热", "brand": "农夫山泉", "purchase_place": "自贩机/智能柜", "desc": "农夫山泉矿泉水，因为它是天然矿泉水喝着让我很放心", "id": "学生-成都-D17", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-3.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "东方树叶这个茶饮很符合我的口味，淡淡的茶香味让我挺喜欢的。", "id": "白领-广州-D10", "card_image": "原始数据/饮品卡/白领-广州/瓶装饮品-11.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "三得利乌龙茶无糖了，喝起来没负担，热乎乎的，又可以清口，很舒服", "id": "白领-成都-D26", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-4.png"}]};
+<script>window.WO_DATA = {"cards": [{"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "果汁", "temp": "热", "brand": "幸运咖", "purchase_place": "超市/便利店", "desc": "吃面配果汁很好不错", "id": "学生-哈尔滨-D08", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-10.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "一点点", "purchase_place": "其他", "desc": "是新出的口味，想尝试下", "id": "学生-哈尔滨-D43", "card_image": "原始数据/饮品卡/学生-哈尔滨/街饮-6.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "暖暖的喝着很舒服", "id": "学生-哈尔滨-D45", "card_image": "原始数据/饮品卡/学生-哈尔滨/街饮.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "中产无娃", "category": "自制饮品", "subtype": "草本养生", "temp": "热", "brand": "SOSO", "purchase_place": "不是自己购买的", "desc": "深夜的热茶更加养胃", "id": "中产无娃-哈尔滨-D28", "card_image": "原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-7.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "农夫山泉", "purchase_place": "超市/便利店", "desc": "农夫山泉打奶茶低糖，配料是真牛奶和原叶茶，没有乱七八糟的添加剂。", "id": "中产无娃-成都-D03", "card_image": "原始数据/饮品卡/中产无娃-成都/瓶装饮品-1.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "包装水", "temp": "热", "brand": "健龙", "purchase_place": "超市/便利店", "desc": "暖暖的气泡水很好喝", "id": "学生-哈尔滨-D23", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-8.png"}, {"theme": "日常饭点", "sub": "", "city": "上海", "persona": "白领", "category": "其他", "subtype": "奶茶", "temp": "热", "brand": "", "purchase_place": "其他", "desc": "我看到有特色的西藏奶茶，特地去品尝了一下，感觉很有特色，甜甜的口味。", "id": "白领-上海-D02", "card_image": "原始数据/饮品卡/白领-上海/其他.png"}, {"theme": "日常饭点", "sub": "", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "中午吃的油腻想要解腻，喝泡的茶会觉得液态，乌龙茶比较合适，解腻且提神，喝了没负担感", "id": "中产无娃-上海-D09", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-15.png"}, {"theme": "日常饭点", "sub": "", "city": "上海", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "草本养生", "temp": "热", "brand": "黄振龙", "purchase_place": "超市/便利店", "desc": "黄杏加草本的组合，可以解腻，同时暖暖的也可以保护肚肠道一举两得。", "id": "中产无娃-上海-D21", "card_image": "原始数据/饮品卡/中产无娃-上海/瓶装饮品-26.png"}, {"theme": "日常饭点", "sub": "", "city": "上海", "persona": "中产无娃", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "TIMS", "purchase_place": "其他", "desc": "中午习惯吃个简单的TIMS套餐，有喝的也有吃的，很满足，而且TIMS就在公司对面很方便", "id": "中产无娃-上海-D46", "card_image": "原始数据/饮品卡/中产无娃-上海/街饮-3.png"}, {"theme": "日常饭点", "sub": "", "city": "上海", "persona": "中产无娃", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "珍珠奶茶", "purchase_place": "其他", "desc": "选一种自己喜欢的口味，每次根据要吃的菜选择喝的奶茶。", "id": "中产无娃-上海-D52", "card_image": "原始数据/饮品卡/中产无娃-上海/街饮-9.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "中产无娃", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "平时上班吃午饭的时候，如果吃的比较油腻，就喜欢喝一瓶东方树叶的红茶解腻", "id": "中产无娃-成都-D13", "card_image": "原始数据/饮品卡/中产无娃-成都/瓶装饮品-9.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "果子熟了", "purchase_place": "超市/便利店", "desc": "吃碗麻辣烫喝着柚子茶，很解腻", "id": "中产有娃-哈尔滨-D12", "card_image": "原始数据/饮品卡/中产有娃-哈尔滨/自制饮品-2.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "唯怡", "purchase_place": "其他", "desc": "花生豆奶", "id": "中产有娃-成都-D14", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-18.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "中产有娃", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "超市/便利店", "desc": "瓶装更方便，热饮冬日更友好", "id": "中产有娃-成都-D16", "card_image": "原始数据/饮品卡/中产有娃-成都/瓶装饮品-2.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "其他", "subtype": "咖啡", "temp": "热", "brand": "雀巢", "purchase_place": "超市/便利店", "desc": "因为要出门所以要保持清醒", "id": "学生-哈尔滨-D06", "card_image": "原始数据/饮品卡/学生-哈尔滨/其他.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "小罐茶", "purchase_place": "超市/便利店", "desc": "因为比较油腻所以喝点解腻的", "id": "学生-哈尔滨-D07", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-1.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "有糖茶", "temp": "热", "brand": "雀巢", "purchase_place": "自贩机/智能柜", "desc": "香香暖暖很美味", "id": "学生-哈尔滨-D14", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-16.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "果汁", "temp": "热", "brand": "万合", "purchase_place": "不是自己购买的", "desc": "这是我女朋友给我买的她上学地方的特产", "id": "学生-哈尔滨-D15", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-17.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "康师傅", "purchase_place": "超市/便利店", "desc": "这个很解辣", "id": "学生-哈尔滨-D16", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-18.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "植物蛋白", "temp": "热", "brand": "宏宝莱", "purchase_place": "其他", "desc": "花生露，之前总喝其他的热饮，想着尝尝这个，喝起来还不错", "id": "学生-哈尔滨-D18", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品-3.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "瓶装饮品", "subtype": "牛奶", "temp": "热", "brand": "维他", "purchase_place": "其他", "desc": "麻辣烫很辣解解辣", "id": "学生-哈尔滨-D25", "card_image": "原始数据/饮品卡/学生-哈尔滨/瓶装饮品.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "香飘飘", "purchase_place": "超市/便利店", "desc": "在超市买的奶茶", "id": "学生-哈尔滨-D28", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品-11.png"}, {"theme": "日常饭点", "sub": "", "city": "哈尔滨", "persona": "学生", "category": "自制饮品", "subtype": "奶茶", "temp": "热", "brand": "奶茶店", "purchase_place": "不是自己购买的", "desc": "吃的麻辣烫太辣了！喝凉的怕坏肚子哈哈", "id": "学生-哈尔滨-D31", "card_image": "原始数据/饮品卡/学生-哈尔滨/自制饮品-4.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "学生", "category": "其他", "subtype": "植物蛋白", "temp": "热", "brand": "早餐店", "purchase_place": "其他", "desc": "豆浆", "id": "学生-广州-D20", "card_image": "原始数据/饮品卡/学生-广州/自制饮品-1.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "咖啡", "temp": "热", "brand": "黑手制面", "purchase_place": "其他", "desc": "店里有特惠，买了杯美式咖啡", "id": "学生-广州-D29", "card_image": "原始数据/饮品卡/学生-广州/街饮-12.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "学生", "category": "街饮", "subtype": "奶茶", "temp": "热", "brand": "喜茶", "purchase_place": "电商", "desc": "喜欢茶的柚子普洱，冬天，想喝点暖和的下饭吃", "id": "学生-广州-D35", "card_image": "原始数据/饮品卡/学生-广州/街饮-5.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "学生", "category": "瓶装饮品", "subtype": "包装水", "temp": "热", "brand": "农夫山泉", "purchase_place": "自贩机/智能柜", "desc": "农夫山泉矿泉水，因为它是天然矿泉水喝着让我很放心", "id": "学生-成都-D17", "card_image": "原始数据/饮品卡/学生-成都/瓶装饮品-3.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "东方树叶", "purchase_place": "超市/便利店", "desc": "东方树叶这个茶饮很符合我的口味，淡淡的茶香味让我挺喜欢的。", "id": "白领-广州-D10", "card_image": "原始数据/饮品卡/白领-广州/瓶装饮品-11.png"}, {"theme": "日常饭点", "sub": "", "city": "广州", "persona": "白领", "category": "瓶装饮品", "subtype": "奶茶", "temp": "热", "brand": "统一", "purchase_place": "电商", "desc": "从工位上拿回来的统一奶茶，暖暖的很贴心，适合随餐，还能解辣", "id": "白领-广州-D19", "card_image": "原始数据/饮品卡/白领-广州/瓶装饮品-9.png"}, {"theme": "日常饭点", "sub": "", "city": "成都", "persona": "白领", "category": "瓶装饮品", "subtype": "无糖茶", "temp": "热", "brand": "三得利", "purchase_place": "超市/便利店", "desc": "三得利乌龙茶无糖了，喝起来没负担，热乎乎的，又可以清口，很舒服", "id": "白领-成都-D26", "card_image": "原始数据/饮品卡/白领-成都/瓶装饮品-4.png"}]};
 window.ACTIVE_THEME = "日常饭点";</script>
 <script>
 const ALL_CARDS = window.WO_DATA.cards;
@@ -509,8 +534,8 @@ function countBy(cards, fn) {
 
 // 场景出现顺序 + 显示改名（同首页 SCENE_BAR_ORDER）。[真实theme, 显示名]
 const SCENE_BAR_ORDER = [
-  ['冬日动趣','冻一冻'],['窝一窝','窝一窝'],['自己人时刻','自己人时刻'],
-  ['偶尔难上加难','至寒时刻'],['欢庆相聚','围一桌'],['凑热闹','凑热闹'],
+  ['冻一冻','冻一冻'],['窝一窝','窝一窝'],['自己人时刻','自己人时刻'],
+  ['至寒时刻','至寒时刻'],['围一桌','围一桌'],['凑热闹','凑热闹'],
   ['冬日通勤','冬日通勤'],['日常工作学习','日常工作学习'],['日常饭点','日常饭点'],
 ];
 // 人群分组：中产有娃/无娃合并为「中产」，sub 标注「有娃」绝对值（同首页）
@@ -521,6 +546,9 @@ const PERSONA_GROUPS = [
 ];
 const DISTRO_CITY_ORDER = ['上海','广州','成都','哈尔滨'];
 const PALETTE = ['#7D7BF8','#7CB342','#D27538','#5E5A80','#5FD27B','#A85A28','#E8A33D','#D7BFE9','#FABABB'];
+// 子品类堆叠柱用：同一子品类在所有品类柱里保持同色，故需更多区分色
+const SUB_PALETTE = ['#7D7BF8','#7CB342','#D27538','#5E5A80','#5FD27B','#A85A28','#E8A33D','#D7BFE9','#FABABB','#4FA3C7','#C7506E','#8AB833','#B07CC6','#6FB7B7','#9AA0A6','#C9A227'];
+const MATRIX_COLS_STACK = ['瓶装饮品','街饮','自制饮品','其他'];
 function txtOn(hex){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
   return (0.299*r+0.587*g+0.114*b)>170?'#3A332B':'#fff';}
 
@@ -531,20 +559,39 @@ function renderHStack(el, bars, segs, opts){
   opts = opts || {};
   el.className = 'hstack';
   el.innerHTML = '';
+  // 柱长∝数量模式：以最长柱为基准，各柱按其总量等比缩放；并算各柱占总量比例。
+  // 最长柱封顶 BAR_MAX_PCT（<100），右侧预留固定空当给「总数·占比」标注，避免最长柱的标注被裁掉。
+  const BAR_MAX_PCT = 90, INLINE_MIN = 3.2;  // 段宽≥全条 3.2% 才在下方直接标注，更窄的收进「小项」
+  let maxTot = 1, grandTot = 0;
+  const smallGroups = [];  // 各柱里占比过小、未直接标注的段，集中到图区外的「小项」分区
+  if (opts.proportional) {
+    const tots = bars.map(b => segs.reduce((a,s)=>a + b.cards.filter(s.test).length, 0));
+    maxTot = Math.max(1, ...tots);
+    grandTot = tots.reduce((a,b)=>a+b, 0) || 1;
+  }
   for (const bar of bars) {
     const counts = segs.map(s => bar.cards.filter(s.test).length);
     const tot = counts.reduce((a,b)=>a+b, 0);
+    const scaleW = opts.proportional ? (tot / maxTot * BAR_MAX_PCT) : 100;
     const row = document.createElement('div'); row.className = 'hstack-row';
     // 左侧三行标题
     const labs = document.createElement('div'); labs.className = 'hstack-rowlabels';
     labs.innerHTML = `<div class="rl bar-rl">${bar.label}</div>`
       + `<div class="rl pct-rl">百分比</div><div class="rl abs-rl">饮品卡数</div>`;
+    // 整柱（品类）名可点 → 看该品类全部原图（不限子品类）
+    if (opts.pool && opts.barLabelClick) {
+      const barPred = opts.barPred ? opts.barPred(bar) : (c => c.theme === bar.key);
+      const blEl = labs.querySelector('.bar-rl'); blEl.classList.add('clickable');
+      blEl.title = `${bar.label}：全部 ${tot} 张`;
+      blEl.onclick = () => showGallery(`${bar.label} · 全部`, opts.pool.filter(barPred));
+    }
     row.appendChild(labs);
     const wrap = document.createElement('div'); wrap.className = 'hstack-barwrap';
     const track = document.createElement('div'); track.className = 'hstack-track';
     const absRow = document.createElement('div'); absRow.className = 'hstack-annot abs';
     const pctRow = document.createElement('div'); pctRow.className = 'hstack-annot pct';
     if (tot === 0) track.innerHTML = '<span class="hstack-empty">无</span>';
+    const small = [];  // 太窄塞不下的段：收集起来放到图区外的「小项」分区
     segs.forEach((s, i) => {
       const n = counts[i]; if (n === 0) return;
       const pct = tot > 0 ? n / tot * 100 : 0;
@@ -555,29 +602,75 @@ function renderHStack(el, bars, segs, opts){
       const seg = document.createElement('div'); seg.className = 'hstack-seg';
       seg.style.width = pct + '%'; seg.style.background = s.color;
       seg.title = `${bar.label} · ${s.label}：${n} 张${subStr}（${pct.toFixed(1)}%）`;
-      // 下方两排：绝对值、百分比（与色块同宽）
-      const aAbs = document.createElement('div'); aAbs.className = 'ann';
-      aAbs.style.width = pct + '%'; aAbs.innerHTML = `${n}${subStr}`; aAbs.title = `${s.label}：${n}${subStr}`;
-      const aPct = document.createElement('div'); aPct.className = 'ann';
-      aPct.style.width = pct + '%'; aPct.textContent = pctStr; aPct.title = `${s.label}：${pctStr}`;
       if (opts.pool) {
-        const pred = c => c.theme === bar.key && s.test(c);
+        const pred = opts.pred ? opts.pred(bar, s) : (c => c.theme === bar.key && s.test(c));
         const show = () => showGallery(`${bar.label} · ${s.label}`, opts.pool.filter(pred));
         seg.classList.add('clickable'); seg.onclick = show;
       }
-      track.appendChild(seg); absRow.appendChild(aAbs); pctRow.appendChild(aPct);
+      track.appendChild(seg);
+      // 下方两排：与段同宽对齐；够宽（占全条≥INLINE_MIN%）才写文字，否则空着、收进小项清单
+      const eff = (opts.proportional ? scaleW : 100) * pct / 100;
+      const aAbs = document.createElement('div'); aAbs.className = 'ann'; aAbs.style.width = pct + '%'; aAbs.title = `${s.label}：${n}${subStr}`;
+      const aPct = document.createElement('div'); aPct.className = 'ann'; aPct.style.width = pct + '%'; aPct.title = `${s.label}：${pctStr}`;
+      if (!opts.barLegend || eff >= INLINE_MIN) { aAbs.innerHTML = `${n}${subStr}`; aPct.textContent = pctStr; }
+      else { small.push({ s, n, subStr, pctStr }); }
+      absRow.appendChild(aAbs); pctRow.appendChild(aPct);
     });
-    wrap.appendChild(track); wrap.appendChild(pctRow); wrap.appendChild(absRow);
+    if (opts.proportional) {
+      // track 只占比例宽度 → 柱长∝该品类数量；右侧标注该品类总数 + 占总比例
+      track.style.width = scaleW + '%'; track.style.flex = '0 1 ' + scaleW + '%';
+      absRow.style.width = scaleW + '%'; pctRow.style.width = scaleW + '%';
+      const line = document.createElement('div'); line.className = 'hstack-trackline';
+      line.appendChild(track);
+      const gpct = Math.round(tot / grandTot * 100);
+      const ct = document.createElement('span'); ct.className = 'hstack-cattot';
+      ct.innerHTML = `${tot}<span class="p">${gpct}%</span>`;
+      if (opts.pool && opts.barLabelClick) {
+        const barPred = opts.barPred ? opts.barPred(bar) : (c => c.theme === bar.key);
+        ct.classList.add('clickable'); ct.title = `${bar.label}：全部 ${tot} 张`;
+        ct.onclick = () => showGallery(`${bar.label} · 全部`, opts.pool.filter(barPred));
+      }
+      line.appendChild(ct);
+      wrap.appendChild(line);
+    } else {
+      track.style.width = '100%';
+      wrap.appendChild(track);
+    }
+    wrap.appendChild(pctRow); wrap.appendChild(absRow);
     row.appendChild(wrap);
     el.appendChild(row);
+    if (opts.barLegend && small.length) smallGroups.push({ bar, items: small });
   }
-  const legend = document.createElement('div'); legend.className = 'hstack-legend';
-  for (const s of segs) {
-    const lg = document.createElement('span'); lg.className = 'lg';
-    lg.innerHTML = `<span class="sw" style="background:${s.color}"></span>${s.label}`;
-    legend.appendChild(lg);
+  {
+    const legend = document.createElement('div'); legend.className = 'hstack-legend';
+    for (const s of segs) {
+      const lg = document.createElement('span'); lg.className = 'lg';
+      lg.innerHTML = `<span class="sw" style="background:${s.color}"></span>${s.label}`;
+      legend.appendChild(lg);
+    }
+    el.appendChild(legend);
   }
-  el.appendChild(legend);
+  // 「小项」分区：放在可视化图区外（el 之后的兄弟节点），按品类分行列出占比过小的子品类
+  const host = el.parentNode; const prevExt = host && host.querySelector(':scope > .hstack-smallext'); if (prevExt) prevExt.remove();
+  if (host && smallGroups.length) {
+    const ext = document.createElement('div'); ext.className = 'hstack-smallext';
+    ext.innerHTML = '<div class="se-title">小项（占比过小，未在条上直接标注）</div>';
+    smallGroups.forEach(g => {
+      const r = document.createElement('div'); r.className = 'se-row';
+      const c = document.createElement('span'); c.className = 'se-cat'; c.textContent = g.bar.label; r.appendChild(c);
+      g.items.forEach(({ s, n, subStr, pctStr }) => {
+        const item = document.createElement('span'); item.className = 'bl';
+        item.innerHTML = `<span class="sw" style="background:${s.color}"></span>${s.label} <b>${n}${subStr}</b> <span class="p">${pctStr}</span>`;
+        if (opts.pool) {
+          const pred = opts.pred ? opts.pred(g.bar, s) : (c2 => c2.theme === g.bar.key && s.test(c2));
+          item.classList.add('clickable'); item.onclick = () => showGallery(`${g.bar.label} · ${s.label}`, opts.pool.filter(pred));
+        }
+        r.appendChild(item);
+      });
+      ext.appendChild(r);
+    });
+    el.insertAdjacentElement('afterend', ext);
+  }
 }
 
 // 城市/人群两块：只画本场景一行横向堆叠（构成占比）。口径=本场景饮品卡，与子主题筛选无关。
@@ -590,6 +683,25 @@ function renderDistro(){
   const bar = [{label, key: window.ACTIVE_THEME, cards}];
   renderHStack(document.getElementById('cityBars'), bar, citySegs, {pool: cards});
   renderHStack(document.getElementById('personaBars'), bar, personaSegs, {pool: cards});
+}
+
+// 品类 × 子品类 横向堆叠（柱长∝数量）：每根柱=一种品类形态，柱长∝该品类卡片数（最长柱=100%基准），
+// 柱内每段=子品类、段长∝该子品类卡片数；同一子品类在所有柱里同色（按全局总量排序定色）。
+// 兼并了原「品类（大类）」横条图——柱长已表达品类数量，右侧标注该品类总数+占总比例。
+function renderSubtypeStack(drinkCards){
+  const el = document.getElementById('subtypeStack');
+  if (!el) return;
+  const cards = drinkCards.filter(c => MATRIX_COLS_STACK.includes(c.category));
+  const gtot = new Map();
+  for (const c of cards) { const sub = c.subtype || '其他'; gtot.set(sub, (gtot.get(sub)||0)+1); }
+  const subOrder = [...gtot.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  const segs = subOrder.map((sub,i)=>({label:sub, color:SUB_PALETTE[i%SUB_PALETTE.length], test:c=>(c.subtype||'其他')===sub}));
+  const bars = MATRIX_COLS_STACK
+    .map(cat => ({label:cat, key:cat, cards:cards.filter(c=>c.category===cat)}))
+    .filter(b => b.cards.length);
+  renderHStack(el, bars, segs, {proportional:true, barLegend:true, pool: cards,
+    pred:(bar,s)=>c=>c.category===bar.key && (c.subtype||'其他')===s.label,
+    barLabelClick:true, barPred:(bar)=>c=>c.category===bar.key});
 }
 function renderBars(el, items, total, opts = {}) {
   el.innerHTML = '';
@@ -659,7 +771,7 @@ function renderSubtypeMatrix(drinkCards) {
   let grand = 0;
   for (const c of drinkCards) {
     const cat = c.category || '';
-    const sub = c.subtype || '(空)';
+    const sub = c.subtype || '其他';
     if (!MATRIX_COLS.includes(cat)) continue;
     if (!cellMap.has(sub)) cellMap.set(sub, {});
     cellMap.get(sub)[cat] = (cellMap.get(sub)[cat] || 0) + 1;
@@ -714,8 +826,8 @@ function renderSubtypeMatrix(drinkCards) {
       const sub = td.dataset.sub;
       const cat = td.dataset.cat;   // 合计列无 data-cat
       const sel = cat
-        ? drinkCards.filter(c => (c.subtype || '(空)') === sub && c.category === cat)
-        : drinkCards.filter(c => (c.subtype || '(空)') === sub);
+        ? drinkCards.filter(c => (c.subtype || '其他') === sub && c.category === cat)
+        : drinkCards.filter(c => (c.subtype || '其他') === sub);
       showGallery(`子品类 ${sub} · ${cat || '合计'}`, sel);
     };
   });
@@ -753,12 +865,8 @@ function renderAll() {
   // 饮品（有饮品的卡）
   const drinkCards = cards.filter(c => c.category);
 
-  renderBars(
-    document.getElementById('drinkCategoryBars'),
-    orderedItems(countBy(drinkCards, c=>c.category), CATEGORY_ORDER),
-    drinkCards.length, {pool: drinkCards, field: 'category', title: '品类'}
-  );
   renderSubtypeMatrix(drinkCards);
+  renderSubtypeStack(drinkCards);
   renderBrandChips(
     document.getElementById('drinkBrandChips'),
     countBy(drinkCards, c=>c.brand),
@@ -862,7 +970,7 @@ function renderSubChips() {
     const chip = document.createElement('div');
     chip.className = 'sub-chip' + (name === currentSub ? ' active' : '');
     chip.innerHTML = `${name} <span class="count">${n}</span>`;
-    chip.onclick = () => { currentSub = name; closeGallery(); renderSubChips(); renderAll(); };
+    chip.onclick = () => { currentSub = name; renderSubChips(); renderAll(); showSceneGallery(false); };
     el.appendChild(chip);
   }
 }
@@ -881,9 +989,20 @@ function setupFolds(){
     });
   });
 }
+// 默认在底部展示本场景（当前子主题筛选下）全部饮品卡，scroll=false 时不自动滚动
+function showSceneGallery(scroll){
+  var src=(typeof filterCards==='function')?filterCards():ALL_CARDS;
+  var cards=src.filter(function(c){return c.category;});
+  var title=(typeof currentSub!=='undefined'&&currentSub&&currentSub!=='全部')
+    ?('本场景 · '+currentSub+' 全部饮品卡'):'本场景全部饮品卡';
+  if(scroll){ showGallery(title, cards); return; }
+  var _si=Element.prototype.scrollIntoView; Element.prototype.scrollIntoView=function(){};
+  showGallery(title, cards); Element.prototype.scrollIntoView=_si;
+}
 renderSubChips();
 renderAll();
 setupFolds();
+showSceneGallery(false);
 </script>
 </body>
 </html>
