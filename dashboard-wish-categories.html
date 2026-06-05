@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>理想饮品许愿看板</title>
+<title>理想饮品许愿 · 品类分布</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -327,21 +327,13 @@
 </head>
 <body>
 
-<h1>❄️ 理想饮品许愿看板</h1>
+<h1>⭐ 理想饮品许愿 · 品类分布</h1>
 <div class="hint">
   来源：<b>原始数据/饮品卡/冬日暖心时刻问卷数据.xlsx</b> 的「C·E_理想许愿」 ·
-  共 <b id="total-count">—</b> 条许愿。每张卡是一位用户对冬天理想饮品的一个许愿（每人最多 3 条）。
+  共 <b id="total-count">—</b> 条许愿。按口味大类（base）重新归类后的品类频次。
   <br>
-  <b>第一层</b>口味大类（base）｜ <b>第二层</b>口味元素（来自用户原话）｜ <b>第三层</b>喝的原因 — 都可在下方点 chip 筛选。
-</div>
-
-<div class="nav-bar">
-  <a class="nav-link" href="dashboard-drinks.html">🥤 用户饮品卡</a>
-  <a class="nav-link" href="dashboard-v2.html">📍 希望瓶装热饮出现的场景</a>
-  <a class="nav-link" href="dashboard-heating.html">🔥 加热设备选型</a>
-  <a class="nav-link" href="dashboard-devices.html">📷 用户实拍设备</a>
-  <a class="nav-link" href="dashboard-complaints.html">💢 不好的体验</a>
-  <a class="nav-link active" href="dashboard-wishes.html">⭐ 理想饮品许愿</a>
+  <b>点击柱子</b> → 只看该品类的许愿（再点一次取消）。完整筛选见
+  <a href="dashboard-wishes.html" style="color:#3b6ea5;font-weight:700">理想饮品许愿看板</a>。
 </div>
 
 <div class="cat-chart-card">
@@ -349,15 +341,13 @@
   <div class="cat-chart" id="cat-chart"></div>
 </div>
 
-<div class="filter-wrap" id="filter-wrap"></div>
-
 <div class="toolbar">
   <div class="stats-line" id="stats-line"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
     <div class="search-box">
       <input id="search-input" type="search" placeholder="🔎 搜索口味、原因、品类、姓名…" oninput="render()">
     </div>
-    <button class="btn" onclick="clearAllFilters()">清空所有筛选</button>
+    <button class="btn" onclick="clearAllFilters()">清空筛选</button>
   </div>
 </div>
 
@@ -13111,7 +13101,6 @@ function selectCatClass(c) {
 function render() {
   state.search = document.getElementById('search-input').value || '';
   renderCatChart();
-  renderFilters();
   renderCards();
 }
 
