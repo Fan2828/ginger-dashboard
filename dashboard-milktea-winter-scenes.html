@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🧋冬日奶茶暖饮场景</title>
+<style>
+:root{
+  --bg:#f8f1e4;
+  --ink:#2d2925;
+  --muted:#8c8378;
+  --muted-2:#a69d91;
+  --line:#d9cdbb;
+  --line-soft:#eadfcc;
+  --panel:#f1ead8;
+  --panel-2:#fbf5e9;
+  --accent:#d26f3b;
+  --accent-dark:#a9562e;
+  --dark:#25211f;
+  --tile-gap:5px;
+}
+*{box-sizing:border-box;margin:0;padding:0;letter-spacing:0;}
+body{
+  min-width:320px;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding:24px;
+}
+main{max-width:1440px;margin:0 auto;}
+.floating-context{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:15;
+  background:rgba(248,241,228,.96);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 8px 24px rgba(83,66,47,.12);
+  color:var(--muted);
+  font-size:13px;
+  backdrop-filter:blur(14px);
+  transform:translateY(-110%);
+  opacity:0;
+  pointer-events:none;
+  transition:transform .18s ease,opacity .18s ease;
+}
+.floating-context.is-visible{
+  transform:translateY(0);
+  opacity:1;
+  pointer-events:auto;
+}
+.floating-inner{
+  max-width:1440px;
+  margin:0 auto;
+  padding:7px 24px;
+}
+.floating-row{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  min-height:36px;
+  border-bottom:1px solid rgba(217,205,187,.78);
+}
+.floating-row:last-child{border-bottom:0;}
+.floating-label{
+  flex:0 0 82px;
+  font-weight:500;
+  color:#93897c;
+  white-space:nowrap;
+}
+.floating-options{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  min-width:0;
+  overflow-x:auto;
+  padding:2px 0;
+  scrollbar-width:none;
+}
+.floating-options::-webkit-scrollbar{display:none;}
+.floating-option{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:#5f574f;
+  font:inherit;
+  font-size:13px;
+  font-weight:500;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:30px;
+  border-radius:999px;
+  padding:0 2px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.floating-option[aria-pressed="true"]{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:32px;
+  padding:0 14px;
+  border-radius:999px;
+  background:var(--dark);
+  color:#fff;
+  font-weight:500;
+}
+.floating-option-count{font-variant-numeric:tabular-nums;}
+.floating-dot{
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  flex:0 0 auto;
+  background:var(--floating-color,var(--accent));
+}
+.floating-dot.all{
+  border:2px solid #a39b92;
+  background:conic-gradient(#d26f3b 0 25%,#8583e6 0 50%,#5fbf78 0 75%,#e3c85d 0);
+}
+.hero{
+  border-bottom:1px solid var(--line);
+  padding-bottom:18px;
+  margin-bottom:22px;
+}
+h1{font-size:34px;font-weight:500;line-height:1.18;color:var(--ink);}
+.title-accent{color:#c86627;}
+.toolbar{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  flex-wrap:wrap;
+  padding:0 0 16px;
+}
+.toolbar-label{
+  font-size:16px;
+  font-weight:500;
+  color:#93897c;
+  white-space:nowrap;
+}
+.format-buttons{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.format-btn{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:#514b45;
+  font:inherit;
+  font-size:15px;
+  font-weight:400;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:38px;
+  cursor:pointer;
+  border-radius:24px;
+  padding:0 2px;
+}
+.format-btn[aria-pressed="true"]{
+  background:var(--dark);
+  color:#fff;
+  padding:0 17px;
+  font-weight:500;
+}
+.dot{
+  width:13px;
+  height:13px;
+  border-radius:50%;
+  flex:0 0 auto;
+  background:var(--dot);
+}
+.dot.all{
+  border:2px solid #a39b92;
+  background:conic-gradient(#d26f3b 0 25%,#8583e6 0 50%,#5fbf78 0 75%,#e3c85d 0);
+}
+.metric-line{
+  display:flex;
+  align-items:baseline;
+  gap:16px;
+  flex-wrap:wrap;
+  color:var(--muted);
+  font-size:15px;
+  margin-bottom:12px;
+}
+.metric-line b{font-size:28px;font-weight:500;color:var(--accent);}
+.layout{
+  margin-bottom:24px;
+  display:flex;
+  justify-content:flex-start;
+}
+.viz-wrap{
+  width:min(50vw,720px);
+  min-width:520px;
+}
+.treemap{
+  position:relative;
+  width:100%;
+  aspect-ratio:1.05/1;
+  max-height:620px;
+  min-height:0;
+  background:transparent;
+  overflow:hidden;
+}
+.scene-tile{
+  position:absolute;
+  border-style:solid;
+  border-color:#f3efb5;
+  border-width:var(--tile-border-top,var(--tile-gap)) var(--tile-border-right,var(--tile-gap)) var(--tile-border-bottom,var(--tile-gap)) var(--tile-border-left,var(--tile-gap));
+  border-radius:8px;
+  padding:14px 16px;
+  text-align:left;
+  color:var(--tile-fg);
+  background:var(--tile-bg);
+  cursor:pointer;
+  overflow:hidden;
+  transition:filter .15s,transform .15s,box-shadow .15s;
+}
+.scene-tile:hover{filter:saturate(1.04) brightness(1.02);}
+.scene-tile.is-selected{
+  box-shadow:inset 0 0 0 4px rgba(45,41,37,.38);
+}
+.scene-name{
+  display:block;
+  font-size:22px;
+  font-weight:500;
+  line-height:1.16;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+}
+.scene-value{
+  display:block;
+  font-size:17px;
+  font-weight:400;
+  line-height:1.35;
+  margin-top:7px;
+  font-variant-numeric:tabular-nums;
+  opacity:.92;
+}
+.scene-tile.is-compact{padding:12px 14px;}
+.scene-tile.is-compact .scene-name{font-size:17px;}
+.scene-tile.is-compact .scene-value{font-size:14px;margin-top:4px;}
+.cards-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  border-top:1px solid var(--line);
+  padding-top:18px;
+  margin-bottom:12px;
+}
+#cardsSection{scroll-margin-top:106px;}
+.cards-title{font-size:24px;font-weight:500;}
+.cards-meta{font-size:15px;color:var(--muted);}
+.clear-btn{
+  appearance:none;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--accent-dark);
+  border-radius:20px;
+  padding:7px 14px;
+  font:inherit;
+  cursor:pointer;
+}
+.clear-btn[hidden]{display:none;}
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(206px,1fr));
+  gap:14px;
+}
+.drink-card{
+  background:var(--panel-2);
+  border:1px solid var(--line-soft);
+  border-radius:8px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.thumb{
+  position:relative;
+  aspect-ratio:3/4;
+  background:#efe6d2;
+  cursor:zoom-in;
+}
+.thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.card-id{display:none!important;}
+.drink-body{padding:12px;display:flex;flex-direction:column;gap:8px;}
+.badges{display:flex;flex-wrap:wrap;gap:5px;}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  min-height:22px;
+  border-radius:5px;
+  padding:2px 7px;
+  font-size:12px;
+  font-weight:500;
+  color:var(--ink);
+  background:#eadfc8;
+}
+.badge.scene{background:#e8d3bd;color:#70452d;}
+.badge.format{background:#dedbf2;color:#383461;}
+.badge.place{background:#dfebd7;color:#3c633e;}
+.desc{
+  color:#686158;
+  font-size:13px;
+  line-height:1.55;
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.lightbox{
+  position:fixed;
+  inset:0;
+  background:rgba(27,24,22,.86);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
+  padding:24px;
+  cursor:zoom-out;
+}
+.lightbox img{
+  max-width:92vw;
+  max-height:92vh;
+  border-radius:8px;
+  box-shadow:0 18px 48px rgba(0,0,0,.35);
+}
+@media(max-width:980px){
+  body{padding:18px;}
+  .layout{display:block;}
+  .viz-wrap{width:100%;max-width:none;min-width:0;}
+  .treemap{aspect-ratio:1.35/1;min-height:340px;max-height:none;}
+}
+@media(max-width:560px){
+  body{padding:14px;}
+  h1{font-size:28px;}
+  .toolbar{gap:12px;}
+  .format-buttons{gap:11px;}
+  .format-btn{font-size:14px;min-height:38px;}
+  .format-btn[aria-pressed="true"]{padding:0 14px;}
+  .treemap{min-height:420px;aspect-ratio:.9/1;}
+  .scene-tile{padding:10px;}
+  .scene-name{font-size:17px;}
+  .scene-value{font-size:14px;}
+  .cards-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+  .floating-context{
+    font-size:13px;
+  }
+  .floating-inner{padding:6px 14px;}
+  .floating-row{
+    gap:10px;
+    min-height:38px;
+  }
+  .floating-label{flex:0 0 66px;}
+  .floating-option[aria-pressed="true"]{
+    min-height:30px;
+    padding:0 12px;
+  }
+  #cardsSection{scroll-margin-top:98px;}
+}
+</style>
+</head>
+<body>
+<div class="floating-context" id="floatingContext" aria-live="polite">
+  <div class="floating-inner">
+    <div class="floating-row">
+      <span class="floating-label">场景视角</span>
+      <div class="floating-options" id="floatingSceneOptions"></div>
+    </div>
+    <div class="floating-row">
+      <span class="floating-label">品类形态</span>
+      <div class="floating-options" id="floatingFormatOptions"></div>
+    </div>
+  </div>
+</div>
+<main>
+  <header class="hero">
+    <h1>🧋冬日<span class="title-accent">奶茶</span>暖饮场景</h1>
+  </header>
+
+  <section class="toolbar" aria-label="品类形态">
+    <div class="toolbar-label">品类形态</div>
+    <div class="format-buttons" id="formatButtons"></div>
+  </section>
+
+  <div class="metric-line">
+    <span><b id="totalCount">0</b>次奶茶提及</span>
+    <span id="currentScope">全部</span>
+  </div>
+
+  <section class="layout">
+    <div class="viz-wrap">
+      <div class="treemap" id="sceneMap" aria-label="奶茶冬季场景方块图"></div>
+    </div>
+  </section>
+
+  <section id="cardsSection">
+    <div class="cards-head">
+      <div>
+        <div class="cards-title" id="cardsTitle"><span class="title-accent">全部</span>奶茶场景</div>
+        <div class="cards-meta" id="cardsMeta">0 张</div>
+      </div>
+      <button class="clear-btn" type="button" data-clear-scene hidden>查看全部场景</button>
+    </div>
+    <div class="cards-grid" id="cardsGrid"></div>
+  </section>
+</main>
+
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
+
+<script>
+const RAW=[{"i":"中产无娃-哈尔滨-D16","t":"冬日通勤","c":"瓶装饮品","city":"哈尔滨","p":"中产无娃","b":"统一","temp":"热","d":"偶然路过发现这款没有喝过，我觉得比蜜雪冰城奶绿好喝","img":"原始数据/饮品卡/中产无娃-哈尔滨/瓶装饮品-6.png"},{"i":"中产有娃-上海-D10","t":"冬日通勤","c":"瓶装饮品","city":"上海","p":"中产有娃","b":"康师傅","temp":"热","d":"直接去超市的热饮柜上拿一瓶。","img":"原始数据/饮品卡/中产有娃-上海/购买.png"},{"i":"学生-广州-D10","t":"冬日通勤","c":"瓶装饮品","city":"广州","p":"学生","b":"立顿","temp":"热","d":"刚买热的立顿奶茶，好喝暖胃","img":"原始数据/饮品卡/学生-广州/瓶装饮品-15.png"},{"i":"中产无娃-广州-D11","t":"自己人时刻","c":"瓶装饮品","city":"广州","p":"中产无娃","b":"统一","temp":"热","d":"平时也喜欢喝奶茶，逛商场带瓶装比较方便","img":"原始数据/饮品卡/中产无娃-广州/瓶装饮品-5.png"},{"i":"中产无娃-广州-D31","t":"日常工作学习","c":"街饮","city":"广州","p":"中产无娃","b":"霸茶姬","temp":"热","d":"冬日喝杯热奶茶暖暖身子，和同事一起忙里偷闲，轻松又惬意。","img":"原始数据/饮品卡/中产无娃-广州/街饮-3.png"},{"i":"学生-哈尔滨-D32","t":"至寒时刻","c":"街饮","city":"哈尔滨","p":"学生","b":"一点点","temp":"热","d":"到o朋友店里 点的奶茶，太冷了暖暖手","img":"原始数据/饮品卡/学生-哈尔滨/自制饮品-5.png"},{"i":"学生-成都-D31","t":"至寒时刻","c":"街饮","city":"成都","p":"学生","b":"春菜","temp":"热","d":"春菜这款看起来特别暖，既可以补气血又可以温暖身体","img":"原始数据/饮品卡/学生-成都/街饮-10.png"},{"i":"白领-哈尔滨-D41","t":"日常工作学习","c":"街饮","city":"哈尔滨","p":"白领","b":"喜茶","temp":"热","d":"珍珠奶茶，里面的珍珠很好口感，奶茶甜甜的","img":"原始数据/饮品卡/白领-哈尔滨/街饮-2.png"},{"i":"白领-哈尔滨-D43","t":"至寒时刻","c":"街饮","city":"哈尔滨","p":"白领","b":"蜜雪冰城","temp":"热","d":"珍珠奶茶，淡淡的奶茶味","img":"原始数据/饮品卡/白领-哈尔滨/街饮-4.png"},{"i":"白领-广州-D29","t":"至寒时刻","c":"自制饮品","city":"广州","p":"白领","b":"","temp":"热","d":"DIY 热饮，补血，养生","img":"原始数据/饮品卡/白领-广州/自制饮品-7.png"},{"i":"中产无娃-上海-D03","t":"冻一冻","c":"瓶装饮品","city":"上海","p":"中产无娃","b":"喜茶","temp":"热","d":"便利店的苹果小奶茶很方便携带，和同事逛街也可以在办公室继续喝","img":"原始数据/饮品卡/中产无娃-上海/瓶装饮品-1.png"},{"i":"中产无娃-上海-D05","t":"冻一冻","c":"瓶装饮品","city":"上海","p":"中产无娃","b":"喜茶","temp":"热","d":"非常清甜口味，浓郁芳香，加热后更加的香甜可口。","img":"原始数据/饮品卡/中产无娃-上海/瓶装饮品-11.png"},{"i":"中产无娃-上海-D06","t":"凑热闹","c":"瓶装饮品","city":"上海","p":"中产无娃","b":"喜茶","temp":"热","d":"茉莉的诱人香气沁人心脾，一般暖流下肚非常提神，很温暖","img":"原始数据/饮品卡/中产无娃-上海/瓶装饮品-12.png"},{"i":"中产无娃-上海-D48","t":"冻一冻","c":"街饮","city":"上海","p":"中产无娃","b":"乐乐茶","temp":"热","d":"想试试甜加咸组合会不会有不同的口感和新奇","img":"原始数据/饮品卡/中产无娃-上海/街饮-5.png"},{"i":"中产无娃-哈尔滨-组pilot-D07","t":"凑热闹","c":"街饮","city":"哈尔滨","p":"中产无娃","b":"雪雪","temp":"","d":"边喝边和奶茶幸福","img":"原始数据/饮品卡/中产无娃-哈尔滨-组pilot/街饮饮品-1.png"},{"i":"中产无娃-成都-D23","t":"凑热闹","c":"街饮","city":"成都","p":"中产无娃","b":"古茗","temp":"热","d":"当时在园区玩得又湿又累，想喝一杯热火又有能量的东西来消除饥饿","img":"原始数据/饮品卡/中产无娃-成都/街饮-3.png"},{"i":"中产有娃-哈尔滨-D06","t":"凑热闹","c":"瓶装饮品","city":"哈尔滨","p":"中产有娃","b":"康师傅","temp":"热","d":"够买方便。可以暖手，拿着也方便很多。","img":"原始数据/饮品卡/中产有娃-哈尔滨/瓶装饮品-2.png"},{"i":"中产有娃-哈尔滨-D15","t":"凑热闹","c":"街饮","city":"哈尔滨","p":"中产有娃","b":"蜜雪冰城","temp":"热","d":"孩子在外面玩雪，冷了一定要喝奶茶暖一暖，就在街边买了一杯。","img":"原始数据/饮品卡/中产有娃-哈尔滨/街饮-1.png"},{"i":"中产有娃-广州-D09","t":"凑热闹","c":"瓶装饮品","city":"广州","p":"中产有娃","b":"维他","temp":"热","d":"冬天想喝点热的，随手拿了这个维他港式奶茶，加热一下还挺方便的，味道也不错。","img":"原始数据/饮品卡/中产有娃-广州/瓶装饮品-8.png"},{"i":"中产有娃-成都-D03","t":"凑热闹","c":"瓶装饮品","city":"成都","p":"中产有娃","b":"兵立王","temp":"热","d":"逛街随便喝一些奶茶","img":"原始数据/饮品卡/中产有娃-成都/其他-3.png"},{"i":"中产有娃-成都-D21","t":"凑热闹","c":"瓶装饮品","city":"成都","p":"中产有娃","b":"妍哈哈","temp":"热","d":"冬天温暖人心","img":"原始数据/饮品卡/中产有娃-成都/瓶装饮品-6.png"},{"i":"学生-上海-D14","t":"冻一冻","c":"自制饮品","city":"上海","p":"学生","b":"东方树叶、光明","temp":"热","d":"用东方树叶茉莉花茶和光明纯牛奶混合制成的茉莉奶绿，是跟着小红书学的","img":"原始数据/饮品卡/学生-上海/瓶装饮品-21.png"},{"i":"学生-上海-组pilot-D06","t":"凑热闹","c":"街饮","city":"上海","p":"学生","b":"霸茶姬","temp":"","d":"那天聚在一起大家一起点了霸茶姬","img":"原始数据/饮品卡/学生-上海-组pilot/街饮饮品-2.png"},{"i":"学生-上海-组pilot-D08","t":"冻一冻","c":"街饮","city":"上海","p":"学生","b":"李山山","temp":"","d":"这是我在成都喝的热饮奶茶，我当时过去打卡，并且点了一杯店里top1","img":"原始数据/饮品卡/学生-上海-组pilot/街饮饮品.png"},{"i":"学生-哈尔滨-D20","t":"冻一冻","c":"瓶装饮品","city":"哈尔滨","p":"学生","b":"瑞w燕","temp":"热","d":"在外面站了好长时间，冻手，然后去外面店里买的","img":"原始数据/饮品卡/学生-哈尔滨/瓶装饮品-5.png"},{"i":"学生-哈尔滨-D39","t":"凑热闹","c":"街饮","city":"哈尔滨","p":"学生","b":"春菜","temp":"热","d":"刚刚做好时浓郁的琥珀香气沁人心脾，称得上一杯浪漫的奶茶～","img":"原始数据/饮品卡/学生-哈尔滨/街饮-2.png"},{"i":"学生-成都-D22","t":"冻一冻","c":"瓶装饮品","city":"成都","p":"学生","b":"阿萨姆","temp":"热","d":"喝的便利店买的热阿萨姆奶茶，不用等时间","img":"原始数据/饮品卡/学生-成都/瓶装饮品-8.png"},{"i":"白领-上海-D09","t":"凑热闹","c":"街饮","city":"上海","p":"白领","b":"蜜雪冰城","temp":"热","d":"因为它捂着暖手，喝起来的茶香很甜润，经典珍珠的Q弹让口感更佳丰富，跨年喝温暖又有气氛...","img":"原始数据/饮品卡/白领-上海/瓶装饮品-15.png"},{"i":"白领-哈尔滨-D37","t":"自己人时刻","c":"街饮","city":"哈尔滨","p":"白领","b":"喜茶","temp":"热","d":"奶茶","img":"原始数据/饮品卡/白领-哈尔滨/街饮-1.png"},{"i":"白领-成都-D42","t":"凑热闹","c":"街饮","city":"成都","p":"白领","b":"古茗","temp":"热","d":"夜晚风冷，芋泥鲜奶饱腹感强，热乎乎的，很适合热闹的夜晚","img":"原始数据/饮品卡/白领-成都/街饮-3.png"},{"i":"白领-成都-D44","t":"凑热闹","c":"街饮","city":"成都","p":"白领","b":"白马寺","temp":"热","d":"每次出去玩时当地的饮品都会让我产生很大的兴趣想要尝试，精美的包装、独特的口味都是...","img":"原始数据/饮品卡/白领-成都/街饮-5.png"},{"i":"白领-成都-D45","t":"冻一冻","c":"街饮","city":"成都","p":"白领","b":"春菜","temp":"热","d":"奶茶可以让变得开心，和朋友出玩时能卸去一周的疲惫。","img":"原始数据/饮品卡/白领-成都/街饮-6.png"},{"i":"白领-成都-组pilot-D10","t":"自己人时刻","c":"街饮","city":"成都","p":"白领","b":"霸王茶姬","temp":"","d":"在逛街的时候喝一杯浓郁茶感更搭配，手上捧着","img":"原始数据/饮品卡/白领-成都-组pilot/街饮饮品-1.png"},{"i":"中产无娃-上海-D45","t":"自己人时刻","c":"街饮","city":"上海","p":"中产无娃","b":"一点点","temp":"热","d":"过生日的那天，和男票去吃羊肉火锅，因为火锅比较辣，点了杯清爽的一点点","img":"原始数据/饮品卡/中产无娃-上海/街饮-2.png"},{"i":"中产无娃-成都-D26","t":"围一桌","c":"街饮","city":"成都","p":"中产无娃","b":"喜茶","temp":"热","d":"有时候在外面吃的很辣了，就喜欢点一杯喜欢茶的黑珍珠真牛奶解辣","img":"原始数据/饮品卡/中产无娃-成都/街饮-6.png"},{"i":"中产无娃-成都-D29","t":"围一桌","c":"瓶装饮品","city":"成都","p":"中产无娃","b":"东方树叶、今典","temp":"热","d":"在便利店直接买热的东方树叶茉莉花茶，喝掉一半再倒入热牛奶。完美高配版茉莉奶绿～","img":"原始数据/饮品卡/中产无娃-成都/街饮.png"},{"i":"中产有娃-哈尔滨-D07","t":"围一桌","c":"瓶装饮品","city":"哈尔滨","p":"中产有娃","b":"统一","temp":"热","d":"火锅配着奶茶，真是美味搭子","img":"原始数据/饮品卡/中产有娃-哈尔滨/瓶装饮品-3.png"},{"i":"中产有娃-广州-D17","t":"围一桌","c":"街饮","city":"广州","p":"中产有娃","b":"卡朋西餐厅","temp":"热","d":"去卡朋基本必点他们家的珍珠奶茶，夏天喝冷的冬天就喝热的，珍珠很好喝","img":"原始数据/饮品卡/中产有娃-广州/街饮-2.png"},{"i":"学生-上海-组pilot-D07","t":"围一桌","c":"街饮","city":"上海","p":"学生","b":"布丁奶茶","temp":"","d":"我们找了一家附近的网红店，奶茶配上火锅，这个奶茶上面是布丁可可","img":"原始数据/饮品卡/学生-上海-组pilot/街饮饮品-3.png"},{"i":"学生-哈尔滨-D30","t":"围一桌","c":"自制饮品","city":"哈尔滨","p":"学生","b":"蜜雪冰城","temp":"热","d":"搭配奶茶","img":"原始数据/饮品卡/学生-哈尔滨/自制饮品-3.png"},{"i":"学生-哈尔滨-D43","t":"日常饭点","c":"街饮","city":"哈尔滨","p":"学生","b":"一点点","temp":"热","d":"是新出的口味，想尝试下","img":"原始数据/饮品卡/学生-哈尔滨/街饮-6.png"},{"i":"学生-广州-D08","t":"围一桌","c":"瓶装饮品","city":"广州","p":"学生","b":"喜茶","temp":"热","d":"喜欢的奶小萱，这个奶茶有淡淡的茉莉香味，喝起来很舒服","img":"原始数据/饮品卡/学生-广州/瓶装饮品-13.png"},{"i":"学生-广州-D22","t":"围一桌","c":"自制饮品","city":"广州","p":"学生","b":"","temp":"热","d":"姐姐自制的海底椰饮品","img":"原始数据/饮品卡/学生-广州/自制饮品-3.png"},{"i":"学生-广州-D32","t":"围一桌","c":"街饮","city":"广州","p":"学生","b":"阿萨姆","temp":"热","d":"那时候放纵日，在店附近买的热饮阿萨姆","img":"原始数据/饮品卡/学生-广州/街饮-2.png"},{"i":"白领-上海-D04","t":"凑热闹","c":"街饮","city":"上海","p":"白领","b":"蜜雪冰城","temp":"热","d":"因为它捂着暖手，喝起来的茶香很甜润，经典珍珠的g弹让口感更加强韧，跨年喝温暖又有气氛...","img":"原始数据/饮品卡/白领-上海/瓶装饮品-10.png"},{"i":"白领-上海-D36","t":"围一桌","c":"街饮","city":"上海","p":"白领","b":"茶决决","temp":"热","d":"吃火锅的时候喝了可以解渴解辣","img":"原始数据/饮品卡/白领-上海/街饮-11.png"},{"i":"白领-上海-D38","t":"围一桌","c":"街饮","city":"上海","p":"白领","b":"茶决决","temp":"热","d":"吃火锅的时候喝了可以解渴解辣","img":"原始数据/饮品卡/白领-上海/街饮-13.png"},{"i":"白领-哈尔滨-D05","t":"自己人时刻","c":"街饮","city":"哈尔滨","p":"白领","b":"蜜雪","temp":"热","d":"便宜还暖和可以送上门","img":"原始数据/饮品卡/白领-哈尔滨/瓶装饮品-1.png"},{"i":"白领-广州-D27","t":"围一桌","c":"自制饮品","city":"广州","p":"白领","b":"立顿","temp":"热","d":"自制热奶茶","img":"原始数据/饮品卡/白领-广州/自制饮品-5.png"},{"i":"白领-成都-D08","t":"围一桌","c":"瓶装饮品","city":"成都","p":"白领","b":"统一","temp":"热","d":"瓶装热饮不用等，乳茶配火锅比甜奶茶更解腻","img":"原始数据/饮品卡/白领-成都/瓶装饮品-14.png"},{"i":"白领-成都-D18","t":"围一桌","c":"瓶装饮品","city":"成都","p":"白领","b":"统一","temp":"热","d":"坐在路边吃饭，喝温热的阿萨姆奶茶能暖手暖胃，口感温润","img":"原始数据/饮品卡/白领-成都/瓶装饮品-23.png"},{"i":"白领-成都-D37","t":"围一桌","c":"自制饮品","city":"成都","p":"白领","b":"自制","temp":"热","d":"冬至天气冷，热饮暖手又暖心，搭配饺子很解腻，一家人围坐在一起和热饮氛围特别好","img":"原始数据/饮品卡/白领-成都/自制饮品-5.png"},{"i":"白领-成都-组pilot-D11","t":"围一桌","c":"街饮","city":"成都","p":"白领","b":"奈雪的茶","temp":"","d":"奶茶","img":"原始数据/饮品卡/白领-成都-组pilot/街饮饮品-2.png"},{"i":"白领-成都-组pilot-D12","t":"围一桌","c":"街饮","city":"成都","p":"白领","b":"珍珠奶茶","temp":"","d":"大家在喝喝喝一些口渴，想喝点饮料，点了外卖","img":"原始数据/饮品卡/白领-成都-组pilot/街饮饮品-3.png"},{"i":"学生-上海-D16","t":"自己人时刻","c":"瓶装饮品","city":"上海","p":"学生","b":"喜茶","temp":"热","d":"这款饮品很适合午餐的时候搭配食物，味道好喝，还是热饮（冬季）","img":"原始数据/饮品卡/学生-上海/瓶装饮品-23.png"},{"i":"学生-哈尔滨-D44","t":"自己人时刻","c":"街饮","city":"哈尔滨","p":"学生","b":"霸王茶姬","temp":"热","d":"清淡的茶和蛋糕很搭啊","img":"原始数据/饮品卡/学生-哈尔滨/街饮-7.png"},{"i":"学生-广州-D01","t":"自己人时刻","c":"瓶装饮品","city":"广州","p":"学生","b":"古著","temp":"热","d":"古著的桃胶木薯饮品","img":"原始数据/饮品卡/学生-广州/其他-1.png"},{"i":"学生-广州-D12","t":"围一桌","c":"瓶装饮品","city":"广州","p":"学生","b":"统一","temp":"热","d":"阿萨姆","img":"原始数据/饮品卡/学生-广州/瓶装饮品-3.png"},{"i":"学生-广州-D26","t":"自己人时刻","c":"街饮","city":"广州","p":"学生","b":"霜王茶姬","temp":"热","d":"霜王茶姬","img":"原始数据/饮品卡/学生-广州/街饮-1.png"},{"i":"学生-广州-D36","t":"自己人时刻","c":"街饮","city":"广州","p":"学生","b":"瑞幸","temp":"热","d":"热珍珠奶茶，冬天的经典搭配，喝起来心里暖暖的","img":"原始数据/饮品卡/学生-广州/街饮-6.png"},{"i":"学生-成都-D24","t":"自己人时刻","c":"瓶装饮品","city":"成都","p":"学生","b":"统一阿萨姆奶茶","temp":"热","d":"玩累了可以补充能量和糖分","img":"原始数据/饮品卡/学生-成都/瓶装饮品.png"},{"i":"学生-成都-D32","t":"自己人时刻","c":"街饮","city":"成都","p":"学生","b":"喜茶","temp":"热","d":"喝奶茶可以帮我缓解一下肚子里的胀感","img":"原始数据/饮品卡/学生-成都/街饮-2.png"},{"i":"学生-成都-D37","t":"自己人时刻","c":"街饮","city":"成都","p":"学生","b":"霸王茶妃","temp":"热","d":"当时霸王茶妃这一款才上新没多久，我就想买来试一试","img":"原始数据/饮品卡/学生-成都/街饮-7.png"},{"i":"白领-哈尔滨-D24","t":"自己人时刻","c":"瓶装饮品","city":"哈尔滨","p":"白领","b":"阿萨姆","temp":"热","d":"甜甜的，热乎乎的，很舒服","img":"原始数据/饮品卡/白领-哈尔滨/瓶装饮品-8.png"},{"i":"白领-哈尔滨-D45","t":"自己人时刻","c":"街饮","city":"哈尔滨","p":"白领","b":"霸王茶姬","temp":"热","d":"那天我们一起买了杯热奶茶 不仅能解渴还可以捂手","img":"原始数据/饮品卡/白领-哈尔滨/街饮-6.png"},{"i":"白领-广州-D09","t":"自己人时刻","c":"瓶装饮品","city":"广州","p":"白领","b":"维他","temp":"热","d":"热奶茶提神醒脑，能解馋，还能随餐","img":"原始数据/饮品卡/白领-广州/瓶装饮品-10.png"},{"i":"白领-广州-D39","t":"自己人时刻","c":"街饮","city":"广州","p":"白领","b":"元气森林","temp":"","d":"女朋友选择了元气森林的乳茶，她选择是因为她喜欢喝甜的，我跟她选择的也是一样的。而...","img":"原始数据/饮品卡/白领-广州/街饮-2.png"},{"i":"中产无娃-上海-D49","t":"冻一冻","c":"街饮","city":"上海","p":"中产无娃","b":"宝圆圆","temp":"热","d":"爬山很累需要热量和多巴胺刺激我进发更好状态。","img":"原始数据/饮品卡/中产无娃-上海/街饮-6.png"},{"i":"中产无娃-广州-D04","t":"冻一冻","c":"自制饮品","city":"广州","p":"中产无娃","b":"自制","temp":"热","d":"红糖红枣奶茶","img":"原始数据/饮品卡/中产无娃-广州/其他-4.png"},{"i":"中产无娃-成都-D28","t":"冻一冻","c":"街饮","city":"成都","p":"中产无娃","b":"茉莉奶白","temp":"热","d":"当时在广州街头散步，那天有点风，然后刚好路过一个茉莉奶白奶茶店，就买了一杯热饮","img":"原始数据/饮品卡/中产无娃-成都/街饮-8.png"},{"i":"中产有娃-广州-D19","t":"自己人时刻","c":"街饮","city":"广州","p":"中产有娃","b":"喜茶","temp":"热","d":"喜欢茶热奶茶搭配红糖珍珠，既有饱腹感又能喝上奶茶","img":"原始数据/饮品卡/中产有娃-广州/街饮-4.png"},{"i":"中产有娃-广州-组pilot-D04","t":"冻一冻","c":"街饮","city":"广州","p":"中产有娃","b":"爷爷不泡茶","temp":"","d":"奶茶","img":"原始数据/饮品卡/中产有娃-广州-组pilot/街饮饮品.png"},{"i":"中产有娃-广州-组暖饮机补充-D07","t":"冻一冻","c":"街饮","city":"广州","p":"中产有娃","b":"热暖饮","temp":"热","d":"吃甜点配着热茶特别惬意","img":"原始数据/饮品卡/中产有娃-广州-组暖饮机补充/街饮-1.png"},{"i":"中产有娃-成都-D01","t":"冻一冻","c":"瓶装饮品","city":"成都","p":"中产有娃","b":"统一","temp":"热","d":"喝点甜的更容易补充能量","img":"原始数据/饮品卡/中产有娃-成都/其他-1.png"},{"i":"中产有娃-成都-D28","t":"冻一冻","c":"街饮","city":"成都","p":"中产有娃","b":"霸王茶姬","temp":"热","d":"热饮拿在手上暖暖的很贴心","img":"原始数据/饮品卡/中产有娃-成都/自制饮品-3.png"},{"i":"中产有娃-成都-D36","t":"冻一冻","c":"街饮","city":"成都","p":"中产有娃","b":"蜜雪冰城","temp":"热","d":"散步的时候，冬日拿在手上暖暖的，不冷手","img":"原始数据/饮品卡/中产有娃-成都/街饮-5.png"},{"i":"中产有娃-成都-D38","t":"冻一冻","c":"街饮","city":"成都","p":"中产有娃","b":"茶百道","temp":"热","d":"茉莉奶绿","img":"原始数据/饮品卡/中产有娃-成都/街饮-7.png"},{"i":"学生-上海-D36","t":"冻一冻","c":"街饮","city":"上海","p":"学生","b":"喜茶","temp":"热","d":"喜欢三倍厚抹茶奶盖麻薯加抹茶冻，三重叠加，越喝越浓","img":"原始数据/饮品卡/学生-上海/街饮-1.png"},{"i":"学生-广州-D39","t":"凑热闹","c":"街饮","city":"广州","p":"学生","b":"螺蛳粉奶茶","temp":"热","d":"螺蛳粉奶茶，因为网上最近特别火这种热饮，刚好路过的时候闻着特别香就想试试","img":"原始数据/饮品卡/学生-广州/街饮-9.png"},{"i":"学生-广州-D40","t":"冻一冻","c":"街饮","city":"广州","p":"学生","b":"阿妈的酥油茶","temp":"热","d":"喝的酥油茶","img":"原始数据/饮品卡/学生-广州/街饮.png"},{"i":"学生-成都-D06","t":"冻一冻","c":"瓶装饮品","city":"成都","p":"学生","b":"统一","temp":"热","d":"热的阿萨姆奶茶方便购买，方便携带，露营有气氛感","img":"原始数据/饮品卡/学生-成都/瓶装饮品-12.png"},{"i":"学生-成都-D30","t":"冻一冻","c":"街饮","city":"成都","p":"学生","b":"岚蓝湾","temp":"热","d":"逛街累了奶茶清甜解渴","img":"原始数据/饮品卡/学生-成都/街饮-1.png"},{"i":"学生-成都-D34","t":"冻一冻","c":"街饮","city":"成都","p":"学生","b":"锦城茶作","temp":"热","d":"走在路上，拿着奶茶可以出片，而奶茶可以做热饮，在冬天很方便，奶茶选择也很多","img":"原始数据/饮品卡/学生-成都/街饮-4.png"},{"i":"白领-上海-D37","t":"冻一冻","c":"街饮","city":"上海","p":"白领","b":"洪都","temp":"热","d":"买了一杯奶茶和朋友一起逛街的时候喝","img":"原始数据/饮品卡/白领-上海/街饮-12.png"},{"i":"白领-上海-D41","t":"自己人时刻","c":"街饮","city":"上海","p":"白领","b":"喜茶","temp":"热","d":"选了一这款黑糖珍珠奶茶，奶盖的味道特别浓郁，满嘴留香","img":"原始数据/饮品卡/白领-上海/街饮-4.png"},{"i":"白领-上海-D43","t":"自己人时刻","c":"街饮","city":"上海","p":"白领","b":"霸王茶姬","temp":"热","d":"和姐妹逛街基本都会选择这种奶茶现做的，就像是习惯一样，比起有口感。","img":"原始数据/饮品卡/白领-上海/街饮-6.png"},{"i":"白领-上海-D45","t":"冻一冻","c":"街饮","city":"上海","p":"白领","b":"霸王茶姬","temp":"热","d":"霸王茶姬，时尚的包装加上纯正的茶口感配上小食，非常适合逛街打卡","img":"原始数据/饮品卡/白领-上海/街饮-8.png"},{"i":"白领-哈尔滨-D44","t":"冻一冻","c":"街饮","city":"哈尔滨","p":"白领","b":"沏上阿姨","temp":"热","d":"在外面逛街的时候我会买一杯热的奶茶 这样不仅可以捂手还能边走边喝","img":"原始数据/饮品卡/白领-哈尔滨/街饮-5.png"},{"i":"白领-哈尔滨-D48","t":"冻一冻","c":"街饮","city":"哈尔滨","p":"白领","b":"泸上阿姨","temp":"热","d":"开车出门，路过奶茶店就会选一杯热乎乎的奶茶，甜甜的，暖暖的。","img":"原始数据/饮品卡/白领-哈尔滨/街饮-9.png"},{"i":"白领-哈尔滨-D49","t":"冻一冻","c":"街饮","city":"哈尔滨","p":"白领","b":"蜜雪冰城","temp":"热","d":"珍珠奶茶是逛街的一个必选项目，女孩子都很喜欢在冬天逛街的时候拿一杯珍珠奶茶也会感...","img":"原始数据/饮品卡/白领-哈尔滨/街饮.png"},{"i":"白领-广州-D05","t":"冻一冻","c":"街饮","city":"广州","p":"白领","b":"古茗","temp":"热","d":"下山后去附近里吃饭，点了一杯热饮奶茶。","img":"原始数据/饮品卡/白领-广州/其他-5.png"},{"i":"白领-广州-D40","t":"冻一冻","c":"街饮","city":"广州","p":"白领","b":"喜茶","temp":"热","d":"热奶茶，一般我会选择带牛奶的热奶茶，这一口暖意是冬天的专属。","img":"原始数据/饮品卡/白领-广州/街饮-3.png"},{"i":"白领-广州-D41","t":"自己人时刻","c":"街饮","city":"广州","p":"白领","b":"喜茶","temp":"热","d":"水牛奶","img":"原始数据/饮品卡/白领-广州/街饮-4.png"},{"i":"白领-成都-D14","t":"冻一冻","c":"瓶装饮品","city":"成都","p":"白领","b":"统一","temp":"","d":"喝的阿萨姆奶茶，喝起来口感很丝滑，补充体力，并且甜甜的，很幸福","img":"原始数据/饮品卡/白领-成都/瓶装饮品-2.png"},{"i":"白领-成都-D27","t":"冻一冻","c":"瓶装饮品","city":"成都","p":"白领","b":"喜茶","temp":"热","d":"小奶茶牛奶茶，因为喜欢喝有点带甜味的，偶尔买点小奶茶牛奶茶解渴","img":"原始数据/饮品卡/白领-成都/瓶装饮品-5.png"},{"i":"白领-成都-D46","t":"冻一冻","c":"街饮","city":"成都","p":"白领","b":"泸上阿姨","temp":"热","d":"滑雪结束后浑身又冷又累，和朋友一起点一杯奶茶再适合不过。温热的奶茶香甜醇厚，既能驱寒...","img":"原始数据/饮品卡/白领-成都/街饮-7.png"},{"i":"中产无娃-哈尔滨-D27","t":"窝一窝","c":"自制饮品","city":"哈尔滨","p":"中产无娃","b":"斯琴妹子","temp":"热","d":"冲泡一杯烤奶皮奶茶，奶香四溢，十分美妙","img":"原始数据/饮品卡/中产无娃-哈尔滨/自制饮品-6.png"},{"i":"中产无娃-广州-D21","t":"窝一窝","c":"自制饮品","city":"广州","p":"中产无娃","b":"","temp":"热","d":"天冷喝一杯玫瑰桂花奶，能暖身驱寒。花香奶香舒缓心情，在家喝着放松又惬意...","img":"原始数据/饮品卡/中产无娃-广州/自制饮品-4.png"},{"i":"中产无娃-成都-D03","t":"日常饭点","c":"瓶装饮品","city":"成都","p":"中产无娃","b":"农夫山泉","temp":"热","d":"农夫山泉打奶茶低糖，配料是真牛奶和原叶茶，没有乱七八糟的添加剂。","img":"原始数据/饮品卡/中产无娃-成都/瓶装饮品-1.png"},{"i":"中产无娃-成都-D27","t":"窝一窝","c":"街饮","city":"成都","p":"中产无娃","b":"霸王茶姬","temp":"热","d":"冬天打游戏本来手就冷，身上也冷，这个时候喜欢点杯霸王茶姬的伯牙绝弦","img":"原始数据/饮品卡/中产无娃-成都/街饮-7.png"},{"i":"中产无娃-成都-组pilot-D01","t":"窝一窝","c":"瓶装饮品","city":"成都","p":"中产无娃","b":"元气森林","temp":"","d":"味道不错，没有糖，不会睡不着","img":"原始数据/饮品卡/中产无娃-成都-组pilot/其他饮品.png"},{"i":"中产有娃-成都-D27","t":"窝一窝","c":"自制饮品","city":"成都","p":"中产有娃","b":"树夏","temp":"热","d":"在家无聊随便喝点","img":"原始数据/饮品卡/中产有娃-成都/自制饮品-2.png"},{"i":"学生-上海-D27","t":"窝一窝","c":"瓶装饮品","city":"上海","p":"学生","b":"统一","temp":"热","d":"阿萨姆奶茶，裹着毯子x追剧，一口下去是暖平平的茶香奶味，感觉非常放松","img":"原始数据/饮品卡/学生-上海/瓶装饮品-33.png"},{"i":"学生-广州-D24","t":"窝一窝","c":"自制饮品","city":"广州","p":"学生","b":"优乐美","temp":"热","d":"麦香味奶茶","img":"原始数据/饮品卡/学生-广州/自制饮品-5.png"},{"i":"学生-广州-D31","t":"窝一窝","c":"街饮","city":"广州","p":"学生","b":"爱马仕国王奶茶","temp":"热","d":"休息的时候点的泰国奶茶","img":"原始数据/饮品卡/学生-广州/街饮-14.png"},{"i":"白领-上海-D02","t":"日常饭点","c":"其他","city":"上海","p":"白领","b":"","temp":"热","d":"我看到有特色的西藏奶茶，特地去品尝了一下，感觉很有特色，甜甜的口味。","img":"原始数据/饮品卡/白领-上海/其他.png"},{"i":"白领-广州-D06","t":"冻一冻","c":"街饮","city":"广州","p":"白领","b":"瑞幸","temp":"热","d":"那时候我就带了一杯热饮咖啡静静的坐在那里看书，挺宁静静气的。","img":"原始数据/饮品卡/白领-广州/其他-6.png"},{"i":"白领-广州-D32","t":"窝一窝","c":"自制饮品","city":"广州","p":"白领","b":"自制","temp":"","d":"在家自制的奶茶，一个人打游戏的时候喝的","img":"原始数据/饮品卡/白领-广州/自制饮品.png"},{"i":"白领-成都-D48","t":"冬日通勤","c":"街饮","city":"成都","p":"白领","b":"霸王茶姬","temp":"热","d":"喝的霸王茶姬桂花香，茶味清香，奶味浓郁","img":"原始数据/饮品卡/白领-成都/街饮饮品-1.png"},{"i":"白领-成都-D05","t":"冬日通勤","c":"瓶装饮品","city":"成都","p":"白领","b":"统一","temp":"热","d":"早上赶时间，便利店现成饮拿了就能走方便快捷，暖身又提神","img":"原始数据/饮品卡/白领-成都/瓶装饮品-11.png"},{"i":"白领-成都-D49","t":"冬日通勤","c":"街饮","city":"成都","p":"白领","b":"霸王茶姬","temp":"热","d":"奶茶店就在路上，而且点了以后很快就上了，拿到起以后就可以在路上喝，口感顺滑，温度合适","img":"原始数据/饮品卡/白领-成都/街饮饮品.png"},{"i":"中产无娃-上海-D47","t":"日常工作学习","c":"街饮","city":"上海","p":"中产无娃","b":"MIPOPO","temp":"热","d":"平时出差比较多，喜欢到处尝试一些没有喝过的品牌奶茶，有新奇口味的我都愿意去尝试","img":"原始数据/饮品卡/中产无娃-上海/街饮-4.png"},{"i":"中产无娃-成都-D10","t":"冬日通勤","c":"瓶装饮品","city":"成都","p":"中产无娃","b":"统一","temp":"热","d":"当时走在街边时风很大，想喝一点温暖的东西来暖和身体，感觉甜甜热热的奶茶最适合了","img":"原始数据/饮品卡/中产无娃-成都/瓶装饮品-6.png"},{"i":"中产有娃-广州-D22","t":"日常工作学习","c":"街饮","city":"广州","p":"中产有娃","b":"霸茶王","temp":"热","d":"下午很困，正好点杯霸茶王奶茶提神","img":"原始数据/饮品卡/中产有娃-广州/街饮-7.png"},{"i":"中产有娃-成都-D10","t":"日常工作学习","c":"瓶装饮品","city":"成都","p":"中产有娃","b":"统一","temp":"热","d":"工作有时候上班太累或者偶尔闲时刻喝喝奶茶热饮","img":"原始数据/饮品卡/中产有娃-成都/瓶装饮品-14.png"},{"i":"中产有娃-成都-D39","t":"日常工作学习","c":"街饮","city":"成都","p":"中产有娃","b":"瑞幸","temp":"热","d":"冬天热饮奶茶拿在手上很温暖","img":"原始数据/饮品卡/中产有娃-成都/街饮.png"},{"i":"学生-上海-D19","t":"日常工作学习","c":"街饮","city":"上海","p":"学生","b":"喜茶","temp":"热","d":"喜欢茶的黑糖波波牛奶茶，既能暖手，喝下去也能快速暖到肚里，而且珍珠之类的东西，跟冬天很搭","img":"原始数据/饮品卡/学生-上海/瓶装饮品-26.png"},{"i":"学生-成都-D38","t":"日常工作学习","c":"街饮","city":"成都","p":"学生","b":"古茗","temp":"热","d":"生椰抹茶麻薯","img":"原始数据/饮品卡/学生-成都/街饮-8.png"},{"i":"学生-成都-D39","t":"日常工作学习","c":"街饮","city":"成都","p":"学生","b":"茶百道","temp":"热","d":"茶百道的这款奶茶既可以补气血又可以解渴","img":"原始数据/饮品卡/学生-成都/街饮-9.png"},{"i":"白领-上海-D35","t":"冻一冻","c":"街饮","city":"上海","p":"白领","b":"一点点","temp":"热","d":"买一杯奶茶和朋友一起逛街的时候喝","img":"原始数据/饮品卡/白领-上海/街饮-10.png"},{"i":"白领-上海-D40","t":"日常工作学习","c":"街饮","city":"上海","p":"白领","b":"ot另茶","temp":"热","d":"想喝有茶味道的浓郁奶茶，就选了这一款泰茶珍珠奶茶，很满足","img":"原始数据/饮品卡/白领-上海/街饮-3.png"},{"i":"白领-上海-组暖饮机补充-D10","t":"日常工作学习","c":"街饮","city":"上海","p":"白领","b":"霸王茶姬","temp":"热","d":"霸王茶姬的配色很吸引我，茶味也适当","img":"原始数据/饮品卡/白领-上海-组暖饮机补充/街饮.png"},{"i":"白领-哈尔滨-D15","t":"日常工作学习","c":"瓶装饮品","city":"哈尔滨","p":"白领","b":"统一","temp":"热","d":"不太甜的奶茶，暖心","img":"原始数据/饮品卡/白领-哈尔滨/瓶装饮品-19.png"},{"i":"白领-哈尔滨-D26","t":"日常工作学习","c":"瓶装饮品","city":"哈尔滨","p":"白领","b":"统一","temp":"","d":"这还是比较好喝的在冷冷的冬季有一个甜甜的奶茶，口感还很丝滑","img":"原始数据/饮品卡/白领-哈尔滨/瓶装饮品.png"},{"i":"白领-广州-D44","t":"日常工作学习","c":"街饮","city":"广州","p":"白领","b":"喜茶","temp":"热","d":"休息口渴喜欢茶那会出了新品朋友推荐想尝一下","img":"原始数据/饮品卡/白领-广州/街饮-7.png"},{"i":"白领-成都-D36","t":"日常工作学习","c":"瓶装饮品","city":"成都","p":"白领","b":"香飘飘","temp":"热","d":"下午上班容易犯困，一杯热奶茶可以放松心情，提神缓压，暖着喝着很治愈","img":"原始数据/饮品卡/白领-成都/自制饮品-4.png"},{"i":"白领-成都-D39","t":"日常工作学习","c":"自制饮品","city":"成都","p":"白领","b":"特仑苏","temp":"热","d":"喝的特仑苏奶纯牛奶，加上红茶，倒在一起，热乎乎的","img":"原始数据/饮品卡/白领-成都/自制饮品.png"},{"i":"白领-成都-D40","t":"日常工作学习","c":"街饮","city":"成都","p":"白领","b":"瑞燕","temp":"热","d":"血糯米桃胶炖银耳，喝起来补气血，健康，而且小料丰富，吃完精力满满。","img":"原始数据/饮品卡/白领-成都/街饮-1.png"},{"i":"白领-成都-组pilot-D13","t":"日常工作学习","c":"街饮","city":"成都","p":"白领","b":"蜜雪冰城","temp":"","d":"作为什么茶饮用，想喝点液体的甜品","img":"原始数据/饮品卡/白领-成都-组pilot/街饮饮品-4.png"},{"i":"中产无娃-上海-D52","t":"日常饭点","c":"街饮","city":"上海","p":"中产无娃","b":"珍珠奶茶","temp":"热","d":"选一种自己喜欢的口味，每次根据要吃的菜选择喝的奶茶。","img":"原始数据/饮品卡/中产无娃-上海/街饮-9.png"},{"i":"中产有娃-成都-D16","t":"日常饭点","c":"瓶装饮品","city":"成都","p":"中产有娃","b":"统一","temp":"热","d":"瓶装更方便，热饮冬日更友好","img":"原始数据/饮品卡/中产有娃-成都/瓶装饮品-2.png"},{"i":"学生-哈尔滨-D28","t":"日常饭点","c":"街饮","city":"哈尔滨","p":"学生","b":"香飘飘","temp":"热","d":"在超市买的奶茶","img":"原始数据/饮品卡/学生-哈尔滨/自制饮品-11.png"},{"i":"学生-哈尔滨-D31","t":"日常饭点","c":"自制饮品","city":"哈尔滨","p":"学生","b":"奶茶店","temp":"热","d":"吃的麻辣烫太辣了！喝凉的怕坏肚子哈哈","img":"原始数据/饮品卡/学生-哈尔滨/自制饮品-4.png"},{"i":"学生-广州-D25","t":"冻一冻","c":"其他","city":"广州","p":"学生","b":"自制的","temp":"热","d":"玫瑰甜味酥油茶","img":"原始数据/饮品卡/学生-广州/自制饮品.png"},{"i":"学生-广州-D35","t":"日常饭点","c":"街饮","city":"广州","p":"学生","b":"喜茶","temp":"热","d":"喜欢茶的柚子普洱，冬天，想喝点暖和的下饭吃","img":"原始数据/饮品卡/学生-广州/街饮-5.png"},{"i":"学生-成都-D04","t":"冻一冻","c":"街饮","city":"成都","p":"学生","b":"蜜雪冰城","temp":"热","d":"吃完饭觉得嘴巴渴，想喝点饮品来解渴，选择了蜜雪冰城的茉莉奶绿","img":"原始数据/饮品卡/学生-成都/瓶装饮品-10.png"},{"i":"白领-广州-D19","t":"日常饭点","c":"瓶装饮品","city":"广州","p":"白领","b":"统一","temp":"热","d":"从工位上拿回来的统一奶茶，暖暖的很贴心，适合随餐，还能解辣","img":"原始数据/饮品卡/白领-广州/瓶装饮品-9.png"}];
+
+const SCENES=["冻一冻","围一桌","日常工作学习","自己人时刻","凑热闹","窝一窝","日常饭点","冬日通勤","至寒时刻"];
+const SCENE_COLORS=new Map([
+  ["冻一冻","#7b7be8"],
+  ["围一桌","#55be70"],
+  ["日常工作学习","#d5c2e6"],
+  ["自己人时刻","#c86627"],
+  ["凑热闹","#9d5431"],
+  ["窝一窝","#59a34d"],
+  ["日常饭点","#f0b8c5"],
+  ["冬日通勤","#e7ac2c"],
+  ["至寒时刻","#3f4068"]
+]);
+const FORMATS=[
+  {key:"全部",label:"全部",dot:null},
+  {key:"瓶装饮品",label:"瓶装",dot:"#d36f39"},
+  {key:"街饮",label:"街饮",dot:"#8583e6"},
+  {key:"自制饮品",label:"自制",dot:"#5ebf78"},
+  {key:"其他",label:"其他",dot:"#b88ad0"}
+];
+let activeFormat="全部";
+let selectedScene="";
+
+function esc(value){
+  return String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[ch]));
+}
+function labelFormat(value){
+  return value === "瓶装饮品" ? "瓶装" : value;
+}
+function currentFormat(){
+  return FORMATS.find(format => format.key === activeFormat) || FORMATS[0];
+}
+function setFormat(key){
+  activeFormat=key;
+  if(selectedScene && !filteredByFormat().some(card => card.t === selectedScene)) selectedScene="";
+  render();
+}
+function scrollToCards(){
+  requestAnimationFrame(()=>document.getElementById("cardsSection").scrollIntoView({behavior:"smooth",block:"start"}));
+}
+function filteredByFormat(){
+  return activeFormat === "全部" ? RAW : RAW.filter(card => card.c === activeFormat);
+}
+function activeCards(){
+  const cards=filteredByFormat();
+  return selectedScene ? cards.filter(card => card.t === selectedScene) : cards;
+}
+function countsByScene(cards){
+  return SCENES.map(scene => ({
+    scene,
+    n:cards.filter(card => card.t === scene).length
+  })).filter(item => item.n > 0);
+}
+function textColor(hex){
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+  return (r*299 + g*587 + b*114) / 1000 > 164 ? "#332d27" : "#fff";
+}
+function floatingOptionHTML({kind,key,label,count,color,active,all}){
+  const dataAttr=kind === "scene" ? "data-scene-option" : "data-format-option";
+  const dotClass=all ? "floating-dot all" : "floating-dot";
+  const style=color ? ` style="--floating-color:${color}"` : "";
+  return `<button class="floating-option" type="button" ${dataAttr}="${esc(key)}" aria-pressed="${active}"${style}>
+    <span class="${dotClass}"></span><span>${esc(label)}</span><span class="floating-option-count">${count}</span>
+  </button>`;
+}
+function splitBalanced(items){
+  const total=items.reduce((sum,item)=>sum+item.n,0);
+  const half=total/2;
+  const left=[];
+  const right=[];
+  let acc=0;
+  items.forEach(item=>{
+    if(acc < half || left.length === 0){
+      left.push(item);
+      acc += item.n;
+    }else{
+      right.push(item);
+    }
+  });
+  if(right.length === 0 && left.length > 1) right.push(left.pop());
+  return [left,right];
+}
+function binaryTreemap(items,x,y,w,h,out){
+  if(!items.length) return out;
+  if(items.length === 1){
+    out.push({...items[0],x,y,w,h});
+    return out;
+  }
+  const [left,right]=splitBalanced(items);
+  const leftTotal=left.reduce((sum,item)=>sum+item.n,0);
+  const total=items.reduce((sum,item)=>sum+item.n,0);
+  if(w >= h){
+    const w1=w * leftTotal / total;
+    binaryTreemap(left,x,y,w1,h,out);
+    binaryTreemap(right,x+w1,y,w-w1,h,out);
+  }else{
+    const h1=h * leftTotal / total;
+    binaryTreemap(left,x,y,w,h1,out);
+    binaryTreemap(right,x,y+h1,w,h-h1,out);
+  }
+  return out;
+}
+function renderFormatButtons(){
+  const host=document.getElementById("formatButtons");
+  const allCount=RAW.length;
+  host.innerHTML=FORMATS.map(format=>{
+    const isActive=format.key === activeFormat;
+    const n=format.key === "全部" ? allCount : RAW.filter(card => card.c === format.key).length;
+    const dot=format.key === "全部"
+      ? '<span class="dot all"></span>'
+      : `<span class="dot" style="--dot:${format.dot}"></span>`;
+    return `<button class="format-btn" type="button" data-format="${esc(format.key)}" aria-pressed="${isActive}">${dot}<span>${esc(format.label)}</span><span>${n}</span></button>`;
+  }).join("");
+  host.querySelectorAll("button").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      setFormat(btn.dataset.format);
+    });
+  });
+}
+function renderTreemap(cards){
+  const host=document.getElementById("sceneMap");
+  const items=countsByScene(cards);
+  const total=items.reduce((sum,item)=>sum+item.n,0);
+  const sorted=[...items].sort((a,b)=>b.n-a.n);
+  const rects=binaryTreemap(sorted,0,0,100,100,[]);
+  host.innerHTML=rects.map(rect=>{
+    const color=SCENE_COLORS.get(rect.scene) || "#c7b9a3";
+    const fg=textColor(color);
+    const pct=total ? Math.round(rect.n/total*100) : 0;
+    const compact=rect.w < 22 || rect.h < 18 ? " is-compact" : "";
+    const selected=selectedScene === rect.scene ? " is-selected" : "";
+    const top=rect.y <= 0.01 ? 0 : "var(--tile-gap)";
+    const left=rect.x <= 0.01 ? 0 : "var(--tile-gap)";
+    const right=rect.x + rect.w >= 99.99 ? 0 : "var(--tile-gap)";
+    const bottom=rect.y + rect.h >= 99.99 ? 0 : "var(--tile-gap)";
+    return `<button class="scene-tile${compact}${selected}" type="button" data-scene="${esc(rect.scene)}" style="left:${rect.x}%;top:${rect.y}%;width:${rect.w}%;height:${rect.h}%;--tile-bg:${color};--tile-fg:${fg};--tile-border-top:${top};--tile-border-right:${right};--tile-border-bottom:${bottom};--tile-border-left:${left};" aria-pressed="${selectedScene===rect.scene}">
+      <span class="scene-name">${esc(rect.scene)}</span>
+      <span class="scene-value">${rect.n} · ${pct}%</span>
+    </button>`;
+  }).join("");
+  host.querySelectorAll(".scene-tile").forEach(tile=>{
+    tile.addEventListener("click",()=>{
+      selectedScene = selectedScene === tile.dataset.scene ? "" : tile.dataset.scene;
+      render();
+      scrollToCards();
+    });
+  });
+}
+function cardHTML(card){
+  const brand=card.b ? `<span class="badge">${esc(card.b)}</span>` : "";
+  return `<article class="drink-card">
+    <div class="thumb" data-img="${esc(card.img)}"><img loading="lazy" src="${esc(card.img)}" alt=""></div>
+    <div class="drink-body">
+      <div class="badges"><span class="badge scene">${esc(card.t)}</span><span class="badge format">${esc(labelFormat(card.c))}</span><span class="badge place">${esc(card.city)} · ${esc(card.p)}</span>${brand}</div>
+      <div class="desc" title="${esc(card.d)}">${esc(card.d)}</div>
+    </div>
+  </article>`;
+}
+function renderCards(){
+  const cards=activeCards();
+  const title=document.getElementById("cardsTitle");
+  const meta=document.getElementById("cardsMeta");
+  const titlePrefix=selectedScene || "全部";
+  title.innerHTML=`<span class="title-accent">${esc(titlePrefix)}</span>奶茶场景`;
+  meta.textContent=`${cards.length} 张`;
+  document.querySelectorAll("[data-clear-scene]").forEach(btn=>{
+    btn.hidden=!selectedScene;
+  });
+  document.getElementById("cardsGrid").innerHTML=cards.map(cardHTML).join("");
+  document.querySelectorAll(".thumb").forEach(thumb=>{
+    thumb.addEventListener("click",()=>zoom(thumb.dataset.img));
+  });
+}
+function renderFloatingContext(cards){
+  const sceneHost=document.getElementById("floatingSceneOptions");
+  const formatHost=document.getElementById("floatingFormatOptions");
+  const sceneItems=[
+    {kind:"scene",key:"",label:"全部场景",count:cards.length,active:!selectedScene,all:true},
+    ...countsByScene(cards).map(item=>({
+      kind:"scene",
+      key:item.scene,
+      label:item.scene,
+      count:item.n,
+      color:SCENE_COLORS.get(item.scene),
+      active:selectedScene === item.scene
+    }))
+  ];
+  sceneHost.innerHTML=sceneItems.map(floatingOptionHTML).join("");
+  sceneHost.querySelectorAll("[data-scene-option]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      selectedScene=btn.dataset.sceneOption;
+      render();
+      scrollToCards();
+    });
+  });
+
+  const formatBase=selectedScene ? RAW.filter(card => card.t === selectedScene) : RAW;
+  const formatItems=FORMATS.map(format=>({
+    kind:"format",
+    key:format.key,
+    label:format.label,
+    count:format.key === "全部" ? formatBase.length : formatBase.filter(card => card.c === format.key).length,
+    color:format.dot,
+    active:format.key === activeFormat,
+    all:format.key === "全部"
+  }));
+  formatHost.innerHTML=formatItems.map(floatingOptionHTML).join("");
+  formatHost.querySelectorAll("[data-format-option]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      setFormat(btn.dataset.formatOption);
+      scrollToCards();
+    });
+  });
+}
+function syncFloatingVisibility(){
+  const bar=document.getElementById("floatingContext");
+  const cards=document.getElementById("cardsSection");
+  if(!bar || !cards) return;
+  bar.classList.toggle("is-visible",cards.getBoundingClientRect().top <= 110);
+}
+function zoom(src){
+  const box=document.getElementById("lightbox");
+  document.getElementById("lightboxImg").src=src;
+  box.style.display="flex";
+}
+function render(){
+  renderFormatButtons();
+  const cards=filteredByFormat();
+  document.getElementById("totalCount").textContent=cards.length;
+  document.getElementById("currentScope").textContent=currentFormat().label;
+  renderFloatingContext(cards);
+  renderTreemap(cards);
+  renderCards();
+  syncFloatingVisibility();
+}
+document.querySelectorAll("[data-clear-scene]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    selectedScene="";
+    render();
+  });
+});
+document.getElementById("lightbox").addEventListener("click",event=>{
+  event.currentTarget.style.display="none";
+});
+window.addEventListener("scroll",syncFloatingVisibility,{passive:true});
+window.addEventListener("resize",syncFloatingVisibility);
+document.addEventListener("DOMContentLoaded",render);
+</script>
+</body>
+</html>
